@@ -10,7 +10,7 @@ import time # Used for script sleeping.
 import logging
 import requests # CF Turnstiles.
 import os # Required to load DOTENV files.
-import fcntl # Unix file locking support.
+#import fcntl # Unix file locking support.
 from dotenv import load_dotenv # Dependant on OS module.
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart # Required for new-ticket-email.html
@@ -40,32 +40,32 @@ CF_TURNSTILE_SECRET_KEY = os.getenv("CF_TURNSTILE_SECRET_KEY")
 logging.basicConfig(filename=LOG_FILE, level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
 # Read/Loads the ticket file into memory. This is the original load_tickets function that works on Windows and Unix.
-#def load_tickets():
-#    try:
-#        with open(TICKETS_FILE, "r") as tkt_file:
-#            return json.load(tkt_file)
-#    except FileNotFoundError:
-#        return [] # represents an empty list.
+def load_tickets():
+    try:
+        with open(TICKETS_FILE, "r") as tkt_file:
+            return json.load(tkt_file)
+    except FileNotFoundError:
+        return [] # represents an empty list.
 
 # This load_tickets function contains the file locking mechanism for Linux.
  
-def load_tickets(retries=5, delay=0.2):
-   # Load tickets from JSON file with file locking and retry logic.
-   for attempt in range(retries):
-       try:
-           with open(TICKETS_FILE, "r") as file:
-               fcntl.flock(file, fcntl.LOCK_SH)  # Shared lock for reading
-               tickets = json.load(file)
-               fcntl.flock(file, fcntl.LOCK_UN)  # Unlock the file.
-               return tickets
-       except (json.JSONDecodeError, FileNotFoundError) as e:
-           logging.critical(f"Error loading tickets: {e}")
-           print(f"ERROR - Error loading tickets: {e}")
-           return []
-       except BlockingIOError:
-           logging.critical(f"File is locked, retrying... ({attempt+1}/{retries})")
-           time.sleep(delay)  # Wait before retrying
-   raise Exception("ERROR - Failed to load tickets after multiple attempts.")
+#def load_tickets(retries=5, delay=0.2):
+#   # Load tickets from JSON file with file locking and retry logic.
+#   for attempt in range(retries):
+#       try:
+#           with open(TICKETS_FILE, "r") as file:
+#               fcntl.flock(file, fcntl.LOCK_SH)  # Shared lock for reading
+#               tickets = json.load(file)
+#               fcntl.flock(file, fcntl.LOCK_UN)  # Unlock the file.
+#               return tickets
+#       except (json.JSONDecodeError, FileNotFoundError) as e:
+#           logging.critical(f"Error loading tickets: {e}")
+#           print(f"ERROR - Error loading tickets: {e}")
+#           return []
+#       except BlockingIOError:
+#           logging.critical(f"File is locked, retrying... ({attempt+1}/{retries})")
+#           time.sleep(delay)  # Wait before retrying
+#   raise Exception("ERROR - Failed to load tickets after multiple attempts.")
 
 # Writes to the ticket file database.
 def save_tickets(tickets):
