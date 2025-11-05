@@ -2,7 +2,7 @@
 
 Simple, Lightweight, Databaseless Service Desk for Home Labbers, Families, and One Man MSPs.
 
-**Current Version:**  v0.5.1
+**Current Version:**  v0.5.2
 
 [GoobyDesk Repo Wiki](https://github.com/GoobyFRS/GoobyDesk/wiki) & [Production Deployment Guide](https://github.com/GoobyFRS/GoobyDesk/wiki/Production-Deployment-Guide).
 
@@ -51,7 +51,6 @@ Closed Tickets are hidden from the Dashboard by default.
 ## Goals and Roadmap to Production v1.0
 
 - Tweak Discord Webhook message content. (Not Started)
-- Implement rate-limiting (Test env was subject to abuse)
 
 ### Linux Project Setup
 
