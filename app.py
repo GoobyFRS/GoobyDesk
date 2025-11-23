@@ -1,22 +1,23 @@
 #!/usr/bin/env python3
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify, flash
-import json # My preffered method of "database" replacements.
+import json
 import smtplib # Required protocol for sending emails by code.
 import imaplib # Required protocol for receiving/logging into email provider.
-import re # Regex support for reading emails and subject lines.
+import re
 import email # Required to read the content of the emails.
-import threading # Background process.
-import time # Used for script sleeping.
+import threading # Background process and thread lock support.
+import time
 import logging
-import requests # CF Turnstiles.
+import requests
 import os # Required to load DOTENV files.
 import fcntl # Unix file locking support.
 from dotenv import load_dotenv # Dependant on OS module.
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart # Required for new-ticket-email.html
 from email.header import decode_header
-from datetime import datetime # Timestamps.
+from datetime import datetime
 from local_webhook_handler import send_discord_notification, send_TktUpdate_discord_notification
+from local_email_handler import send_email, extract_email_body, fetch_email_replies
 
 # Load environment variables from .env in the local folder.
 load_dotenv(dotenv_path=".env")
