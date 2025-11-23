@@ -16,8 +16,8 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart # Required for new-ticket-email.html
 from email.header import decode_header
 from datetime import datetime # Timestamps.
-from local_webhook_handler import send_discord_notification # Webhook handler, local to this repo.
-from local_webhook_handler import send_TktUpdate_discord_notification # I need to find a better way to handle this import but I learned this new thing!
+from local_webhook_handler import send_discord_notification, send_TktUpdate_discord_notification # I need to find a better way to handle this import but I learned this new thing!
+from local_email_handler import send_email, fetch_email_replies
 
 # Load environment variables from .env in the local folder.
 load_dotenv(dotenv_path=".env")
@@ -66,24 +66,26 @@ def load_tickets():
         return [] # represents an empty list.
 
 # This load_tickets function contains the file locking mechanism for Linux.
- 
-#def load_tickets(retries=5, delay=0.2):
-#   # Load tickets from JSON file with file locking and retry logic.
-#   for attempt in range(retries):
-#       try:
-#           with open(TICKETS_FILE, "r") as file:
-#               fcntl.flock(file, fcntl.LOCK_SH)  # Shared lock for reading
-#               tickets = json.load(file)
-#               fcntl.flock(file, fcntl.LOCK_UN)  # Unlock the file.
-#               return tickets
-#       except (json.JSONDecodeError, FileNotFoundError) as e:
-#           logging.critical(f"Error loading tickets: {e}")
-#           print(f"ERROR - Error loading tickets: {e}")
-#           return []
-#       except BlockingIOError:
-#           logging.critical(f"File is locked, retrying... ({attempt+1}/{retries})")
-#           time.sleep(delay)  # Wait before retrying
-#   raise Exception("ERROR - Failed to load tickets after multiple attempts.")
+
+"""
+def load_tickets(retries=5, delay=0.2):
+   # Load tickets from JSON file with file locking and retry logic.
+   for attempt in range(retries):
+       try:
+           with open(TICKETS_FILE, "r") as file:
+               fcntl.flock(file, fcntl.LOCK_SH)  # Shared lock for reading
+               tickets = json.load(file)
+               fcntl.flock(file, fcntl.LOCK_UN)  # Unlock the file.
+               return tickets
+       except (json.JSONDecodeError, FileNotFoundError) as e:
+           logging.critical(f"Error loading tickets: {e}")
+           print(f"ERROR - Error loading tickets: {e}")
+           return []
+       except BlockingIOError:
+           logging.critical(f"File is locked, retrying... ({attempt+1}/{retries})")
+           time.sleep(delay)  # Wait before retrying
+   raise Exception("ERROR - Failed to load tickets after multiple attempts.")
+"""
 
 # Writes to the ticket file database.
 def save_tickets(tickets):
@@ -108,115 +110,121 @@ def generate_ticket_number():
     return f"TKT-{current_year}-{ticket_count}"  # Format: TKT-YYYY-XXXX
 
 # Send a confirmation email.
-#def send_email(requestor_email, ticket_subject, ticket_message, html=True):
-#    msg = MIMEMultipart()
-#    msg["Subject"] = ticket_subject
-#    msg["From"] = EMAIL_ACCOUNT
-#    msg["To"] = requestor_email
-#    
-#    # Attach body as plain text and/or HTML
-#    if html:
-#        msg.attach(MIMEText(ticket_message, "html"))
-#    else:
-#        msg.attach(MIMEText(ticket_message, "plain"))
-#    
-#    try:
-#        with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
-#            server.starttls()
-#            server.login(EMAIL_ACCOUNT, EMAIL_PASSWORD)
-#            server.sendmail(EMAIL_ACCOUNT, requestor_email, msg.as_string())
-#    except Exception as e:
-#        logging.error(f"Email sending failed: {e}")
-#    logging.info(f"Confirmation Email sent to {requestor_email}")
+"""
+def send_email(requestor_email, ticket_subject, ticket_message, html=True):
+    msg = MIMEMultipart()
+    msg["Subject"] = ticket_subject
+    msg["From"] = EMAIL_ACCOUNT
+    msg["To"] = requestor_email
+    
+    # Attach body as plain text and/or HTML
+    if html:
+        msg.attach(MIMEText(ticket_message, "html"))
+    else:
+        msg.attach(MIMEText(ticket_message, "plain"))
+    
+    try:
+        with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
+            server.starttls()
+            server.login(EMAIL_ACCOUNT, EMAIL_PASSWORD)
+            server.sendmail(EMAIL_ACCOUNT, requestor_email, msg.as_string())
+    except Exception as e:
+        logging.error(f"Email sending failed: {e}")
+    logging.info(f"Confirmation Email sent to {requestor_email}")
+"""
 
 # extract_email_body is attempting to scrape the content of the "valid" TKT email replies. It skips attachments. I do not currently need this feature. 
-#def extract_email_body(msg): 
-#    body = ""
-#    
-#    if msg.is_multipart():
-#        for part in msg.walk():
-#            content_type = part.get_content_type()
-#            content_disposition = str(part.get("Content-Disposition"))
-#
-#            if "attachment" in content_disposition:
-#                continue  # Skip attachments
-#
-#            if content_type == "text/plain":  # Prefer plaintext over HTML
-#                try:
-#                    body = part.get_payload(decode=True).decode(errors="ignore").strip()
-#                except Exception as e:
-#                    logging.warning(f"Error decoding email part: {e}")
-#                    continue
-#            elif content_type == "text/html" and not body:
-#                try:
-#                    body = part.get_payload(decode=True).decode(errors="ignore").strip()
-#                except Exception as e:
-#                    logging.warning(f"Error decoding HTML part: {e}")
-#                    continue
-#    else:
-#        try:
-#            body = msg.get_payload(decode=True).decode(errors="ignore").strip()
-#        except Exception as e:
-#            logging.error(f"Error decoding single-part email: {e}")
-#
-#    return body
+"""
+def extract_email_body(msg): 
+    body = ""
+    
+    if msg.is_multipart():
+        for part in msg.walk():
+            content_type = part.get_content_type()
+            content_disposition = str(part.get("Content-Disposition"))
+
+            if "attachment" in content_disposition:
+                continue  # Skip attachments
+
+            if content_type == "text/plain":  # Prefer plaintext over HTML
+                try:
+                    body = part.get_payload(decode=True).decode(errors="ignore").strip()
+                except Exception as e:
+                    logging.warning(f"Error decoding email part: {e}")
+                    continue
+            elif content_type == "text/html" and not body:
+                try:
+                    body = part.get_payload(decode=True).decode(errors="ignore").strip()
+                except Exception as e:
+                    logging.warning(f"Error decoding HTML part: {e}")
+                    continue
+    else:
+        try:
+            body = msg.get_payload(decode=True).decode(errors="ignore").strip()
+        except Exception as e:
+            logging.error(f"Error decoding single-part email: {e}")
+
+    return body
+"""
 
 # fetch_email_replies logically occurs before extract_email_body which is above this comment in the code.
-#def fetch_email_replies():
-#    try:
-#        mail = imaplib.IMAP4_SSL(IMAP_SERVER)
-#        mail.login(EMAIL_ACCOUNT, EMAIL_PASSWORD)  
-#        mail.select("inbox")  
-#
-#        mail_server_response_status, messages = mail.search(None, "UNSEEN")  
-#        if mail_server_response_status != "OK":
-#            logging.error("Reading Inbox via IMAP failed for an unknown reason.")
-#            return
-#
-#        email_ids = messages[0].split()
-#        tickets = load_tickets()  
-#
-#        for email_id in email_ids:
-#            email_id = email_id.decode()  # Ensure it's a string
-#            mail_server_response_status, msg_data = mail.fetch(email_id, "(RFC822)")
-#            if mail_server_response_status != "OK" or not msg_data:
-#                logging.warning(f"Unable to fetch email {email_id}")
-#                continue  
-#
-#            for response_part in msg_data:
-#                if isinstance(response_part, tuple):
-#                    msg = email.message_from_bytes(response_part[1])
-#                    subject, encoding = decode_header(msg["Subject"])[0]
-#                    if isinstance(subject, bytes):
-#                        subject = subject.decode(encoding or "utf-8")
-#
-#                    from_email = msg.get("From")
-#                    match_ticket_reply = re.search(r"(?i)\bTKT-\d{4}-\d+\b", subject)
-#                    ticket_id = match_ticket_reply.group(0) if match_ticket_reply else None
-#                    logging.debug(f"Extracted ticket ID: {ticket_id} from subject: {subject}")  
-#
-#                    if not ticket_id:
-#                        continue  
-#
-#                    body = extract_email_body(msg)
-#
-#                    for ticket in tickets:
-#                        if ticket["ticket_number"] == ticket_id:
-#                            ticket["ticket_notes"].append({"ticket_message": body})
-#                            save_tickets(tickets) 
-#                            logging.debug(f"Updated ticket {ticket_id} with reply from {from_email}") 
-#                            break
-#                        
-#        mail.logout()
-#        logging.debug("Email fetch job completed successfully.")
-#    except Exception as e:
-#        logging.error(f"Error fetching emails: {e}")
+"""
+def fetch_email_replies():
+    try:
+        mail = imaplib.IMAP4_SSL(IMAP_SERVER)
+        mail.login(EMAIL_ACCOUNT, EMAIL_PASSWORD)  
+        mail.select("inbox")  
+
+        mail_server_response_status, messages = mail.search(None, "UNSEEN")  
+        if mail_server_response_status != "OK":
+            logging.error("Reading Inbox via IMAP failed for an unknown reason.")
+            return
+
+        email_ids = messages[0].split()
+        tickets = load_tickets()  
+
+        for email_id in email_ids:
+            email_id = email_id.decode()  # Ensure it's a string
+            mail_server_response_status, msg_data = mail.fetch(email_id, "(RFC822)")
+            if mail_server_response_status != "OK" or not msg_data:
+                logging.warning(f"Unable to fetch email {email_id}")
+                continue  
+
+            for response_part in msg_data:
+                if isinstance(response_part, tuple):
+                    msg = email.message_from_bytes(response_part[1])
+                    subject, encoding = decode_header(msg["Subject"])[0]
+                    if isinstance(subject, bytes):
+                        subject = subject.decode(encoding or "utf-8")
+
+                    from_email = msg.get("From")
+                    match_ticket_reply = re.search(r"(?i)\bTKT-\d{4}-\d+\b", subject)
+                    ticket_id = match_ticket_reply.group(0) if match_ticket_reply else None
+                    logging.debug(f"Extracted ticket ID: {ticket_id} from subject: {subject}")  
+
+                    if not ticket_id:
+                        continue  
+
+                    body = extract_email_body(msg)
+
+                    for ticket in tickets:
+                        if ticket["ticket_number"] == ticket_id:
+                            ticket["ticket_notes"].append({"ticket_message": body})
+                            save_tickets(tickets) 
+                            logging.debug(f"Updated ticket {ticket_id} with reply from {from_email}") 
+                            break
+                        
+        mail.logout()
+        logging.debug("Email fetch job completed successfully.")
+    except Exception as e:
+        logging.error(f"Error fetching emails: {e}")
+"""
 
 # Background email monitoring. This is a running process using modules above.
 def background_email_monitor():
     while True:
         fetch_email_replies()
-        time.sleep(300)  # Wait for emails every 5 minutes.
+        time.sleep(600)  # Wait for emails every 10 minutes.
 
 threading.Thread(target=background_email_monitor, daemon=True).start()
 

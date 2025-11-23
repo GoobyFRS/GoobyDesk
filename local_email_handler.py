@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+# Local module for send_email, extact_email_body and fetch_email_replies functions.
 import os
 import smtplib
 import imaplib
@@ -21,10 +23,6 @@ SMTP_SERVER = os.getenv("SMTP_SERVER")
 SMTP_PORT = os.getenv("SMTP_PORT")
 TICKETS_FILE = os.getenv("TICKETS_FILE")
 
-
-# ---------------------------------------------------------
-# UTILITIES (copied from app.py — these remain pure helpers)
-# ---------------------------------------------------------
 def load_tickets():
     try:
         with open(TICKETS_FILE, "r") as f:
@@ -32,15 +30,10 @@ def load_tickets():
     except FileNotFoundError:
         return []
 
-
 def save_tickets(tickets):
     with open(TICKETS_FILE, "w") as f:
         json.dump(tickets, f, indent=4)
 
-
-# ---------------------------------------------------------
-# EMAIL SENDER
-# ---------------------------------------------------------
 def send_email(requestor_email, ticket_subject, ticket_message, html=True):
     msg = MIMEMultipart()
     msg["Subject"] = ticket_subject
@@ -58,10 +51,6 @@ def send_email(requestor_email, ticket_subject, ticket_message, html=True):
     except Exception as e:
         logging.error(f"Email sending failed: {e}")
 
-
-# ---------------------------------------------------------
-# EMAIL BODY EXTRACTOR
-# ---------------------------------------------------------
 def extract_email_body(msg):
     body = ""
 
@@ -89,10 +78,6 @@ def extract_email_body(msg):
 
     return body
 
-
-# ---------------------------------------------------------
-# EMAIL REPLIES FETCHER
-# ---------------------------------------------------------
 def fetch_email_replies():
     try:
         mail = imaplib.IMAP4_SSL(IMAP_SERVER)
