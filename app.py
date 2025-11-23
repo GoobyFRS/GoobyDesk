@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify, flash
 import json
-import smtplib # Required protocol for sending emails by code.
 import imaplib # Required protocol for receiving/logging into email provider.
 import re
 import email # Required to read the content of the emails.
@@ -11,8 +10,7 @@ import logging
 import requests
 import os # Required to load DOTENV files.
 import fcntl # Unix file locking support.
-from dotenv import load_dotenv # Dependant on OS module.
-from email.mime.text import MIMEText
+from dotenv import load_dotenv
 from email.mime.multipart import MIMEMultipart # Required for new-ticket-email.html
 from email.header import decode_header
 from datetime import datetime
