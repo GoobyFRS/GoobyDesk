@@ -40,10 +40,22 @@ app.secret_key = os.getenv("FLASKAPP_SECRET_KEY")
 # Standard Logging. basicConfig makes it reusable in other local py modules.
 logging.basicConfig(filename=LOG_FILE, level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
+# INITIAL ERROR CODES - ENV FILE RELATED
+
+if not CF_TURNSTILE_SITE_KEY:
+    logging.critical("CF_TURNSTILE_SITE_KEY is not set in .env file!")
+    print("CRITICAL: CF_TURNSTILE_SITE_KEY must be configured in .env file. Its required for CAPTCHA functionality.")
+    exit(10) 
+
+if not CF_TURNSTILE_SECRET_KEY:
+    logging.critical("CF_TURNSTILE_SITE_KEY is not set in .env file!")
+    print("CRITICAL: CF_TURNSTILE_SITE_KEY must be configured in .env file. Its required for CAPTCHA functionality.")
+    exit(11) 
+
 if not UPTIME_KUMA_WEBHOOK_SECRET:
     logging.critical("UPTIME_KUMA_WEBHOOK_SECRET is not set in .env file!")
-    print("ERROR: UPTIME_KUMA_WEBHOOK_SECRET must be configured in .env file")
-    exit(12) # Error Code 12?
+    print("CRITICAL: UPTIME_KUMA_WEBHOOK_SECRET must be configured in .env file")
+    exit(12)
 
 # Read/Loads the ticket file into memory. This is the original load_tickets function that works on Windows and Unix.
 def load_tickets():
@@ -386,47 +398,68 @@ def logout():
     session.pop("technician", None)
     return redirect(url_for("login"))
 
-
 # Route/routine for Webhook endpoint for Uptime-Kuma monitoring alerts. Automatically creates tickets when monitors go down or recover. Secured with secret token validation.
-# Add this route to your Flask application (insert before the error handlers section)
 
 @app.route("/webhook/uptime-kuma", methods=["POST"])
 def uptime_kuma_webhook():
     try:
-        # Validate secret token from Authorization header
         auth_header = request.headers.get("Authorization")
-        
         if not auth_header:
-            logging.warning("Uptime-Kuma webhook rejected: Missing Authorization header")
+            logging.warning("Webhook rejected: Missing Authorization header.")
             return jsonify({"status": "error", "message": "Missing Authorization header"}), 401
-        
-        # Expected format: "Bearer YOUR_SECRET_TOKEN"
+
         if not auth_header.startswith("Bearer "):
-            logging.warning("Uptime-Kuma webhook rejected: Invalid Authorization format")
+            logging.warning("Webhook rejected: Authorization header not using Bearer token.")
             return jsonify({"status": "error", "message": "Invalid Authorization format"}), 401
-        
-        provided_token = auth_header.replace("Bearer ", "")
-        
-        # Compare with the secret token from .env
+
+        provided_token = auth_header.replace("Bearer ", "").strip()
         if provided_token != UPTIME_KUMA_WEBHOOK_SECRET:
-            logging.warning(f"Uptime-Kuma webhook rejected: Invalid token from {request.remote_addr}")
+            logging.warning(f"Webhook rejected: Invalid token from {request.remote_addr}")
             return jsonify({"status": "error", "message": "Invalid token"}), 403
-        
-        # Get JSON payload from Uptime-Kuma
-        webhook_data = request.get_json()
-        
-        if not webhook_data:
-            logging.warning("Uptime-Kuma webhook received empty payload")
-            return jsonify({"status": "error", "message": "Empty payload"}), 400
-        
-        # Extract monitor information from Uptime-Kuma payload
-        monitor_name = webhook_data.get("monitor", {}).get("name", "Unknown Monitor")
-        monitor_url = webhook_data.get("monitor", {}).get("url", "N/A")
-        monitor_type = webhook_data.get("monitor", {}).get("type", "Unknown")
-        heartbeat_msg = webhook_data.get("heartbeat", {}).get("msg", "")
-        heartbeat_status = webhook_data.get("heartbeat", {}).get("status", 0)  # 0 = Down, 1 = Up
-        
-        # Determine if this is a down alert or recovery
+
+        webhook_data = request.get_json(silent=True)
+
+        if webhook_data is None:
+            logging.warning("Webhook received invalid or empty JSON payload.")
+            return jsonify({"status": "error", "message": "Invalid JSON payload"}), 400
+
+        logging.debug(f"Webhook payload received: {webhook_data}")
+
+        # ------------------------------
+        # 3. Extract Monitor Information (supports BOTH formats)
+        # ------------------------------
+
+        # FORMAT A (complex):
+        # {
+        #   "monitor": { "name": "", "url": "", "type": "" },
+        #   "heartbeat": { "msg": "", "status": 0 }
+        # }
+
+        # FORMAT B (simple):
+        # {
+        #   "name": "",
+        #   "url": "",
+        #   "msg": "",
+        #   "status": "DOWN"
+        # }
+
+        monitor_obj = webhook_data.get("monitor", {}) or {}
+
+        monitor_name = monitor_obj.get("name") or webhook_data.get("name", "Unknown Monitor")
+        monitor_url = monitor_obj.get("url") or webhook_data.get("url", "N/A")
+        monitor_type = monitor_obj.get("type") or "Unknown"
+
+        heartbeat_obj = webhook_data.get("heartbeat", {}) or {}
+
+        heartbeat_msg = heartbeat_obj.get("msg") or webhook_data.get("msg", "")
+
+        # Status handling — can be number OR string
+        heartbeat_status = heartbeat_obj.get("status")
+
+        if heartbeat_status is None:  
+            status_str = str(webhook_data.get("status", "")).lower()
+            heartbeat_status = 0 if status_str == "down" else 1
+
         if heartbeat_status == 0:
             alert_type = "DOWN"
             ticket_impact = "High"
@@ -437,29 +470,30 @@ def uptime_kuma_webhook():
             ticket_impact = "Low"
             ticket_urgency = "Low"
             request_type = "Incident"
-        
-        # Build ticket details
+
         ticket_subject = f"[Uptime-Kuma] {monitor_name} - {alert_type}"
+
         ticket_message = f"""
+
 Monitor Alert from Uptime-Kuma:
 
 Monitor Name: {monitor_name}
 Monitor Type: {monitor_type}
 Monitor URL: {monitor_url}
+
 Status: {alert_type}
 Message: {heartbeat_msg}
 
 This ticket was automatically generated by the Uptime-Kuma monitoring system.
         """.strip()
-        
-        # Only create tickets for DOWN alerts (optional: remove this if you want tickets for recoveries too)
+
         if heartbeat_status == 0:
             ticket_number = generate_ticket_number()
-            
+
             new_ticket = {
                 "ticket_number": ticket_number,
                 "requestor_name": "Uptime-Kuma Monitor",
-                "requestor_email": EMAIL_ACCOUNT,  # Use system email
+                "requestor_email": EMAIL_ACCOUNT,   # System email
                 "ticket_subject": ticket_subject,
                 "ticket_message": ticket_message,
                 "request_type": request_type,
@@ -468,36 +502,44 @@ This ticket was automatically generated by the Uptime-Kuma monitoring system.
                 "ticket_status": "Open",
                 "submission_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                 "ticket_notes": [],
-                "source": "uptime-kuma-webhook"  # Tag for tracking webhook-generated tickets
+                "source": "uptime-kuma-webhook"
             }
-            
+
             tickets = load_tickets()
             tickets.append(new_ticket)
             save_tickets(tickets)
-            logging.info(f"{ticket_number} created from Uptime-Kuma webhook for {monitor_name}")
-            
-            # Send Discord notification
+
+            logging.info(
+                f"{ticket_number} created from Uptime-Kuma webhook "
+                f"for monitor '{monitor_name}' ({monitor_url})"
+            )
+
+            # Discord Notification
             try:
                 send_discord_notification(ticket_number, ticket_subject, ticket_message)
             except Exception as e:
-                logging.error(f"Failed to send Discord notification for {ticket_number}: {str(e)}")
-            
+                logging.error(f"Failed sending Discord notification for {ticket_number}: {e}")
+
             return jsonify({
                 "status": "success",
                 "ticket_number": ticket_number,
-                "message": f"Ticket created for {monitor_name}"
+                "message": f"Ticket created for monitor '{monitor_name}'"
             }), 201
+
         else:
-            # For recovery alerts, just log and acknowledge
-            logging.info(f"Uptime-Kuma recovery notification received for {monitor_name}")
+            # ------------------------------
+            # 7. Handle Recovery
+            # ------------------------------
+            logging.info(f"Uptime-Kuma recovery received for monitor '{monitor_name}'")
             return jsonify({
                 "status": "success",
                 "message": f"Recovery acknowledged for {monitor_name}"
             }), 200
-            
+
     except Exception as e:
-        logging.error(f"Error processing Uptime-Kuma webhook: {str(e)}")
+        logging.error(f"ERROR: processing Uptime-Kuma webhook: {e}")
         return jsonify({"status": "error", "message": str(e)}), 500
+
 
 # BELOW THIS LINE IS RESERVED FOR FLASK ERROR ROUTES. PUT ALL CORE APP FUNCTIONS ABOVE THIS LINE!
 # Handle 400 errors.
