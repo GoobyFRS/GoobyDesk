@@ -1,3 +1,4 @@
+import os
 import smtplib
 import imaplib
 import email
@@ -6,9 +7,7 @@ import logging
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.header import decode_header
-
 from dotenv import load_dotenv
-import os
 import json
 from datetime import datetime
 
