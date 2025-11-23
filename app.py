@@ -16,8 +16,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart # Required for new-ticket-email.html
 from email.header import decode_header
 from datetime import datetime # Timestamps.
-from local_webhook_handler import send_discord_notification # Webhook handler, local to this repo.
-from local_webhook_handler import send_TktUpdate_discord_notification # I need to find a better way to handle this import but I learned this new thing!
+from local_webhook_handler import send_discord_notification, send_TktUpdate_discord_notification
 
 # Load environment variables from .env in the local folder.
 load_dotenv(dotenv_path=".env")
