@@ -297,6 +297,11 @@ def logout():
     session.pop("technician", None)
     return redirect(url_for("login"))
 
+"""
+@app.route("/api/uptime-kuma", methods=["POST"])
+
+"""
+
 # BELOW THIS LINE IS RESERVED FOR FLASK ERROR ROUTES. PUT ALL CORE APP FUNCTIONS ABOVE THIS LINE!
 # Handle 400 errors.
 @app.errorhandler(400)
