@@ -21,18 +21,6 @@ EMAIL_ACCOUNT = os.getenv("EMAIL_ACCOUNT")
 EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD")
 SMTP_SERVER = os.getenv("SMTP_SERVER")
 SMTP_PORT = os.getenv("SMTP_PORT")
-TICKETS_FILE = os.getenv("TICKETS_FILE")
-
-def load_tickets():
-    try:
-        with open(TICKETS_FILE, "r") as f:
-            return json.load(f)
-    except FileNotFoundError:
-        return []
-
-def save_tickets(tickets):
-    with open(TICKETS_FILE, "w") as f:
-        json.dump(tickets, f, indent=4)
 
 def send_email(requestor_email, ticket_subject, ticket_message, html=True):
     msg = MIMEMultipart()
