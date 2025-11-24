@@ -210,7 +210,8 @@ def login():
         # After adding this feature/function the simplified ability to only have one defined technician is broke. This should be resolved before production release.
         for defined_technician in employees:
             if username == defined_technician["tech_username"] and password == defined_technician["tech_authcode"]:
-                session["technician"] = username  # Store the technician's username in the session cookie.
+                session["technician"] = username
+                logging.info(f"{username} logged in.") # Store the technician's username in the session cookie.
                 return redirect(url_for("dashboard")) # On successful login, send to Dashboard.
             else:
                 return render_template("404.html"), 404 # Send our custom 404 page.
@@ -244,7 +245,8 @@ def ticket_detail(ticket_number):
 
 # Route/routine for updating a ticket. Called from Dashboard and Ticket Commander.
 @app.route("/ticket/<ticket_number>/update_status/<ticket_status>", methods=["POST"])
-def update_ticket_status(ticket_number, ticket_status): 
+def update_ticket_status(ticket_number, ticket_status):
+    logging.info(f"{ticket_number} status has been changed to {ticket_status}.")
     if not session.get("technician"):  # Ensure only authenticated techs can update tickets.
         return render_template("403.html"), 403
     
