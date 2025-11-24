@@ -2,7 +2,7 @@
 
 Simple, Lightweight, Databaseless Service Desk for Home Labbers, Families, and One Man MSPs.
 
-**Current Version:**  v0.5.1
+**Current Version:**  v0.5.2
 
 [GoobyDesk Repo Wiki](https://github.com/GoobyFRS/GoobyDesk/wiki) & [Production Deployment Guide](https://github.com/GoobyFRS/GoobyDesk/wiki/Production-Deployment-Guide).
 
@@ -50,8 +50,15 @@ Closed Tickets are hidden from the Dashboard by default.
 
 ## Goals and Roadmap to Production v1.0
 
-- Tweak Discord Webhook message content. (Not Started)
-- Implement rate-limiting (Test env was subject to abuse)
+- Accept Uptime-Kuma webhooks for ticket creation. 
+- Accept NewRelic webhooks for ticket creation. 
+- Log Technician activity.
+- Report Viewer with SLA tables.
+- Easy toggle for email platform use. 
+- Ability to send Slack notifications.
+- Secure Technician passwords with hashing.
+- Rate Limit without CloudFlare.
+- High Quality User Input Sanitation.
 
 ### Linux Project Setup
 

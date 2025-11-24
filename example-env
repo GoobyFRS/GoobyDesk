@@ -9,3 +9,5 @@ DISCORD_WEBHOOK_URL="https://discord.com/api/webhooks/XXXXX/YYYYY"
 LOG_FILE=/var/log/goobyDesk.log
 CF_TURNSTILE_SITE_KEY=01234567890
 CF_TURNSTILE_SECRET_KEY=abcdefghijklmnopqrstuvwxyz
+UPTIME_KUMA_WEBHOOK_SECRET=your_secure_random_token_here_replace_this_value
+FLASKAPP_SECRET_KEY=SECURE_YOUR_COOKIES
