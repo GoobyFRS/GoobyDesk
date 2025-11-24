@@ -50,7 +50,15 @@ Closed Tickets are hidden from the Dashboard by default.
 
 ## Goals and Roadmap to Production v1.0
 
-- Tweak Discord Webhook message content. (Not Started)
+- Accept Uptime-Kuma webhooks for ticket creation. 
+- Accept NewRelic webhooks for ticket creation. 
+- Log Technician activity.
+- Report Viewer with SLA tables.
+- Easy toggle for email platform use. 
+- Ability to send Slack notifications.
+- Secure Technician passwords with hashing.
+- Rate Limit without CloudFlare.
+- High Quality User Input Sanitation.
 
 ### Linux Project Setup
 
