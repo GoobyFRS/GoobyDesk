@@ -188,6 +188,7 @@ def home():
                 send_discord_notification(ticket_number, ticket_subject, ticket_message)
             except Exception as e:
                 logging.error(f"Failed to send Discord notification for {ticket_number}: {str(e)}")
+
             # Prompt the users web interface of a successful ticket submission.
             flash(f"Ticket {ticket_number} has been submitted successfully!", "success")
             return redirect(url_for("home"))
@@ -195,6 +196,7 @@ def home():
         except Exception as e:
             logging.critical(f"Failed to process ticket submission: {str(e)}")
             return "An error occurred while submitting your ticket. Please try again later.", 500
+        
     # Refresh and Reload the Home/Index
     return render_template("index.html", sitekey=CF_TURNSTILE_SITE_KEY)
 
@@ -211,7 +213,7 @@ def login():
         for defined_technician in employees:
             if username == defined_technician["tech_username"] and password == defined_technician["tech_authcode"]:
                 session["technician"] = username
-                logging.info(f"{username} logged in.") # Store the technician's username in the session cookie.
+                logging.info(f"{username} has logged in.") # Store the technician's username in the session cookie.
                 return redirect(url_for("dashboard")) # On successful login, send to Dashboard.
             else:
                 return render_template("404.html"), 404 # Send our custom 404 page.
@@ -299,6 +301,10 @@ def logout():
 
 """
 @app.route("/api/uptime-kuma", methods=["POST"])
+
+"""
+"""
+@app.route("/api/newrelic", methods=["POST"])
 
 """
 

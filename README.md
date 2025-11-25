@@ -2,7 +2,7 @@
 
 Simple, Lightweight, Databaseless Service Desk for Home Labbers, Families, and One Man MSPs.
 
-**Current Version:**  v0.5.2
+**Current Version:**  v0.5.4
 
 [GoobyDesk Repo Wiki](https://github.com/GoobyFRS/GoobyDesk/wiki) & [Production Deployment Guide](https://github.com/GoobyFRS/GoobyDesk/wiki/Production-Deployment-Guide).
 
@@ -72,8 +72,6 @@ python3 ./app.py
 CTRL+C to break. ```deactivate``` to clean up.
 
 ### Windows Project Setup
-
-**Technically Broken, no longer supported.**
 
 1. Comment out ```import fcntl``` line 11.
 2. Comment out ```load_tickets``` lines 44-60.

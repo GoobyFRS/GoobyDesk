@@ -75,7 +75,7 @@ def extract_email_body(msg):
         try:
             body = msg.get_payload(decode=True).decode(errors="ignore").strip()
         except Exception as e:
-            logging.error(f"Error decoding single email: {e}")
+            logging.error(f"EMAIL HANDLER - Error decoding single email: {e}")
 
     return body
 
@@ -117,7 +117,7 @@ def fetch_email_replies():
                         if t["ticket_number"] == ticket_id:
                             t["ticket_notes"].append({"ticket_message": body})
                             save_tickets(tickets)
-                            logging.info(f"Updated {ticket_id} with email reply.")
+                            logging.info(f"EMAIL HANDLER - Updated {ticket_id} with email reply.")
                             break
 
         mail.logout()

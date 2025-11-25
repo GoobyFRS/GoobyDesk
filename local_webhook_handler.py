@@ -47,6 +47,7 @@ def send_discord_notification(ticket_number, ticket_subject, ticket_message):
 
 # send_TktUpdate_discord_notification will send a webhook when the status becomes In-Progress or Closed..
 def send_TktUpdate_discord_notification(ticket_number, ticket_status):
+
     if not DISCORD_WEBHOOK_URL:
         logging.warning("WEBHOOK HANDLER - DISCORD_WEBHOOK_URL is not set. Check your .env file.")
         return
@@ -79,3 +80,10 @@ def send_TktUpdate_discord_notification(ticket_number, ticket_status):
         logging.error("WEBHOOK HANDLER - Request to Discord timed out.")
     except requests.exceptions.RequestException as e:
         logging.error(f"WEBHOOK HANDLER - Unexpected error: {e}")
+
+"""
+def send_slack_notification(ticket_number, ticket_subject, ticket_message):
+
+def send_TktUpdate_slack_notification(ticket_number, ticket_subject, ticket_message):
+
+"""
