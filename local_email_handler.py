@@ -21,6 +21,19 @@ EMAIL_ACCOUNT = os.getenv("EMAIL_ACCOUNT")
 EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD")
 SMTP_SERVER = os.getenv("SMTP_SERVER")
 SMTP_PORT = os.getenv("SMTP_PORT")
+TICKETS_FILE = os.getenv("TICKETS_FILE") # Required for email ticket handling.
+
+def load_tickets(): # Required for email ticket handling.
+    try:
+        with open(TICKETS_FILE, "r") as tkt_file:
+            return json.load(tkt_file)
+    except FileNotFoundError:
+        return [] # represents an empty list.
+    
+def save_tickets(tickets): # Required for email ticket handling.
+    with open(TICKETS_FILE, "w") as tkt_file_write_op:
+        json.dump(tickets, tkt_file_write_op, indent=4)
+        logging.debug("The ticket database file was modified.")
 
 def send_email(requestor_email, ticket_subject, ticket_message, html=True):
     msg = MIMEMultipart()
@@ -37,7 +50,7 @@ def send_email(requestor_email, ticket_subject, ticket_message, html=True):
             server.sendmail(EMAIL_ACCOUNT, requestor_email, msg.as_string())
         logging.info(f"Email sent to {requestor_email}")
     except Exception as e:
-        logging.error(f"Email sending failed: {e}")
+        logging.error(f"EMAIL HANDLER - Email sending failed: {e}")
 
 def extract_email_body(msg):
     body = ""
@@ -57,7 +70,7 @@ def extract_email_body(msg):
                 elif ctype == "text/html" and not body:
                     body = part.get_payload(decode=True).decode(errors="ignore").strip()
             except Exception as e:
-                logging.warning(f"Error decoding email part: {e}")
+                logging.warning(f"EMAIL HANDLER - Error decoding email part: {e}")
     else:
         try:
             body = msg.get_payload(decode=True).decode(errors="ignore").strip()
@@ -74,7 +87,7 @@ def fetch_email_replies():
 
         status, messages = mail.search(None, "UNSEEN")
         if status != "OK":
-            logging.error("Failed to search inbox.")
+            logging.error("EMAIL HANDLER - Failed to search inbox.")
             return
 
         email_ids = messages[0].split()
@@ -110,4 +123,4 @@ def fetch_email_replies():
         mail.logout()
 
     except Exception as e:
-        logging.error(f"Error fetching email replies: {e}")
+        logging.error(f"EMAIL HANDLER - Error fetching email replies: {e}")
