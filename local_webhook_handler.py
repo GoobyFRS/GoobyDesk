@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# Local module for sending Discord and Slack webhook notifications.
+__all__ = ["send_discord_notification", "send_TktUpdate_discord_notification", "send_slack_notification", "send_TktUpdate_slack_notification"]
 import os
 import json
 import requests
@@ -153,9 +155,3 @@ def send_TktUpdate_slack_notification(ticket_number, ticket_status):
     except requests.exceptions.RequestException as e:
         logging.error(f"WEBHOOK HANDLER - Unexpected error: {e}")
         
-"""
-def send_slack_notification(ticket_number, ticket_subject, ticket_message):
-
-def send_TktUpdate_slack_notification(ticket_number, ticket_subject, ticket_message):
-
-"""

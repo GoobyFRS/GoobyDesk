@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # Local module for send_email, extact_email_body and fetch_email_replies functions.
+__all__ = ["send_email", "extract_email_body", "fetch_email_replies"]
 import os
 import smtplib
 import imaplib

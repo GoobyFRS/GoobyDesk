@@ -13,7 +13,7 @@ from email.mime.multipart import MIMEMultipart # Required for new-ticket-email.h
 from email.header import decode_header
 from datetime import datetime # Timestamps.
 from local_webhook_handler import send_discord_notification, send_TktUpdate_discord_notification
-from local_email_handler import send_email, fetch_email_replies
+import local_email_handler
 
 # Load environment variables from .env in the local folder.
 load_dotenv(dotenv_path=".env")
@@ -110,7 +110,7 @@ def generate_ticket_number():
 # Background email inbox monitoring process.
 def background_email_monitor():
     while True:
-        fetch_email_replies()
+        local_email_handler.fetch_email_replies()
         time.sleep(600)  # Wait for emails every 10 minutes.
 
 threading.Thread(target=background_email_monitor, daemon=True).start()
