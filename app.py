@@ -40,20 +40,34 @@ logging.basicConfig(filename=LOG_FILE, level=logging.INFO, format="%(asctime)s -
 
 # INITIAL ERROR CODES - ENV FILE RELATED
 
+if not LOG_FILE:
+    print("CRITICAL: LOG_FILE must be configured in .env file. Its a fundemental requirement for logging, debugging, and issue resolution.")
+    exit(105)
+
+if not TICKETS_FILE:
+    logging.critical("TICKETS_FILE is not defined in the .env file!")
+    print("CRITICAL: TICKETS_FILE must be configured in .env file. Its required for ticket database functionality.")
+    exit(106)
+
+if not EMPLOYEE_FILE:
+    logging.critical("EMPLOYEE_FILE is not defined in the .env file!")
+    print("CRITICAL: EMPLOYEE_FILE must be configured in .env file. Its required for employee login functionality.")
+    exit(107)
+
 if not CF_TURNSTILE_SITE_KEY:
     logging.critical("CF_TURNSTILE_SITE_KEY is not set in .env file!")
     print("CRITICAL: CF_TURNSTILE_SITE_KEY must be configured in .env file. Its required for CAPTCHA functionality.")
-    exit(10) 
+    exit(108) 
 
 if not CF_TURNSTILE_SECRET_KEY:
     logging.critical("CF_TURNSTILE_SITE_KEY is not set in .env file!")
     print("CRITICAL: CF_TURNSTILE_SITE_KEY must be configured in .env file. Its required for CAPTCHA functionality.")
-    exit(11) 
+    exit(109) 
 
 #if not UPTIME_KUMA_WEBHOOK_SECRET:
 #    logging.critical("UPTIME_KUMA_WEBHOOK_SECRET is not set in .env file!")
 #    print("CRITICAL: UPTIME_KUMA_WEBHOOK_SECRET must be configured in .env file")
-#    exit(12)
+#    exit(112)
 
 # Read/Loads the ticket file into memory. This is the original load_tickets function that works on Windows and Unix.
 def load_tickets():
