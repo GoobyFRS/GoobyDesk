@@ -112,7 +112,7 @@ def generate_ticket_number():
 # Background email monitoring. This is a running process using modules above.
 def background_email_monitor():
     while True:
-        fetch_email_replies()
+        local_email_handler.fetch_email_replies()
         time.sleep(600)  # Wait for emails every 10 minutes.
 
 threading.Thread(target=background_email_monitor, daemon=True).start()
