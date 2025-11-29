@@ -307,10 +307,73 @@ def logout():
 @app.route("/api/newrelic", methods=["POST"])
 
 """
-"""
-@app.route("/api/tailscale", methods=["POST"])
 
-"""
+@app.route("/api/tailscale", methods=["POST"])
+def tailscale_webhook():
+    try:
+        payload = request.json
+
+        if not payload:
+            logging.warning("Tailscale webhook received empty payload.")
+            return jsonify({"error": "Empty payload"}), 400
+
+        # Pretty-print JSON for ticket body
+        formatted_body = json.dumps(payload, indent=4)
+
+        # Build ticket fields
+        requestor_name = "Tailscale"
+        requestor_email = EMAIL_ACCOUNT  # Your .env sender address
+        ticket_subject = "Tailscale Notification"
+        ticket_message = formatted_body
+        ticket_impact = "Medium"
+        ticket_urgency = "Medium"
+        request_type = "Change"
+        ticket_number = generate_ticket_number()
+
+        new_ticket = {
+            "ticket_number": ticket_number,
+            "requestor_name": requestor_name,
+            "requestor_email": requestor_email,
+            "ticket_subject": ticket_subject,
+            "ticket_message": ticket_message,
+            "request_type": request_type,
+            "ticket_impact": ticket_impact,
+            "ticket_urgency": ticket_urgency,
+            "ticket_status": "Open",
+            "submission_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "ticket_notes": []
+        }
+
+        tickets = load_tickets()
+        tickets.append(new_ticket)
+        save_tickets(tickets)
+        logging.info(f"Tailscale Notification — {ticket_number} created successfully.")
+
+        # Attempt to send email
+        try:
+            email_body = f"<pre>{formatted_body}</pre>"
+            send_email(
+                EMAIL_ACCOUNT,
+                f"{ticket_number} - {ticket_subject}",
+                email_body,
+                html=True
+            )
+            logging.info(f"Email sent for Tailscale ticket {ticket_number}.")
+        except Exception as e:
+            logging.error(f"Tailscale email sending failed for {ticket_number}: {str(e)}")
+
+        # Discord notification (optional)
+        try:
+            send_discord_notification(ticket_number, ticket_subject, formatted_body)
+        except Exception as e:
+            logging.error(f"Tailscale Discord notification failed for {ticket_number}: {str(e)}")
+
+        return jsonify({"status": "success", "ticket": ticket_number}), 200
+
+    except Exception as e:
+        logging.critical(f"Tailscale webhook error: {str(e)}")
+        return jsonify({"error": "Internal server error"}), 500
+
 
 # BELOW THIS LINE IS RESERVED FOR FLASK ERROR ROUTES. PUT ALL CORE APP FUNCTIONS ABOVE THIS LINE!
 # Handle 400 errors.
