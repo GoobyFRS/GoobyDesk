@@ -11,3 +11,5 @@ LOG_FILE=/var/log/goobyDesk.log
 CF_TURNSTILE_SITE_KEY=01234567890
 CF_TURNSTILE_SECRET_KEY=abcdefghijklmnopqrstuvwxyz
 FLASKAPP_SECRET_KEY=SECURE_YOUR_COOKIES
+TAILSCALE_NOTIFY_EMAIL=where_should_this_go@example.com
+TAILSCALE_WEBHOOK_KEY=ts-key_abcdefghijklmnopqrstuvwxyz1234567890

@@ -28,6 +28,8 @@ DISCORD_WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK_URL")
 LOG_FILE = os.getenv("LOG_FILE")
 CF_TURNSTILE_SITE_KEY = os.getenv("CF_TURNSTILE_SITE_KEY") # REQUIRED for CAPTCHA functionality.
 CF_TURNSTILE_SECRET_KEY = os.getenv("CF_TURNSTILE_SECRET_KEY") # REQUIRED for CAPTCHA functionality.
+TAILSCALE_NOTIFY_EMAIL = os.getenv("TAILSCALE_NOTIFY_EMAIL")
+TAILSCALE_WEBHOOK_KEY = os.getenv("TAILSCALE_WEBHOOK_KEY")
 #UPTIME_KUMA_WEBHOOK_SECRET = os.getenv("UPTIME_KUMA_WEBHOOK_SECRET")
 
 app = Flask(__name__)
@@ -276,7 +278,7 @@ def add_ticket_note(ticket_number):
     new_tkt_note = request.form.get("note_content")  # Ensure the key matches the JS request
 
     if not new_tkt_note:
-        return jsonify({"message": "Note content cannot be empty."}), 400
+        return jsonify({"message": "Note Contents cannot be empty!"}), 400
 
     tickets = load_tickets()  # Load tickets into memory.
 
@@ -310,7 +312,7 @@ def tailscale_webhook():
         payload = request.json
 
         if not payload:
-            logging.warning("Tailscale webhook received an empty payload.")
+            logging.warning("WARNING: Tailscale webhook received an empty payload.")
             return jsonify({"error": "Empty payload"}), 400
 
         # Pretty-print JSON for ticket body
@@ -318,7 +320,7 @@ def tailscale_webhook():
 
         # Build ticket fields
         requestor_name = "Tailscale"
-        requestor_email = EMAIL_ACCOUNT
+        requestor_email = TAILSCALE_NOTIFY_EMAIL
         ticket_subject = "Tailscale Notification"
         ticket_message = formatted_body
         ticket_impact = "Medium"
@@ -344,19 +346,6 @@ def tailscale_webhook():
         tickets.append(new_ticket)
         save_tickets(tickets)
         logging.info(f"Tailscale Notification — {ticket_number} created successfully.")
-
-        # Attempt to send email
-        try:
-            email_body = f"<pre>{formatted_body}</pre>"
-            send_email(
-                EMAIL_ACCOUNT,
-                f"{ticket_number} - {ticket_subject}",
-                email_body,
-                html=True
-            )
-            logging.info(f"Email sent for Tailscale ticket {ticket_number}.")
-        except Exception as e:
-            logging.error(f"Tailscale email sending failed for {ticket_number}: {str(e)}")
 
         return jsonify({"status": "success", "ticket": ticket_number}), 200
 
