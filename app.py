@@ -1,10 +1,6 @@
 #!/usr/bin/env python3
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify, flash
 import json # My preffered method of "database" replacements.
-import smtplib # Required protocol for sending emails by code.
-import imaplib # Required protocol for receiving/logging into email provider.
-import re # Regex support for reading emails and subject lines.
-import email # Required to read the content of the emails.
 import threading # Background process.
 import time # Used for script sleeping.
 import logging
@@ -16,7 +12,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart # Required for new-ticket-email.html
 from email.header import decode_header
 from datetime import datetime # Timestamps.
-from local_webhook_handler import send_discord_notification, send_TktUpdate_discord_notification # I need to find a better way to handle this import but I learned this new thing!
+from local_webhook_handler import send_discord_notification, send_TktUpdate_discord_notification
 from local_email_handler import send_email, fetch_email_replies
 
 # Load environment variables from .env in the local folder.
@@ -30,9 +26,9 @@ SMTP_SERVER = os.getenv("SMTP_SERVER") # Provider SMTP Server Address.
 SMTP_PORT = os.getenv("SMTP_PORT") # Provider SMTP Server Port. Default is TCP/587.
 DISCORD_WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK_URL")
 LOG_FILE = os.getenv("LOG_FILE")
-CF_TURNSTILE_SITE_KEY = os.getenv("CF_TURNSTILE_SITE_KEY")
-CF_TURNSTILE_SECRET_KEY = os.getenv("CF_TURNSTILE_SECRET_KEY")
-UPTIME_KUMA_WEBHOOK_SECRET = os.getenv("UPTIME_KUMA_WEBHOOK_SECRET")
+CF_TURNSTILE_SITE_KEY = os.getenv("CF_TURNSTILE_SITE_KEY") # REQUIRED for CAPTCHA functionality.
+CF_TURNSTILE_SECRET_KEY = os.getenv("CF_TURNSTILE_SECRET_KEY") # REQUIRED for CAPTCHA functionality.
+#UPTIME_KUMA_WEBHOOK_SECRET = os.getenv("UPTIME_KUMA_WEBHOOK_SECRET")
 
 app = Flask(__name__)
 app.secret_key = os.getenv("FLASKAPP_SECRET_KEY")
@@ -52,10 +48,10 @@ if not CF_TURNSTILE_SECRET_KEY:
     print("CRITICAL: CF_TURNSTILE_SITE_KEY must be configured in .env file. Its required for CAPTCHA functionality.")
     exit(11) 
 
-if not UPTIME_KUMA_WEBHOOK_SECRET:
-    logging.critical("UPTIME_KUMA_WEBHOOK_SECRET is not set in .env file!")
-    print("CRITICAL: UPTIME_KUMA_WEBHOOK_SECRET must be configured in .env file")
-    exit(12)
+#if not UPTIME_KUMA_WEBHOOK_SECRET:
+#    logging.critical("UPTIME_KUMA_WEBHOOK_SECRET is not set in .env file!")
+#    print("CRITICAL: UPTIME_KUMA_WEBHOOK_SECRET must be configured in .env file")
+#    exit(12)
 
 # Read/Loads the ticket file into memory. This is the original load_tickets function that works on Windows and Unix.
 def load_tickets():
@@ -109,7 +105,7 @@ def generate_ticket_number():
     ticket_count = str(len(tickets) + 1).zfill(4)  # Zero-padded ticket count
     return f"TKT-{current_year}-{ticket_count}"  # Format: TKT-YYYY-XXXX
 
-# Background email monitoring. This is a running process using modules above.
+# Background email inbox monitoring process.
 def background_email_monitor():
     while True:
         local_email_handler.fetch_email_replies()
@@ -314,7 +310,7 @@ def tailscale_webhook():
         payload = request.json
 
         if not payload:
-            logging.warning("Tailscale webhook received empty payload.")
+            logging.warning("Tailscale webhook received an empty payload.")
             return jsonify({"error": "Empty payload"}), 400
 
         # Pretty-print JSON for ticket body
@@ -322,7 +318,7 @@ def tailscale_webhook():
 
         # Build ticket fields
         requestor_name = "Tailscale"
-        requestor_email = EMAIL_ACCOUNT  # Your .env sender address
+        requestor_email = EMAIL_ACCOUNT
         ticket_subject = "Tailscale Notification"
         ticket_message = formatted_body
         ticket_impact = "Medium"
@@ -361,12 +357,6 @@ def tailscale_webhook():
             logging.info(f"Email sent for Tailscale ticket {ticket_number}.")
         except Exception as e:
             logging.error(f"Tailscale email sending failed for {ticket_number}: {str(e)}")
-
-        # Discord notification (optional)
-        try:
-            send_discord_notification(ticket_number, ticket_subject, formatted_body)
-        except Exception as e:
-            logging.error(f"Tailscale Discord notification failed for {ticket_number}: {str(e)}")
 
         return jsonify({"status": "success", "ticket": ticket_number}), 200
 
