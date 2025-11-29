@@ -307,6 +307,10 @@ def logout():
 @app.route("/api/newrelic", methods=["POST"])
 
 """
+"""
+@app.route("/api/tailscale", methods=["POST"])
+
+"""
 
 # BELOW THIS LINE IS RESERVED FOR FLASK ERROR ROUTES. PUT ALL CORE APP FUNCTIONS ABOVE THIS LINE!
 # Handle 400 errors.
