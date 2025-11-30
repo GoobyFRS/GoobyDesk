@@ -12,7 +12,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart # Required for new-ticket-email.html
 from email.header import decode_header
 from datetime import datetime # Timestamps.
-from local_webhook_handler import send_discord_notification, send_TktUpdate_discord_notification
+from local_webhook_handler import send_discord_notification, send_TktUpdate_discord_notification, send_slack_notification, send_TktUpdate_slack_notification
 import local_email_handler
 
 # Load environment variables from .env in the local folder.
@@ -70,6 +70,7 @@ def load_tickets():
         with open(TICKETS_FILE, "r") as tkt_file:
             return json.load(tkt_file)
     except FileNotFoundError:
+        exit(106)
         return [] # represents an empty list.
 
 # This load_tickets function contains the file locking mechanism for Linux.
@@ -107,6 +108,7 @@ def load_employees():
             return json.load(tech_file_read_op)
     except FileNotFoundError:
         logging.debug("Employee Database file could not be located. Check your .env config file.")
+        exit(107)
         return {} # represents an empty dictionary.
 
 # Generate a new ticket number.
@@ -182,19 +184,25 @@ def home():
             save_tickets(tickets)
             logging.info(f"{ticket_number} has been created.")
 
-            # Attempt to send a Confirmation Email via SMTP with logging and graceful error handling.
+            # Sends confirmation email to the requestor using the local_email_handler module.
             try:
                 email_body = render_template("/new-ticket-email.html", ticket=new_ticket)
-                send_email(requestor_email, f"{ticket_number} - {ticket_subject}", email_body, html=True)
+                local_email_handler.send_email(requestor_email, f"{ticket_number} - {ticket_subject}", email_body, html=True)
                 logging.info(f"Confirmation Email for {ticket_number} sent successfully.")
             except Exception as e:
                 logging.error(f"Failed to send email for {ticket_number}: {str(e)}")
 
-            # Attempt to send a Discord webhook notification with logging and graceful error handling.
+            # Send a Discord webhook notification.
             try:
                 send_discord_notification(ticket_number, ticket_subject, ticket_message)
             except Exception as e:
                 logging.error(f"Failed to send Discord notification for {ticket_number}: {str(e)}")
+            
+            # Send a Slack webhook notification.
+            try:
+                send_slack_notification(ticket_number, ticket_subject, ticket_message)
+            except Exception as e:
+                logging.error(f"Failed to send Slack notification for {ticket_number}: {str(e)}")
 
             # Prompt the users web interface of a successful ticket submission.
             flash(f"Ticket {ticket_number} has been submitted successfully!", "success")
@@ -213,7 +221,7 @@ def login():
     if request.method == "POST":
         username = request.form["tech_username_box"] # query from HTML form name.
         password = request.form["tech_password_box"]
-        employees = load_employees() # Loads the employee data into memory.
+        employees = load_employees() # Loading the employee database into memory.
 
         # Iterate through the list of employees to check for a match.
         # After adding this feature/function the simplified ability to only have one defined technician is broke. This should be resolved before production release.
@@ -238,7 +246,7 @@ def dashboard():
     open_tickets = [ticket for ticket in tickets if ticket["ticket_status"].lower() != "closed"]
     return render_template("dashboard.html", tickets=open_tickets, loggedInTech=session["technician"])
 
-# Route/routine for viewing a ticket in the Ticket Commander view.
+# Route for viewing a ticket in the Ticket Commander view.
 @app.route("/ticket/<ticket_number>")
 def ticket_detail(ticket_number):
     if "technician" not in session:  # Validate the logged-in user cookie...
@@ -252,11 +260,11 @@ def ticket_detail(ticket_number):
 
     return render_template("404.html"), 404
 
-# Route/routine for updating a ticket. Called from Dashboard and Ticket Commander.
+# Route for updating a ticket. Called from Dashboard and Ticket Commander.
 @app.route("/ticket/<ticket_number>/update_status/<ticket_status>", methods=["POST"])
 def update_ticket_status(ticket_number, ticket_status):
     logging.info(f"{ticket_number} status has been changed to {ticket_status}.")
-    if not session.get("technician"):  # Ensure only authenticated techs can update tickets.
+    if not session.get("technician"):  # Ensuring only authenticated techs can update tickets.
         return render_template("403.html"), 403
     
     valid_statuses = ["Open", "In-Progress", "Closed"]
@@ -274,8 +282,9 @@ def update_ticket_status(ticket_number, ticket_status):
                 ticket["closed_by"] = loggedInTech  # Append the Closed_By_Tech to support ticket audits.
                 ticket["closure_date"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")  # Append the ticket closure date.
 
-            save_tickets(tickets)  # Save the updated tickets.
-            send_TktUpdate_discord_notification(ticket_number, ticket_status)  # Updated notification.
+            save_tickets(tickets)
+            send_TktUpdate_discord_notification(ticket_number, ticket_status)  # Sends Discord Ticket Update notification.
+            send_TktUpdate_slack_notification(ticket_number, ticket_status) # Sends Slack Ticket Update notification. Need to add eror handling here.
             logging.debug(f"Ticket {ticket_number} updated to {ticket_status}.")
             return jsonify({"message": f"Ticket {ticket_number} updated to {ticket_status}."})  # Success popup.
 
