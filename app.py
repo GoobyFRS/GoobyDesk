@@ -6,7 +6,7 @@ import time # Used for script sleeping.
 import logging
 import requests # CF Turnstiles.
 import os # Required to load DOTENV files.
-import fcntl # Unix file locking support.
+#import fcntl # Unix file locking support.
 from dotenv import load_dotenv # Dependant on OS module.
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart # Required for new-ticket-email.html
@@ -64,11 +64,6 @@ if not CF_TURNSTILE_SECRET_KEY:
     print("CRITICAL: CF_TURNSTILE_SITE_KEY must be configured in .env file. Its required for CAPTCHA functionality.")
     exit(109) 
 
-#if not UPTIME_KUMA_WEBHOOK_SECRET:
-#    logging.critical("UPTIME_KUMA_WEBHOOK_SECRET is not set in .env file!")
-#    print("CRITICAL: UPTIME_KUMA_WEBHOOK_SECRET must be configured in .env file")
-#    exit(112)
-
 # Read/Loads the ticket file into memory. This is the original load_tickets function that works on Windows and Unix.
 def load_tickets():
     try:
@@ -99,7 +94,7 @@ def load_tickets(retries=5, delay=0.2):
    raise Exception("ERROR - Failed to load tickets after multiple attempts.")
 """
 
-# Writes to the ticket file database.
+# Writes to the ticket file database. Eventually needs file locking for Linux.
 def save_tickets(tickets):
     with open(TICKETS_FILE, "w") as tkt_file_write_op:
         json.dump(tickets, tkt_file_write_op, indent=4)

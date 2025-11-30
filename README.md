@@ -2,7 +2,9 @@
 
 Simple, Lightweight, Databaseless Service Desk for Home Labbers, Families, and One Man MSPs.
 
-**Current Version:**  v0.5.4
+**Current Version:**  v0.6.0
+
+**Revision Date:** 2025.11.29
 
 [GoobyDesk Repo Wiki](https://github.com/GoobyFRS/GoobyDesk/wiki) & [Production Deployment Guide](https://github.com/GoobyFRS/GoobyDesk/wiki/Production-Deployment-Guide).
 
@@ -54,7 +56,6 @@ Closed Tickets are hidden from the Dashboard by default.
 - Accept NewRelic webhooks for ticket creation. 
 - Report Viewer with SLA tables.
 - Easy toggle for email platform use. 
-- Ability to send Slack notifications.
 - Secure Technician passwords with hashing.
 - Rate Limit without CloudFlare.
 - High Quality User Input Sanitation.

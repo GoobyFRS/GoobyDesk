@@ -24,7 +24,9 @@ SMTP_SERVER = os.getenv("SMTP_SERVER")
 SMTP_PORT = os.getenv("SMTP_PORT")
 TICKETS_FILE = os.getenv("TICKETS_FILE") # Required for email ticket handling.
 
-def load_tickets(): # Required for email ticket handling.
+# Helper Functions for ticket handling.
+
+def load_tickets():
     try:
         with open(TICKETS_FILE, "r") as tkt_file:
             return json.load(tkt_file)
@@ -35,6 +37,8 @@ def save_tickets(tickets): # Required for email ticket handling.
     with open(TICKETS_FILE, "w") as tkt_file_write_op:
         json.dump(tickets, tkt_file_write_op, indent=4)
         logging.debug("The ticket database file was modified.")
+
+# Core Email Handling Functions.
 
 def send_email(requestor_email, ticket_subject, ticket_message, html=True):
     msg = MIMEMultipart()
