@@ -2,7 +2,9 @@
 
 Simple, Lightweight, Databaseless Service Desk for Home Labbers, Families, and One Man MSPs.
 
-**Current Version:**  v0.5.2
+**Current Version:**  v0.6.0
+
+**Revision Date:** 2025.11.29
 
 [GoobyDesk Repo Wiki](https://github.com/GoobyFRS/GoobyDesk/wiki) & [Production Deployment Guide](https://github.com/GoobyFRS/GoobyDesk/wiki/Production-Deployment-Guide).
 
@@ -52,10 +54,8 @@ Closed Tickets are hidden from the Dashboard by default.
 
 - Accept Uptime-Kuma webhooks for ticket creation. 
 - Accept NewRelic webhooks for ticket creation. 
-- Log Technician activity.
 - Report Viewer with SLA tables.
 - Easy toggle for email platform use. 
-- Ability to send Slack notifications.
 - Secure Technician passwords with hashing.
 - Rate Limit without CloudFlare.
 - High Quality User Input Sanitation.
@@ -73,8 +73,6 @@ CTRL+C to break. ```deactivate``` to clean up.
 
 ### Windows Project Setup
 
-**Technically Broken, no longer supported.**
-
 1. Comment out ```import fcntl``` line 11.
 2. Comment out ```load_tickets``` lines 44-60.
 3. Uncomment top ```load_tickets```. lines 35 - 42.
@@ -88,29 +86,3 @@ python app.py
 ```
 
 CTRL+C to break. ```deactivate``` to clean up.
-
-### Screenshots
-
-#### Landing Page
-
-![Index-GHWiki](https://github.com/user-attachments/assets/6dfde191-1c8f-4c15-8c72-5544f06d17a9)
-
-#### Login
-
-![LoginCF-GHWiki](https://github.com/user-attachments/assets/ed15c2ca-4409-49c4-9285-8fab243a74c0)
-
-#### Dashboard
-
-![Dashboard-GHWiki](https://github.com/user-attachments/assets/b72367bd-b2f5-47bf-8b18-6e56f0a7bbe3)
-
-#### Ticket Commander
-
-![TktCommander-GHWiki](https://github.com/user-attachments/assets/d9ad4f04-f8f0-4ec3-99a1-e21bc74b0ee7)
-
-#### Discord Notifications
-
-![Discord-GHWiki](https://github.com/user-attachments/assets/828e559d-f7f2-4acc-b47b-5c6b621fe95f)
-
-#### Confirmation Email Template
-
-![FirstEmail-GHWiki](https://github.com/user-attachments/assets/9fa30684-ab70-49b9-b897-1fb106802c06)

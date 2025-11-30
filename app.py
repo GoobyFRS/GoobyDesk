@@ -1,23 +1,19 @@
 #!/usr/bin/env python3
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify, flash
 import json # My preffered method of "database" replacements.
-import smtplib # Required protocol for sending emails by code.
-import imaplib # Required protocol for receiving/logging into email provider.
-import re # Regex support for reading emails and subject lines.
-import email # Required to read the content of the emails.
 import threading # Background process.
 import time # Used for script sleeping.
 import logging
 import requests # CF Turnstiles.
 import os # Required to load DOTENV files.
-import fcntl # Unix file locking support.
+#import fcntl # Unix file locking support.
 from dotenv import load_dotenv # Dependant on OS module.
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart # Required for new-ticket-email.html
 from email.header import decode_header
 from datetime import datetime # Timestamps.
-from local_webhook_handler import send_discord_notification, send_TktUpdate_discord_notification # I need to find a better way to handle this import but I learned this new thing!
-from local_email_handler import send_email, fetch_email_replies
+from local_webhook_handler import send_discord_notification, send_TktUpdate_discord_notification, send_slack_notification, send_TktUpdate_slack_notification
+import local_email_handler
 
 # Load environment variables from .env in the local folder.
 load_dotenv(dotenv_path=".env")
@@ -30,9 +26,11 @@ SMTP_SERVER = os.getenv("SMTP_SERVER") # Provider SMTP Server Address.
 SMTP_PORT = os.getenv("SMTP_PORT") # Provider SMTP Server Port. Default is TCP/587.
 DISCORD_WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK_URL")
 LOG_FILE = os.getenv("LOG_FILE")
-CF_TURNSTILE_SITE_KEY = os.getenv("CF_TURNSTILE_SITE_KEY")
-CF_TURNSTILE_SECRET_KEY = os.getenv("CF_TURNSTILE_SECRET_KEY")
-UPTIME_KUMA_WEBHOOK_SECRET = os.getenv("UPTIME_KUMA_WEBHOOK_SECRET")
+CF_TURNSTILE_SITE_KEY = os.getenv("CF_TURNSTILE_SITE_KEY") # REQUIRED for CAPTCHA functionality.
+CF_TURNSTILE_SECRET_KEY = os.getenv("CF_TURNSTILE_SECRET_KEY") # REQUIRED for CAPTCHA functionality.
+TAILSCALE_NOTIFY_EMAIL = os.getenv("TAILSCALE_NOTIFY_EMAIL")
+TAILSCALE_WEBHOOK_KEY = os.getenv("TAILSCALE_WEBHOOK_KEY")
+#UPTIME_KUMA_WEBHOOK_SECRET = os.getenv("UPTIME_KUMA_WEBHOOK_SECRET")
 
 app = Flask(__name__)
 app.secret_key = os.getenv("FLASKAPP_SECRET_KEY")
@@ -42,20 +40,29 @@ logging.basicConfig(filename=LOG_FILE, level=logging.INFO, format="%(asctime)s -
 
 # INITIAL ERROR CODES - ENV FILE RELATED
 
+if not LOG_FILE:
+    print("CRITICAL: LOG_FILE must be configured in .env file. Its a fundemental requirement for logging, debugging, and issue resolution.")
+    exit(105)
+
+if not TICKETS_FILE:
+    logging.critical("TICKETS_FILE is not defined in the .env file!")
+    print("CRITICAL: TICKETS_FILE must be configured in .env file. Its required for ticket database functionality.")
+    exit(106)
+
+if not EMPLOYEE_FILE:
+    logging.critical("EMPLOYEE_FILE is not defined in the .env file!")
+    print("CRITICAL: EMPLOYEE_FILE must be configured in .env file. Its required for employee login functionality.")
+    exit(107)
+
 if not CF_TURNSTILE_SITE_KEY:
     logging.critical("CF_TURNSTILE_SITE_KEY is not set in .env file!")
     print("CRITICAL: CF_TURNSTILE_SITE_KEY must be configured in .env file. Its required for CAPTCHA functionality.")
-    exit(10) 
+    exit(108) 
 
 if not CF_TURNSTILE_SECRET_KEY:
     logging.critical("CF_TURNSTILE_SITE_KEY is not set in .env file!")
     print("CRITICAL: CF_TURNSTILE_SITE_KEY must be configured in .env file. Its required for CAPTCHA functionality.")
-    exit(11) 
-
-if not UPTIME_KUMA_WEBHOOK_SECRET:
-    logging.critical("UPTIME_KUMA_WEBHOOK_SECRET is not set in .env file!")
-    print("CRITICAL: UPTIME_KUMA_WEBHOOK_SECRET must be configured in .env file")
-    exit(12)
+    exit(109) 
 
 # Read/Loads the ticket file into memory. This is the original load_tickets function that works on Windows and Unix.
 def load_tickets():
@@ -63,6 +70,7 @@ def load_tickets():
         with open(TICKETS_FILE, "r") as tkt_file:
             return json.load(tkt_file)
     except FileNotFoundError:
+        exit(106)
         return [] # represents an empty list.
 
 # This load_tickets function contains the file locking mechanism for Linux.
@@ -87,7 +95,7 @@ def load_tickets(retries=5, delay=0.2):
    raise Exception("ERROR - Failed to load tickets after multiple attempts.")
 """
 
-# Writes to the ticket file database.
+# Writes to the ticket file database. Eventually needs file locking for Linux.
 def save_tickets(tickets):
     with open(TICKETS_FILE, "w") as tkt_file_write_op:
         json.dump(tickets, tkt_file_write_op, indent=4)
@@ -100,6 +108,7 @@ def load_employees():
             return json.load(tech_file_read_op)
     except FileNotFoundError:
         logging.debug("Employee Database file could not be located. Check your .env config file.")
+        exit(107)
         return {} # represents an empty dictionary.
 
 # Generate a new ticket number.
@@ -109,10 +118,10 @@ def generate_ticket_number():
     ticket_count = str(len(tickets) + 1).zfill(4)  # Zero-padded ticket count
     return f"TKT-{current_year}-{ticket_count}"  # Format: TKT-YYYY-XXXX
 
-# Background email monitoring. This is a running process using modules above.
+# Background email inbox monitoring process.
 def background_email_monitor():
     while True:
-        fetch_email_replies()
+        local_email_handler.fetch_email_replies()
         time.sleep(600)  # Wait for emails every 10 minutes.
 
 threading.Thread(target=background_email_monitor, daemon=True).start()
@@ -175,19 +184,26 @@ def home():
             save_tickets(tickets)
             logging.info(f"{ticket_number} has been created.")
 
-            # Attempt to send a Confirmation Email via SMTP with logging and graceful error handling.
+            # Sends confirmation email to the requestor using the local_email_handler module.
             try:
                 email_body = render_template("/new-ticket-email.html", ticket=new_ticket)
-                send_email(requestor_email, f"{ticket_number} - {ticket_subject}", email_body, html=True)
+                local_email_handler.send_email(requestor_email, f"{ticket_number} - {ticket_subject}", email_body, html=True)
                 logging.info(f"Confirmation Email for {ticket_number} sent successfully.")
             except Exception as e:
                 logging.error(f"Failed to send email for {ticket_number}: {str(e)}")
 
-            # Attempt to send a Discord webhook notification with logging and graceful error handling.
+            # Send a Discord webhook notification.
             try:
                 send_discord_notification(ticket_number, ticket_subject, ticket_message)
             except Exception as e:
                 logging.error(f"Failed to send Discord notification for {ticket_number}: {str(e)}")
+            
+            # Send a Slack webhook notification.
+            try:
+                send_slack_notification(ticket_number, ticket_subject, ticket_message)
+            except Exception as e:
+                logging.error(f"Failed to send Slack notification for {ticket_number}: {str(e)}")
+
             # Prompt the users web interface of a successful ticket submission.
             flash(f"Ticket {ticket_number} has been submitted successfully!", "success")
             return redirect(url_for("home"))
@@ -195,6 +211,7 @@ def home():
         except Exception as e:
             logging.critical(f"Failed to process ticket submission: {str(e)}")
             return "An error occurred while submitting your ticket. Please try again later.", 500
+        
     # Refresh and Reload the Home/Index
     return render_template("index.html", sitekey=CF_TURNSTILE_SITE_KEY)
 
@@ -204,14 +221,14 @@ def login():
     if request.method == "POST":
         username = request.form["tech_username_box"] # query from HTML form name.
         password = request.form["tech_password_box"]
-        employees = load_employees() # Loads the employee data into memory.
+        employees = load_employees() # Loading the employee database into memory.
 
         # Iterate through the list of employees to check for a match.
         # After adding this feature/function the simplified ability to only have one defined technician is broke. This should be resolved before production release.
         for defined_technician in employees:
             if username == defined_technician["tech_username"] and password == defined_technician["tech_authcode"]:
                 session["technician"] = username
-                logging.info(f"{username} logged in.") # Store the technician's username in the session cookie.
+                logging.info(f"{username} has logged in.") # Store the technician's username in the session cookie.
                 return redirect(url_for("dashboard")) # On successful login, send to Dashboard.
             else:
                 return render_template("404.html"), 404 # Send our custom 404 page.
@@ -229,7 +246,7 @@ def dashboard():
     open_tickets = [ticket for ticket in tickets if ticket["ticket_status"].lower() != "closed"]
     return render_template("dashboard.html", tickets=open_tickets, loggedInTech=session["technician"])
 
-# Route/routine for viewing a ticket in the Ticket Commander view.
+# Route for viewing a ticket in the Ticket Commander view.
 @app.route("/ticket/<ticket_number>")
 def ticket_detail(ticket_number):
     if "technician" not in session:  # Validate the logged-in user cookie...
@@ -243,11 +260,11 @@ def ticket_detail(ticket_number):
 
     return render_template("404.html"), 404
 
-# Route/routine for updating a ticket. Called from Dashboard and Ticket Commander.
+# Route for updating a ticket. Called from Dashboard and Ticket Commander.
 @app.route("/ticket/<ticket_number>/update_status/<ticket_status>", methods=["POST"])
 def update_ticket_status(ticket_number, ticket_status):
     logging.info(f"{ticket_number} status has been changed to {ticket_status}.")
-    if not session.get("technician"):  # Ensure only authenticated techs can update tickets.
+    if not session.get("technician"):  # Ensuring only authenticated techs can update tickets.
         return render_template("403.html"), 403
     
     valid_statuses = ["Open", "In-Progress", "Closed"]
@@ -265,8 +282,9 @@ def update_ticket_status(ticket_number, ticket_status):
                 ticket["closed_by"] = loggedInTech  # Append the Closed_By_Tech to support ticket audits.
                 ticket["closure_date"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")  # Append the ticket closure date.
 
-            save_tickets(tickets)  # Save the updated tickets.
-            send_TktUpdate_discord_notification(ticket_number, ticket_status)  # Updated notification.
+            save_tickets(tickets)
+            send_TktUpdate_discord_notification(ticket_number, ticket_status)  # Sends Discord Ticket Update notification.
+            send_TktUpdate_slack_notification(ticket_number, ticket_status) # Sends Slack Ticket Update notification. Need to add eror handling here.
             logging.debug(f"Ticket {ticket_number} updated to {ticket_status}.")
             return jsonify({"message": f"Ticket {ticket_number} updated to {ticket_status}."})  # Success popup.
 
@@ -278,7 +296,7 @@ def add_ticket_note(ticket_number):
     new_tkt_note = request.form.get("note_content")  # Ensure the key matches the JS request
 
     if not new_tkt_note:
-        return jsonify({"message": "Note content cannot be empty."}), 400
+        return jsonify({"message": "Note Contents cannot be empty!"}), 400
 
     tickets = load_tickets()  # Load tickets into memory.
 
@@ -301,6 +319,58 @@ def logout():
 @app.route("/api/uptime-kuma", methods=["POST"])
 
 """
+"""
+@app.route("/api/newrelic", methods=["POST"])
+
+"""
+
+@app.route("/api/tailscale", methods=["POST"])
+def tailscale_webhook():
+    try:
+        payload = request.json
+
+        if not payload:
+            logging.warning("WARNING: Tailscale webhook received an empty payload.")
+            return jsonify({"error": "Empty payload"}), 400
+
+        # Pretty-print JSON for ticket body
+        formatted_body = json.dumps(payload, indent=4)
+
+        # Build ticket fields
+        requestor_name = "Tailscale"
+        requestor_email = TAILSCALE_NOTIFY_EMAIL
+        ticket_subject = "Tailscale Notification"
+        ticket_message = formatted_body
+        ticket_impact = "Medium"
+        ticket_urgency = "Medium"
+        request_type = "Change"
+        ticket_number = generate_ticket_number()
+
+        new_ticket = {
+            "ticket_number": ticket_number,
+            "requestor_name": requestor_name,
+            "requestor_email": requestor_email,
+            "ticket_subject": ticket_subject,
+            "ticket_message": ticket_message,
+            "request_type": request_type,
+            "ticket_impact": ticket_impact,
+            "ticket_urgency": ticket_urgency,
+            "ticket_status": "Open",
+            "submission_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "ticket_notes": []
+        }
+
+        tickets = load_tickets()
+        tickets.append(new_ticket)
+        save_tickets(tickets)
+        logging.info(f"Tailscale Notification — {ticket_number} created successfully.")
+
+        return jsonify({"status": "success", "ticket": ticket_number}), 200
+
+    except Exception as e:
+        logging.critical(f"Tailscale webhook error: {str(e)}")
+        return jsonify({"error": "Internal server error"}), 500
+
 
 # BELOW THIS LINE IS RESERVED FOR FLASK ERROR ROUTES. PUT ALL CORE APP FUNCTIONS ABOVE THIS LINE!
 # Handle 400 errors.

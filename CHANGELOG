@@ -1,5 +1,7 @@
 # CHANGELOG
 
+**Nov.29.2025-1:** CHANGELOG has not been updated since my return to the project. I expect to leverage it again at some point in the future, but for now my commit notes and my own thoughts are what is keeping track for now. Peace, Love, and Happiness my friends! 
+
 **Mar.13.2025-1:** Patching an issue with logging and setup the basic framework for a visual confirmation message on ticket submission.
 
 **Mar.06.2025-1:** Implement standard logging and Cloudflare Turnstile spam prevention.
