@@ -335,7 +335,72 @@ def logout():
 
 """
 @app.route("/api/uptime-kuma", methods=["POST"])
+@app.route("/api/uptime-kuma", methods=["POST"])
+def uptime_kuma_webhook():
+    try:
+        # 1. Secure the endpoint using the token in query parameters
+        provided_token = request.args.get("token")
+        if provided_token != UPTIME_KUMA_WEBHOOK_SECRET:
+            logging.warning("Unauthorized Uptime Kuma webhook attempt.")
+            return jsonify({"error": "Unauthorized"}), 401
 
+        # 2. Validate payload
+        if not request.is_json:
+            logging.warning("Uptime Kuma webhook received invalid content type.")
+            return jsonify({"error": "Invalid content type"}), 400
+
+        payload = request.json
+
+        # Useful logging for debugging
+        logging.info(f"Uptime Kuma payload received: {payload}")
+
+        # 3. Extract meaningful data
+        monitor_name = payload.get("monitorName", "Unknown Monitor")
+        monitor_url = payload.get("monitorURL", "Unknown URL")
+        status = payload.get("status")
+        message = payload.get("msg", "No message")
+        timestamp = payload.get("time", int(time.time()))
+
+        # 4. Translate numeric status to readable text
+        status_text = {
+            0: "DOWN",
+            1: "UP",
+            2: "PENDING"
+        }.get(status, "UNKNOWN")
+
+        # 5. Build ticket text
+        ticket_subject = f"Uptime Kuma Alert - {monitor_name} is {status_text}"
+        ticket_body = json.dumps(payload, indent=4)
+
+        # 6. Build ticket structure
+        ticket_number = generate_ticket_number()
+        new_ticket = {
+            "ticket_number": ticket_number,
+            "requestor_name": "Uptime Kuma",
+            "requestor_email": "noreply@rxamole.orgt",
+            "ticket_subject": ticket_subject,
+            "ticket_message": ticket_body,
+            "request_type": "Incident" if status == 0 else "Maintenance",
+            "ticket_impact": "High" if status == 0 else "Low",
+            "ticket_urgency": "High" if status == 0 else "Low",
+            "ticket_status": "Open",
+            "submission_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "ticket_notes": []
+        }
+
+        # 7. Save ticket
+        tickets = load_tickets()
+        tickets.append(new_ticket)
+        save_tickets(tickets)
+
+        # 8. Log success
+        logging.info(f"Uptime Kuma ticket created: {ticket_number}")
+
+        return jsonify({"status": "success", "ticket": ticket_number}), 200
+
+    except Exception as e:
+        logging.critical(f"Uptime Kuma webhook error: {str(e)}")
+        return jsonify({"error": "Internal server error"}), 500
 """
 """
 @app.route("/api/newrelic", methods=["POST"])
