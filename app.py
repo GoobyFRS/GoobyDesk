@@ -30,6 +30,7 @@ CF_TURNSTILE_SITE_KEY = os.getenv("CF_TURNSTILE_SITE_KEY") # REQUIRED for CAPTCH
 CF_TURNSTILE_SECRET_KEY = os.getenv("CF_TURNSTILE_SECRET_KEY") # REQUIRED for CAPTCHA functionality.
 TAILSCALE_NOTIFY_EMAIL = os.getenv("TAILSCALE_NOTIFY_EMAIL")
 TAILSCALE_WEBHOOK_KEY = os.getenv("TAILSCALE_WEBHOOK_KEY")
+EMAIL_ENABLED = os.getenv("EMAIL_ENABLED", "false").lower() == "true"
 #UPTIME_KUMA_WEBHOOK_SECRET = os.getenv("UPTIME_KUMA_WEBHOOK_SECRET")
 
 app = Flask(__name__)
@@ -62,7 +63,12 @@ if not CF_TURNSTILE_SITE_KEY:
 if not CF_TURNSTILE_SECRET_KEY:
     logging.critical("CF_TURNSTILE_SITE_KEY is not set in .env file!")
     print("CRITICAL: CF_TURNSTILE_SITE_KEY must be configured in .env file. Its required for CAPTCHA functionality.")
-    exit(109) 
+    exit(109)
+
+if not EMAIL_ENABLED:
+    logging.critical("EMAIL_ENABLED is not set in .env file! This must be set to True or False so the local email handler knows whether to run or not.")
+    print("CRITICAL: EMAIL_ENABLED must be configured in .env file. This must be set to True or False so the local email handler knows whether to run or not.")
+    exit(110)
 
 # Read/Loads the ticket file into memory. This is the original load_tickets function that works on Windows and Unix.
 def load_tickets():
@@ -185,12 +191,24 @@ def home():
             logging.info(f"{ticket_number} has been created.")
 
             # Sends confirmation email to the requestor using the local_email_handler module.
+            if EMAIL_ENABLED:
+                try:
+                    email_body = render_template("/new-ticket-email.html", ticket=new_ticket)
+                    local_email_handler.send_email(requestor_email, f"{ticket_number} - {ticket_subject}", email_body, html=True)
+                    logging.info(f"Confirmation Email for {ticket_number} sent successfully.")
+                except Exception as e:
+                    logging.error(f"Failed to send email for {ticket_number}: {str(e)}")
+                else:
+                    logging.info(f"EMAIL_ENABLED is set to false. Skipping email sending for {ticket_number}.")
+
+            """ This code block may be removed in future releases. It's retained for reference. Hopefully EMAIL_ENABLED functions as intended.
             try:
                 email_body = render_template("/new-ticket-email.html", ticket=new_ticket)
                 local_email_handler.send_email(requestor_email, f"{ticket_number} - {ticket_subject}", email_body, html=True)
                 logging.info(f"Confirmation Email for {ticket_number} sent successfully.")
             except Exception as e:
                 logging.error(f"Failed to send email for {ticket_number}: {str(e)}")
+            """
 
             # Send a Discord webhook notification.
             try:
@@ -389,4 +407,5 @@ def page_not_found(e):
     return render_template("404.html"), 404
 
 if __name__ == "__main__":
+    logging.info("GoobyDesk Flask application is starting up.")
     app.run() #debug=True

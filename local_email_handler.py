@@ -17,6 +17,7 @@ from datetime import datetime
 # Load environment variables
 load_dotenv(".env")
 
+EMAIL_ENABLED = os.getenv("EMAIL_ENABLED", "False").lower() == "true"
 IMAP_SERVER = os.getenv("IMAP_SERVER")
 EMAIL_ACCOUNT = os.getenv("EMAIL_ACCOUNT")
 EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD")
@@ -24,7 +25,7 @@ SMTP_SERVER = os.getenv("SMTP_SERVER")
 SMTP_PORT = os.getenv("SMTP_PORT")
 TICKETS_FILE = os.getenv("TICKETS_FILE") # Required for email ticket handling.
 
-# Helper Functions for ticket handling.
+# Helper Functions for ticket handling. Not using a locking mechanism for simplicity. Maybe in the future.
 
 def load_tickets():
     try:
@@ -41,6 +42,10 @@ def save_tickets(tickets): # Required for email ticket handling.
 # Core Email Handling Functions.
 
 def send_email(requestor_email, ticket_subject, ticket_message, html=True):
+    if not EMAIL_ENABLED:
+        logging.info("EMAIL HANDLER - Email skipped as EMAIL_ENABLED is set to False.")
+        return False
+
     msg = MIMEMultipart()
     msg["Subject"] = ticket_subject
     msg["From"] = EMAIL_ACCOUNT
@@ -53,9 +58,11 @@ def send_email(requestor_email, ticket_subject, ticket_message, html=True):
             server.starttls()
             server.login(EMAIL_ACCOUNT, EMAIL_PASSWORD)
             server.sendmail(EMAIL_ACCOUNT, requestor_email, msg.as_string())
-        logging.info(f"Email sent to {requestor_email}")
+        logging.info(f"EMAIL HANDLER - Email sent to {requestor_email}")
+        return True
     except Exception as e:
         logging.error(f"EMAIL HANDLER - Email sending failed: {e}")
+        return False
 
 def extract_email_body(msg):
     body = ""
@@ -85,6 +92,10 @@ def extract_email_body(msg):
     return body
 
 def fetch_email_replies():
+    if not EMAIL_ENABLED:
+        logging.debug("EMAIL HANDLER - IMAP fetch skipped as EMAIL_ENABLED is set to False.")
+        return
+
     try:
         mail = imaplib.IMAP4_SSL(IMAP_SERVER)
         mail.login(EMAIL_ACCOUNT, EMAIL_PASSWORD)
