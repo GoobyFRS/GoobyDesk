@@ -65,6 +65,7 @@ def send_email(requestor_email, ticket_subject, ticket_message, html=True):
         return False
 
 def extract_email_body(msg):
+    logging.debug("EMAIL HANDLER - Extracting an email body.")
     body = ""
 
     if msg.is_multipart():
@@ -95,7 +96,7 @@ def fetch_email_replies():
     if not EMAIL_ENABLED:
         logging.debug("EMAIL HANDLER - IMAP fetch skipped as EMAIL_ENABLED is set to False.")
         return
-
+    logging.debug("EMAIL HANDLER - Attempting to fetch email replies from IMAP server.")
     try:
         mail = imaplib.IMAP4_SSL(IMAP_SERVER)
         mail.login(EMAIL_ACCOUNT, EMAIL_PASSWORD)

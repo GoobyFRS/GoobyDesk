@@ -155,3 +155,4 @@ def send_TktUpdate_slack_notification(ticket_number, ticket_status):
     except requests.exceptions.RequestException as e:
         logging.error(f"WEBHOOK HANDLER - Unexpected error: {e}")
         
+

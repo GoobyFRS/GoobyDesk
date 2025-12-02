@@ -302,7 +302,7 @@ def update_ticket_status(ticket_number, ticket_status):
 
             save_tickets(tickets)
             send_TktUpdate_discord_notification(ticket_number, ticket_status)  # Sends Discord Ticket Update notification.
-            send_TktUpdate_slack_notification(ticket_number, ticket_status) # Sends Slack Ticket Update notification. Need to add eror handling here.
+            send_TktUpdate_slack_notification(ticket_number, ticket_status) # Sends Slack Ticket Update notification.
             logging.debug(f"Ticket {ticket_number} updated to {ticket_status}.")
             return jsonify({"message": f"Ticket {ticket_number} updated to {ticket_status}."})  # Success popup.
 
@@ -334,7 +334,6 @@ def logout():
     return redirect(url_for("login"))
 
 """
-@app.route("/api/uptime-kuma", methods=["POST"])
 @app.route("/api/uptime-kuma", methods=["POST"])
 def uptime_kuma_webhook():
     try:
