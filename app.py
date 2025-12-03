@@ -53,29 +53,39 @@ if not LOG_FILE:
     exit(105)
 
 if not TICKETS_FILE:
-    logging.critical("TICKETS_FILE is not defined in the .env file!")
+    logging.critical("TICKETS_FILE must be configured in .env file. Its required for ticket database functionality.")
     print("CRITICAL: TICKETS_FILE must be configured in .env file. Its required for ticket database functionality.")
     exit(106)
 
 if not EMPLOYEE_FILE:
-    logging.critical("EMPLOYEE_FILE is not defined in the .env file!")
+    logging.critical("EMPLOYEE_FILE must be configured in .env file. Its required for employee login functionality.!")
     print("CRITICAL: EMPLOYEE_FILE must be configured in .env file. Its required for employee login functionality.")
     exit(107)
 
 if not CF_TURNSTILE_SITE_KEY:
-    logging.critical("CF_TURNSTILE_SITE_KEY is not set in .env file!")
+    logging.critical("CF_TURNSTILE_SITE_KEY must be configured in .env file. Its required for CAPTCHA functionality.")
     print("CRITICAL: CF_TURNSTILE_SITE_KEY must be configured in .env file. Its required for CAPTCHA functionality.")
     exit(108) 
 
 if not CF_TURNSTILE_SECRET_KEY:
-    logging.critical("CF_TURNSTILE_SITE_KEY is not set in .env file!")
+    logging.critical("CF_TURNSTILE_SITE_KEY must be configured in .env file. Its required for CAPTCHA functionality.")
     print("CRITICAL: CF_TURNSTILE_SITE_KEY must be configured in .env file. Its required for CAPTCHA functionality.")
     exit(109)
 
+email_thread_enabler_check = os.getenv("EMAIL_ENABLED")
+if email_thread_enabler_check is None:
+    logging.critical("EMAIL_ENABLED is not defined in .env file! This must be set to true or false so the local email handler knows whether to run or not.")
+    EMAIL_ENABLED = False
+else:
+    EMAIL_ENABLED = email_thread_enabler_check.lower() == "true"
+    logging.info(f"EMAIL_ENABLED is set to {EMAIL_ENABLED}.")
+
+"""
 if not EMAIL_ENABLED:
     logging.critical("EMAIL_ENABLED is not set in .env file! This must be set to True or False so the local email handler knows whether to run or not.")
     print("CRITICAL: EMAIL_ENABLED must be configured in .env file. This must be set to True or False so the local email handler knows whether to run or not.")
     exit(110)
+"""
 
 # Read/Loads the ticket file into memory. This is the original load_tickets function that works on Windows and Unix.
 def load_tickets():
@@ -138,7 +148,13 @@ def background_email_monitor():
         local_email_handler.fetch_email_replies()
         time.sleep(600)  # Wait for emails every 10 minutes.
 
-threading.Thread(target=background_email_monitor, daemon=True).start()
+if EMAIL_ENABLED:
+    logging.info("Starting background email monitoring thread...")
+    threading.Thread(target=background_email_monitor, daemon=True).start()
+else:
+    logging.info("EMAIL_ENABLED is set to false. Skipping...")
+
+#threading.Thread(target=background_email_monitor, daemon=True).start()
 
 @app.route("/", methods=["GET", "POST"])
 def home():
@@ -202,7 +218,7 @@ def home():
             if EMAIL_ENABLED:
                 try:
                     logging.debug(f"EMAIL HANDLER - EMAIL_ENABLED is set to true. Attempting to send email for {ticket_number}.")
-                    email_body = render_template("/new-ticket-email.html", ticket=new_ticket)
+                    email_body = render_template("new-ticket-email.html", ticket=new_ticket)
                     local_email_handler.send_email(requestor_email, f"{ticket_number} - {ticket_subject}", email_body, html=True)
                     logging.info(f"Confirmation Email for {ticket_number} sent successfully.")
                 except Exception as e:
@@ -221,14 +237,14 @@ def home():
 
             # Send a Discord webhook notification.
             try:
-                logging.debug(f"WEBHOOK HANDLER - Preparing to send Discord notification for new Ticket {ticket_number}.")
+                logging.debug(f"Preparing to send Discord notification for new Ticket {ticket_number}.")
                 send_discord_notification(ticket_number, ticket_subject, ticket_message)
             except Exception as e:
                 logging.error(f"Failed to send Discord notification for {ticket_number}: {str(e)}")
             
             # Send a Slack webhook notification.
             try:
-                logging.debug(f"WEBHOOK HANDLER - Preparing to send Slack notification for new Ticket {ticket_number}.")
+                logging.debug(f"Preparing to send Slack notification for new Ticket {ticket_number}.")
                 send_slack_notification(ticket_number, ticket_subject, ticket_message)
             except Exception as e:
                 logging.error(f"Failed to send Slack notification for {ticket_number}: {str(e)}")
