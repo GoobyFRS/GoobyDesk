@@ -201,6 +201,7 @@ def home():
             # Sends confirmation email to the requestor using the local_email_handler module.
             if EMAIL_ENABLED:
                 try:
+                    logging.debug(f"EMAIL HANDLER - EMAIL_ENABLED is set to true. Attempting to send email for {ticket_number}.")
                     email_body = render_template("/new-ticket-email.html", ticket=new_ticket)
                     local_email_handler.send_email(requestor_email, f"{ticket_number} - {ticket_subject}", email_body, html=True)
                     logging.info(f"Confirmation Email for {ticket_number} sent successfully.")
@@ -220,12 +221,14 @@ def home():
 
             # Send a Discord webhook notification.
             try:
+                logging.debug(f"WEBHOOK HANDLER - Preparing to send Discord notification for new Ticket {ticket_number}.")
                 send_discord_notification(ticket_number, ticket_subject, ticket_message)
             except Exception as e:
                 logging.error(f"Failed to send Discord notification for {ticket_number}: {str(e)}")
             
             # Send a Slack webhook notification.
             try:
+                logging.debug(f"WEBHOOK HANDLER - Preparing to send Slack notification for new Ticket {ticket_number}.")
                 send_slack_notification(ticket_number, ticket_subject, ticket_message)
             except Exception as e:
                 logging.error(f"Failed to send Slack notification for {ticket_number}: {str(e)}")
@@ -309,8 +312,13 @@ def update_ticket_status(ticket_number, ticket_status):
                 ticket["closure_date"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")  # Append the ticket closure date.
 
             save_tickets(tickets)
+            logging.debug(f"Ticket {ticket_number} status updated to {ticket_status} by {loggedInTech}.")
+            logging.debug(f"WEBHOOK HANDLER - Preparing to send Ticket {ticket_number} status update notification to Discord.")
             send_TktUpdate_discord_notification(ticket_number, ticket_status)  # Sends Discord Ticket Update notification.
+            logging.info(f"{ticket_number} status successfully sent to Discord.")
+            logging.debug(f"WEBHOOK HANDLER - Preparing to send Ticket {ticket_number} status update notification to Slack.")
             send_TktUpdate_slack_notification(ticket_number, ticket_status) # Sends Slack Ticket Update notification.
+            logging.info(f"{ticket_number} status successfully sent to Slack.")
             logging.debug(f"Ticket {ticket_number} updated to {ticket_status}.")
             return jsonify({"message": f"Ticket {ticket_number} updated to {ticket_status}."})  # Success popup.
 
