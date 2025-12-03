@@ -25,6 +25,14 @@ SMTP_SERVER = os.getenv("SMTP_SERVER")
 SMTP_PORT = os.getenv("SMTP_PORT")
 TICKETS_FILE = os.getenv("TICKETS_FILE") # Required for email ticket handling.
 
+"""
+Debug - Detailed information
+Info - Successes
+Warning - Unexpected events
+Error - Function failures
+Critical - Serious application failures
+"""
+
 # Helper Functions for ticket handling. Not using a locking mechanism for simplicity. Maybe in the future.
 
 def load_tickets():

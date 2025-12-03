@@ -29,15 +29,22 @@ LOG_FILE = os.getenv("LOG_FILE")
 CF_TURNSTILE_SITE_KEY = os.getenv("CF_TURNSTILE_SITE_KEY") # REQUIRED for CAPTCHA functionality.
 CF_TURNSTILE_SECRET_KEY = os.getenv("CF_TURNSTILE_SECRET_KEY") # REQUIRED for CAPTCHA functionality.
 TAILSCALE_NOTIFY_EMAIL = os.getenv("TAILSCALE_NOTIFY_EMAIL")
-TAILSCALE_WEBHOOK_KEY = os.getenv("TAILSCALE_WEBHOOK_KEY")
+#TAILSCALE_WEBHOOK_KEY = os.getenv("TAILSCALE_WEBHOOK_KEY")
 EMAIL_ENABLED = os.getenv("EMAIL_ENABLED", "false").lower() == "true"
-#UPTIME_KUMA_WEBHOOK_SECRET = os.getenv("UPTIME_KUMA_WEBHOOK_SECRET")
 
 app = Flask(__name__)
 app.secret_key = os.getenv("FLASKAPP_SECRET_KEY")
 
 # Standard Logging. basicConfig makes it reusable in other local py modules.
 logging.basicConfig(filename=LOG_FILE, level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+
+"""
+Debug - Detailed information
+Info - Successes
+Warning - Unexpected events
+Error - Function failures
+Critical - Serious application failures
+"""
 
 # INITIAL ERROR CODES - ENV FILE RELATED
 
@@ -76,6 +83,7 @@ def load_tickets():
         with open(TICKETS_FILE, "r") as tkt_file:
             return json.load(tkt_file)
     except FileNotFoundError:
+        logging.critical("Ticket Database file could not be located.")
         exit(106)
         return [] # represents an empty list.
 
@@ -113,7 +121,7 @@ def load_employees():
         with open(EMPLOYEE_FILE, "r") as tech_file_read_op:
             return json.load(tech_file_read_op)
     except FileNotFoundError:
-        logging.debug("Employee Database file could not be located. Check your .env config file.")
+        logging.debug("Employee Database file could not be located.")
         exit(107)
         return {} # represents an empty dictionary.
 
