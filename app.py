@@ -504,4 +504,4 @@ def page_not_found(e):
 
 if __name__ == "__main__":
     logging.info("GoobyDesk Flask application is starting up.")
-    app.run() #debug=True
+    app.run(debug=True) #debug=True
