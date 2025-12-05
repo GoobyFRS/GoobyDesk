@@ -4,7 +4,7 @@ Simple, Lightweight, Databaseless Service Desk for Home Labbers, Families, and O
 
 **Current Version:**  v0.7.0
 
-**Revision Date:** 2025.12.X
+**Revision Date:** 2025.12.5
 
 [GoobyDesk Repo Wiki](https://github.com/GoobyFRS/GoobyDesk/wiki) & [Production Deployment Guide](https://github.com/GoobyFRS/GoobyDesk/wiki/Production-Deployment-Guide).
 
@@ -12,7 +12,6 @@ Simple, Lightweight, Databaseless Service Desk for Home Labbers, Families, and O
 
 GoobyDesk is a Python3, Flask-based web application. Leverages Cloudflare Turnstile for Anti-Spam/Brute force protection.
 
-- By default, the Flask app will run at ```http://127.0.0.1:5000``` during local development.
 - Production instances should be ran behind a Python3 WSGI server such as [Gunicorn](https://gunicorn.org/).
 - Production Gunicorn instances should be ran behind a Reverse Proxy such as [Caddy](https://caddyserver.com/).
 
@@ -38,8 +37,6 @@ Mobile-friendly landing page with lightweight ticket submission.
   - Change
   - Access
 
-New Ticket Created confirmation emails are sent from an inbox defined in a DOTENV file.
-
 New Ticket Created confirmation emails are based on a clean HTML5 Jinja template that can be easily customized.
 
 User email replies are appended to the ticket notes.
@@ -52,10 +49,9 @@ Closed Tickets are hidden from the Dashboard by default.
 
 ## Goals and Roadmap to Production v1.0
 
-- Accept Uptime-Kuma webhooks for ticket creation. 
+- Rework Webhook system
 - Accept NewRelic webhooks for ticket creation. 
 - Report Viewer with SLA tables.
-- Easy toggle for email platform use. 
 - Secure Technician passwords with hashing.
 - Rate Limit without CloudFlare.
 - High Quality User Input Sanitation.
