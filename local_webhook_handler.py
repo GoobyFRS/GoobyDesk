@@ -1,166 +1,120 @@
 #!/usr/bin/env python3
 # Local module for sending Discord and Slack webhook notifications.
-__all__ = ["send_discord_notification", "send_TktUpdate_discord_notification", "send_slack_notification", "send_TktUpdate_slack_notification"]
+
 import os
 import json
-import requests
 import logging
+import requests
 from config_loader import load_core_config
-core_config = load_core_config()
 
-"""
-Debug - Detailed information
-Info - Successes
-Warning - Unexpected events
-Error - Function failures
-Critical - Serious application failures
-"""
-DISCORD_WEBHOOK_URL = core_config["discord"]["webhook_url"]
-SLACK_WEBHOOK_URL = core_config["slack"]["webhook_url"]
+__all__ = [
+    "send_discord_new_ticket",
+    "send_discord_update",
+    "send_slack_new_ticket",
+    "send_slack_update",
+]
 
-# Sends a Discord webhook notification when a new ticket is created.
-def send_discord_notification(ticket_number, ticket_subject, ticket_message):
-    if not DISCORD_WEBHOOK_URL:
-        logging.warning("WEBHOOK HANDLER - DISCORD_WEBHOOK_URL is not set. Check your .env file.")
-        return
-    
-    data = {
+
+def get_webhook_urls():
+    config = load_core_config()
+    return (
+        config.get("discord", {}).get("webhook_url"),
+        config.get("slack", {}).get("webhook_url"),
+    )
+
+
+def send_webhook(url, payload, service_name):
+    """Generalized webhook sender for Discord & Slack."""
+    if not url:
+        logging.warning(
+            f"WEBHOOK HANDLER - {service_name} webhook URL missing. Check .env configuration."
+        )
+        return False
+
+    headers = {"Content-Type": "application/json"}
+
+    try:
+        response = requests.post(url, json=payload, headers=headers, timeout=5)
+        response.raise_for_status()
+
+        logging.info(
+            f"WEBHOOK HANDLER - Successfully sent notification to {service_name}. Status: {response.status_code}"
+        )
+        return True
+
+    except requests.exceptions.Timeout:
+        logging.error(f"WEBHOOK HANDLER - {service_name} request timed out.")
+    except requests.exceptions.ConnectionError:
+        logging.error(
+            f"WEBHOOK HANDLER - Failed to connect to {service_name}. Check internet and webhook URL."
+        )
+    except requests.exceptions.RequestException as e:
+        logging.error(f"WEBHOOK HANDLER - {service_name} unexpected error: {e}")
+
+    return False
+
+# DISCORD NOTIFICATIONS
+
+def send_discord_new_ticket(ticket_number, subject, message):
+    DISCORD_URL, _ = get_webhook_urls()
+
+    payload = {
         "username": "GoobyDesk",
-        
         "embeds": [
             {
-                "title": f"New Ticket Created: {ticket_number} - {ticket_subject}",
-                "description": f"**Details:** {ticket_message}",
-                "color": 5814783,  # Light Blue # decimal representation of a hexadecimal color code
+                "title": f"New Ticket Created: {ticket_number} - {subject}",
+                "description": f"**Details:** {message}",
+                "color": 0x58B9FF,  # Light blue
             }
-        ]
+        ],
     }
 
-    headers = {"Content-Type": "application/json"}
+    return send_webhook(DISCORD_URL, payload, "Discord")
 
-    try:
-        response = requests.post(DISCORD_WEBHOOK_URL, data=json.dumps(data), headers=headers)
-        response.raise_for_status()  # Raise exception for HTTP errors
-        
-        if response.status_code == 204:
-            logging.info(f"WEBHOOK HANDLER - New Ticket {ticket_number} notification sent to Discord.")
-        else:
-            logging.warning(f"WEBHOOK HANDLER - Unexpected response code: {response.status_code}")
+def send_discord_update(ticket_number, status):
+    DISCORD_URL, _ = get_webhook_urls()
 
-    except requests.exceptions.ConnectionError:
-        logging.error("WEBHOOK HANDLER - Failed to connect to Discord. Check internet and webhook URL.")
-    except requests.exceptions.Timeout:
-        logging.error("WEBHOOK HANDLER - Request to Discord timed out.")
-    except requests.exceptions.RequestException as e:
-        logging.error(f"WEBHOOK HANDLER - Unexpected error: {e}")
-
-# send_TktUpdate_discord_notification will send a webhook when the status becomes In-Progress or Closed..
-def send_TktUpdate_discord_notification(ticket_number, ticket_status):
-
-    if not DISCORD_WEBHOOK_URL:
-        logging.warning("WEBHOOK HANDLER - DISCORD_WEBHOOK_URL is not set. Check your .env file.")
-        return
-    
-    data = {
+    payload = {
         "username": "GoobyDesk",
-        
         "embeds": [
             {
-                "title": f"Ticket {ticket_number} updated to {ticket_status}.",
-                "color": 16776960,  # Yellow # decimal representation of a hexadecimal color code
+                "title": f"Ticket {ticket_number} updated to {status}",
+                "color": 0xFFFF00,  # Yellow
             }
-        ]
+        ],
     }
 
-    headers = {"Content-Type": "application/json"}
+    return send_webhook(DISCORD_URL, payload, "Discord")
 
-    try:
-        response = requests.post(DISCORD_WEBHOOK_URL, data=json.dumps(data), headers=headers)
-        response.raise_for_status()  # Raise exception for HTTP errors
-        
-        if response.status_code == 204:
-            logging.info(f"WEBHOOK HANDLER - Ticket {ticket_number} status change notification sent to Discord.")
-        else:
-            logging.warning(f"WEBHOOK HANDLER - Unexpected response code: {response.status_code}")
+# SLACK NOTIFICATIONS
 
-    except requests.exceptions.ConnectionError:
-        logging.error("WEBHOOK HANDLER - Failed to connect to Discord. Check internet and webhook URL.")
-    except requests.exceptions.Timeout:
-        logging.error("WEBHOOK HANDLER - Request to Discord timed out.")
-    except requests.exceptions.RequestException as e:
-        logging.error(f"WEBHOOK HANDLER - Unexpected error: {e}")
+def send_slack_new_ticket(ticket_number, subject, message):
+    _, SLACK_URL = get_webhook_urls()
 
-def send_slack_notification(ticket_number, ticket_subject, ticket_message):
-    if not SLACK_WEBHOOK_URL:
-        logging.warning("WEBHOOK HANDLER - SLACK_WEBHOOK_URL is not set. Check your .env file.")
-        return
-
-    data = {
+    payload = {
         "username": "GoobyDesk",
-        
         "attachments": [
             {
-                "title": f"New Ticket Created: {ticket_number} - {ticket_subject}",
-                "text": f"*Details:* {ticket_message}",
-                "color": "#58B9FF",  # Light Blue
+                "title": f"New Ticket Created: {ticket_number} - {subject}",
+                "text": f"*Details:* {message}",
+                "color": "#58B9FF",
             }
-        ]
+        ],
     }
 
-    headers = {"Content-Type": "application/json"}
+    return send_webhook(SLACK_URL, payload, "Slack")
 
-    try:
-        logging.debug(f"WEBHOOK HANDLER - Trying to sending new ticket notification to Slack.")
-        response = requests.post(SLACK_WEBHOOK_URL, data=json.dumps(data), headers=headers)
-        response.raise_for_status()  # Raise exception for HTTP errors
+def send_slack_update(ticket_number, status):
+    _, SLACK_URL = get_webhook_urls()
 
-        if response.status_code == 200:
-            logging.info(f"WEBHOOK HANDLER - New Ticket {ticket_number} notification sent to Slack.")
-        else:
-            logging.warning(f"WEBHOOK HANDLER - Unexpected response code: {response.status_code}")
-
-    except requests.exceptions.ConnectionError:
-        logging.error("WEBHOOK HANDLER - Failed to connect to Slack. Check internet and webhook URL.")
-    except requests.exceptions.Timeout:
-        logging.error("WEBHOOK HANDLER - Request to Slack timed out.")
-    except requests.exceptions.RequestException as e:
-        logging.error(f"WEBHOOK HANDLER - Unexpected error: {e}")
-
-# send_TktUpdate_slack_notification will send a webhook when the status becomes In-Progress or Closed..
-def send_TktUpdate_slack_notification(ticket_number, ticket_status):
-
-    if not SLACK_WEBHOOK_URL:
-        logging.warning("WEBHOOK HANDLER - SLACK_WEBHOOK_URL is not set. Check your .env file.")
-        return
-
-    data = {
+    payload = {
         "username": "GoobyDesk",
-        
         "attachments": [
             {
-                "title": f"Ticket {ticket_number} updated to {ticket_status}.",
-                "color": "#FFFF00",  # Yellow
+                "title": f"Ticket {ticket_number} updated to {status}",
+                "color": "#FFFF00",
             }
-        ]
+        ],
     }
 
-    headers = {"Content-Type": "application/json"}
-
-    try:
-        logging.debug(f"WEBHOOK HANDLER - Preparing to send Slack notification for Ticket {ticket_number} status change to {ticket_status}.")
-        response = requests.post(SLACK_WEBHOOK_URL, data=json.dumps(data), headers=headers)
-        response.raise_for_status()  # Raise exception for HTTP errors
-
-        if response.status_code == 200:
-            logging.info(f"WEBHOOK HANDLER - Ticket {ticket_number} status change notification sent to Slack.")
-        else:
-            logging.warning(f"WEBHOOK HANDLER - Unexpected response code: {response.status_code}")
-
-    except requests.exceptions.ConnectionError:
-        logging.error("WEBHOOK HANDLER - Failed to connect to Slack. Check internet and webhook URL.")
-    except requests.exceptions.Timeout:
-        logging.error("WEBHOOK HANDLER - Request to Slack timed out.")
-    except requests.exceptions.RequestException as e:
-        logging.error(f"WEBHOOK HANDLER - Unexpected error: {e}")
-        
-
+    return send_webhook(SLACK_URL, payload, "Slack")
