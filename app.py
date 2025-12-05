@@ -17,20 +17,38 @@ from local_webhook_handler import send_discord_notification, send_TktUpdate_disc
 import local_email_handler
 
 # Load environment variables from .env in the local folder.
+core_config = load_core_config()
 load_dotenv(dotenv_path=".env")
-TICKETS_FILE = os.getenv("TICKETS_FILE")
-EMPLOYEE_FILE = os.getenv("EMPLOYEE_FILE")
-IMAP_SERVER = os.getenv("IMAP_SERVER") # Provider IMAP Server Address
-EMAIL_ACCOUNT = os.getenv("EMAIL_ACCOUNT") # SEND FROM Email Address/Username
+
+#TICKETS_FILE = os.getenv("TICKETS_FILE")
+#EMPLOYEE_FILE = os.getenv("EMPLOYEE_FILE")
+#IMAP_SERVER = os.getenv("IMAP_SERVER") # Provider IMAP Server Address
+#EMAIL_ACCOUNT = os.getenv("EMAIL_ACCOUNT") # SEND FROM Email Address/Username
 EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD") # App Password
-SMTP_SERVER = os.getenv("SMTP_SERVER") # Provider SMTP Server Address.
-SMTP_PORT = os.getenv("SMTP_PORT") # Provider SMTP Server Port. Default is TCP/587.
-DISCORD_WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK_URL")
-LOG_FILE = os.getenv("LOG_FILE")
+#SMTP_SERVER = os.getenv("SMTP_SERVER") # Provider SMTP Server Address.
+#SMTP_PORT = os.getenv("SMTP_PORT") # Provider SMTP Server Port. Default is TCP/587.
+#DISCORD_WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK_URL")
+#LOG_FILE = os.getenv("LOG_FILE")
 CF_TURNSTILE_SITE_KEY = os.getenv("CF_TURNSTILE_SITE_KEY") # REQUIRED for CAPTCHA functionality.
 CF_TURNSTILE_SECRET_KEY = os.getenv("CF_TURNSTILE_SECRET_KEY") # REQUIRED for CAPTCHA functionality.
 TAILSCALE_NOTIFY_EMAIL = os.getenv("TAILSCALE_NOTIFY_EMAIL")
-EMAIL_ENABLED = os.getenv("EMAIL_ENABLED", "false").lower() == "true"
+#EMAIL_ENABLED = os.getenv("EMAIL_ENABLED", "false").lower() == "true"
+
+# Example uses:
+TICKETS_FILE = core_config["tickets_file"]
+EMPLOYEE_FILE = core_config["employees_file"]
+
+LOG_LEVEL = core_config["logging"]["level"]
+LOG_FILE = core_config["logging"]["file"]
+
+EMAIL_ENABLED = core_config["email"]["enabled"]
+EMAIL_ACCOUNT = core_config["email"]["account"]
+IMAP_SERVER = core_config["email"]["imap_server"]
+SMTP_SERVER = core_config["email"]["smtp_server"]
+SMTP_PORT = core_config["email"]["smtp_port"]
+
+DISCORD_ENABLED = core_config["discord"]["enabled"]
+SLACK_ENABLED = core_config["slack"]["enabled"]
 
 app = Flask(__name__)
 app.secret_key = os.getenv("FLASKAPP_SECRET_KEY")
