@@ -7,6 +7,7 @@ import logging
 import requests
 import os # Required to load DOTENV files.
 #import fcntl # Unix file locking support. Not currently being used.
+import config_loader # Local module
 from dotenv import load_dotenv # Dependant on OS module.
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart # Required for new-ticket-email.html
@@ -34,8 +35,15 @@ EMAIL_ENABLED = os.getenv("EMAIL_ENABLED", "false").lower() == "true"
 app = Flask(__name__)
 app.secret_key = os.getenv("FLASKAPP_SECRET_KEY")
 
+"""
 # Standard Logging. basicConfig makes it reusable in other local py modules.
 logging.basicConfig(filename=LOG_FILE, level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+"""
+logging.basicConfig(
+    filename=LOG_FILE,
+    level=getattr(logging, LOG_LEVEL.upper(), logging.INFO),
+    format="%(asctime)s - %(levelname)s - %(message)s"
+)
 
 """
 Debug - Detailed information
