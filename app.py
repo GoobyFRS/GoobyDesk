@@ -374,12 +374,12 @@ def uptime_kuma_webhook():
         payload = request.json
         logging.info(f"Uptime Kuma payload received: {payload}")
 
-        # --- Uptime Kuma Heartbeat Structure ---
+        # Uptime Kuma Heartbeat Structure
         heartbeat = payload.get("heartbeat", {})
         monitor = payload.get("monitor", {})
 
-        # Extract fields safely
-        status = heartbeat.get("status") # 0 = DOWN, 1 = UP
+        # Extract fields
+        status = heartbeat.get("status")
         monitor_name = monitor.get("name", "Unknown Monitor")
         monitor_url = monitor.get("url", "Unknown URL") # Not currently used.
         message = heartbeat.get("msg", payload.get("msg", "No message")) # Not currently used.
@@ -421,6 +421,9 @@ def uptime_kuma_webhook():
         save_tickets(tickets)
 
         logging.info(f"Created Uptime Kuma DOWN ticket: {ticket_number}")
+        send_discord_notification(f"New Uptime-Kuma Ticket: {ticket_number}")
+
+        send_slack_notification(f"New Uptime-Kuma Ticket{ticket_number}")
 
         return jsonify({"status": "success", "ticket": ticket_number}), 200
 
@@ -473,13 +476,14 @@ def tailscale_webhook():
         tickets.append(new_ticket)
         save_tickets(tickets)
         logging.info(f"Tailscale Notification — {ticket_number} created successfully.")
+        send_discord_notification(f"New Tailscale Notification: {ticket_number}")
+        send_slack_notification(f"New Tailscale Notification: {ticket_number}")
 
         return jsonify({"status": "success", "ticket": ticket_number}), 200
 
     except Exception as e:
         logging.critical(f"Tailscale webhook error: {str(e)}")
         return jsonify({"error": "Internal server error"}), 500
-
 
 # BELOW THIS LINE IS RESERVED FOR FLASK ERROR ROUTES. PUT ALL CORE APP FUNCTIONS ABOVE THIS LINE!
 # Handle 400 errors.
