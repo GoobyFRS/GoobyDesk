@@ -12,6 +12,14 @@ load_dotenv(dotenv_path=".env")
 DISCORD_WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK_URL")
 SLACK_WEBHOOK_URL = os.getenv("SLACK_WEBHOOK_URL")
 
+"""
+Debug - Detailed information
+Info - Successes
+Warning - Unexpected events
+Error - Function failures
+Critical - Serious application failures
+"""
+
 # Sends a Discord webhook notification when a new ticket is created.
 def send_discord_notification(ticket_number, ticket_subject, ticket_message):
     if not DISCORD_WEBHOOK_URL:
@@ -104,6 +112,7 @@ def send_slack_notification(ticket_number, ticket_subject, ticket_message):
     headers = {"Content-Type": "application/json"}
 
     try:
+        logging.debug(f"WEBHOOK HANDLER - Trying to sending new ticket notification to Slack.")
         response = requests.post(SLACK_WEBHOOK_URL, data=json.dumps(data), headers=headers)
         response.raise_for_status()  # Raise exception for HTTP errors
 
@@ -140,6 +149,7 @@ def send_TktUpdate_slack_notification(ticket_number, ticket_status):
     headers = {"Content-Type": "application/json"}
 
     try:
+        logging.debug(f"WEBHOOK HANDLER - Preparing to send Slack notification for Ticket {ticket_number} status change to {ticket_status}.")
         response = requests.post(SLACK_WEBHOOK_URL, data=json.dumps(data), headers=headers)
         response.raise_for_status()  # Raise exception for HTTP errors
 
@@ -155,3 +165,4 @@ def send_TktUpdate_slack_notification(ticket_number, ticket_status):
     except requests.exceptions.RequestException as e:
         logging.error(f"WEBHOOK HANDLER - Unexpected error: {e}")
         
+
