@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify, flash
-import json # My preffered method of "database" replacements.
+import json
 import threading # Background process.
-import time # Used for script sleeping.
+import time
 import logging
-import requests # CF Turnstiles.
+import requests
 import os # Required to load DOTENV files.
-#import fcntl # Unix file locking support.
+#import fcntl # Unix file locking support. Not currently being used.
 from dotenv import load_dotenv # Dependant on OS module.
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart # Required for new-ticket-email.html
@@ -29,7 +29,6 @@ LOG_FILE = os.getenv("LOG_FILE")
 CF_TURNSTILE_SITE_KEY = os.getenv("CF_TURNSTILE_SITE_KEY") # REQUIRED for CAPTCHA functionality.
 CF_TURNSTILE_SECRET_KEY = os.getenv("CF_TURNSTILE_SECRET_KEY") # REQUIRED for CAPTCHA functionality.
 TAILSCALE_NOTIFY_EMAIL = os.getenv("TAILSCALE_NOTIFY_EMAIL")
-#TAILSCALE_WEBHOOK_KEY = os.getenv("TAILSCALE_WEBHOOK_KEY")
 EMAIL_ENABLED = os.getenv("EMAIL_ENABLED", "false").lower() == "true"
 
 app = Flask(__name__)
@@ -74,7 +73,7 @@ if not CF_TURNSTILE_SECRET_KEY:
 
 email_thread_enabler_check = os.getenv("EMAIL_ENABLED")
 if email_thread_enabler_check is None:
-    logging.critical("EMAIL_ENABLED is not defined in .env file! This must be set to true or false so the local email handler knows whether to run or not.")
+    logging.critical("EMAIL_ENABLED is not defined. Defaulting to False.")
     EMAIL_ENABLED = False
 else:
     EMAIL_ENABLED = email_thread_enabler_check.lower() == "true"
@@ -97,7 +96,7 @@ def load_tickets():
         exit(106)
         return [] # represents an empty list.
 
-# This load_tickets function contains the file locking mechanism for Linux.
+# This load_tickets function contains the file locking mechanism for Linux. Not currently being tested or developed.
 
 """
 def load_tickets(retries=5, delay=0.2):
@@ -365,74 +364,66 @@ def logout():
     session.pop("technician", None)
     return redirect(url_for("login"))
 
-"""
 @app.route("/api/uptime-kuma", methods=["POST"])
 def uptime_kuma_webhook():
     try:
-        # 1. Secure the endpoint using the token in query parameters
-        provided_token = request.args.get("token")
-        if provided_token != UPTIME_KUMA_WEBHOOK_SECRET:
-            logging.warning("Unauthorized Uptime Kuma webhook attempt.")
-            return jsonify({"error": "Unauthorized"}), 401
-
-        # 2. Validate payload
+        # Validate JSON payload
         if not request.is_json:
-            logging.warning("Uptime Kuma webhook received invalid content type.")
+            logging.warning("Uptime-Kuma webhook sent an invalid content type.")
             return jsonify({"error": "Invalid content type"}), 400
 
         payload = request.json
-
-        # Useful logging for debugging
         logging.info(f"Uptime Kuma payload received: {payload}")
 
-        # 3. Extract meaningful data
+        # Extract fields (with safe defaults)
         monitor_name = payload.get("monitorName", "Unknown Monitor")
-        monitor_url = payload.get("monitorURL", "Unknown URL")
+        monitor_url = payload.get("monitorURL", "Unknown URL") # Not currently used.
         status = payload.get("status")
-        message = payload.get("msg", "No message")
-        timestamp = payload.get("time", int(time.time()))
+        message = payload.get("msg", "No message") # Not currently used.
+        timestamp = payload.get("time", int(time.time())) # Not currently used.
 
-        # 4. Translate numeric status to readable text
+        # Translate status to human-readable
         status_text = {
             0: "DOWN",
             1: "UP",
             2: "PENDING"
         }.get(status, "UNKNOWN")
 
-        # 5. Build ticket text
-        ticket_subject = f"Uptime Kuma Alert - {monitor_name} is {status_text}"
+        # We only create tickets for DOWN events
+        if status != 0:
+            logging.info(f"Skipping ticket creation for {monitor_name} (status={status_text}).")
+            return jsonify({"status": "ignored", "reason": "not down"}), 200
+
+        # Build the ticket content
+        ticket_subject = f"Uptime Kuma Alert - {monitor_name} is DOWN"
         ticket_body = json.dumps(payload, indent=4)
 
-        # 6. Build ticket structure
         ticket_number = generate_ticket_number()
         new_ticket = {
             "ticket_number": ticket_number,
             "requestor_name": "Uptime Kuma",
-            "requestor_email": "noreply@rxamole.orgt",
+            "requestor_email": "noreply@uptimekuma.local",
             "ticket_subject": ticket_subject,
             "ticket_message": ticket_body,
-            "request_type": "Incident" if status == 0 else "Maintenance",
-            "ticket_impact": "High" if status == 0 else "Low",
-            "ticket_urgency": "High" if status == 0 else "Low",
+            "request_type": "Incident",
+            "ticket_impact": "High",
+            "ticket_urgency": "High",
             "ticket_status": "Open",
             "submission_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             "ticket_notes": []
         }
 
-        # 7. Save ticket
         tickets = load_tickets()
         tickets.append(new_ticket)
         save_tickets(tickets)
 
-        # 8. Log success
-        logging.info(f"Uptime Kuma ticket created: {ticket_number}")
-
+        logging.info(f"Created Uptime Kuma DOWN ticket: {ticket_number}")
         return jsonify({"status": "success", "ticket": ticket_number}), 200
 
     except Exception as e:
         logging.critical(f"Uptime Kuma webhook error: {str(e)}")
         return jsonify({"error": "Internal server error"}), 500
-"""
+
 """
 @app.route("/api/newrelic", methods=["POST"])
 
@@ -444,17 +435,17 @@ def tailscale_webhook():
         payload = request.json
 
         if not payload:
-            logging.warning("WARNING: Tailscale webhook received an empty payload.")
+            logging.warning("WARNING: Tailscale webhook sent an empty payload.")
             return jsonify({"error": "Empty payload"}), 400
 
         # Pretty-print JSON for ticket body
-        formatted_body = json.dumps(payload, indent=4)
+        formatted_ts_webhook_body = json.dumps(payload, indent=4)
 
-        # Build ticket fields
+        # Build ticket content
         requestor_name = "Tailscale"
         requestor_email = TAILSCALE_NOTIFY_EMAIL
         ticket_subject = "Tailscale Notification"
-        ticket_message = formatted_body
+        ticket_message = formatted_ts_webhook_body
         ticket_impact = "Medium"
         ticket_urgency = "Medium"
         request_type = "Change"
