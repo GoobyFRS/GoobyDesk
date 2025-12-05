@@ -367,34 +367,37 @@ def logout():
 @app.route("/api/uptime-kuma", methods=["POST"])
 def uptime_kuma_webhook():
     try:
-        # Validate JSON payload
         if not request.is_json:
-            logging.warning("Uptime-Kuma webhook sent an invalid content type.")
+            logging.warning("Uptime-Kuma webhook sent invalid content type.")
             return jsonify({"error": "Invalid content type"}), 400
 
         payload = request.json
         logging.info(f"Uptime Kuma payload received: {payload}")
 
-        # Extract fields (with safe defaults)
-        monitor_name = payload.get("monitorName", "Unknown Monitor")
-        monitor_url = payload.get("monitorURL", "Unknown URL") # Not currently used.
-        status = payload.get("status")
-        message = payload.get("msg", "No message") # Not currently used.
-        timestamp = payload.get("time", int(time.time())) # Not currently used.
+        # --- Uptime Kuma Heartbeat Structure ---
+        heartbeat = payload.get("heartbeat", {})
+        monitor = payload.get("monitor", {})
 
-        # Translate status to human-readable
+        # Extract fields safely
+        status = heartbeat.get("status") # 0 = DOWN, 1 = UP
+        monitor_name = monitor.get("name", "Unknown Monitor")
+        monitor_url = monitor.get("url", "Unknown URL") # Not currently used.
+        message = heartbeat.get("msg", payload.get("msg", "No message")) # Not currently used.
+        timestamp = heartbeat.get("time", int(time.time())) # Not currently used.
+
+        # Status mapping for readability
         status_text = {
             0: "DOWN",
             1: "UP",
             2: "PENDING"
         }.get(status, "UNKNOWN")
 
-        # We only create tickets for DOWN events
+        # Only trigger for DOWN events
         if status != 0:
             logging.info(f"Skipping ticket creation for {monitor_name} (status={status_text}).")
             return jsonify({"status": "ignored", "reason": "not down"}), 200
 
-        # Build the ticket content
+        # Build ticket content
         ticket_subject = f"Uptime Kuma Alert - {monitor_name} is DOWN"
         ticket_body = json.dumps(payload, indent=4)
 
@@ -418,6 +421,7 @@ def uptime_kuma_webhook():
         save_tickets(tickets)
 
         logging.info(f"Created Uptime Kuma DOWN ticket: {ticket_number}")
+
         return jsonify({"status": "success", "ticket": ticket_number}), 200
 
     except Exception as e:
