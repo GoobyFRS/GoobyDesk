@@ -1,69 +1,45 @@
 #!/usr/bin/env python3
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify, flash
-import json
-import threading # Background process.
+import json, threading, time, logging, requests, os
+import threading
 import time
 import logging
 import requests
-import os # Required to load DOTENV files.
-#import fcntl # Unix file locking support. Not currently being used.
-from config_loader import load_core_config# Local module
-from dotenv import load_dotenv # Dependant on OS module.
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart # Required for new-ticket-email.html
-from email.header import decode_header
-from datetime import datetime # Timestamps.
-from local_webhook_handler import send_discord_notification, send_TktUpdate_discord_notification, send_slack_notification, send_TktUpdate_slack_notification
+import os
 import local_email_handler
-
-# Load environment variables from .env in the local folder.
-core_config = load_core_config()
+from config_loader import load_core_config # Local module
+from dotenv import load_dotenv
+from datetime import datetime
+from local_webhook_handler import send_discord_notification, send_TktUpdate_discord_notification, send_slack_notification, send_TktUpdate_slack_notification
+#import fcntl # Unix file locking support. Not currently being used.
 
 load_dotenv(dotenv_path=".env")
-
-#TICKETS_FILE = os.getenv("TICKETS_FILE")
-#EMPLOYEE_FILE = os.getenv("EMPLOYEE_FILE")
-#IMAP_SERVER = os.getenv("IMAP_SERVER") # Provider IMAP Server Address
-#EMAIL_ACCOUNT = os.getenv("EMAIL_ACCOUNT") # SEND FROM Email Address/Username
-EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD") # App Password
-#SMTP_SERVER = os.getenv("SMTP_SERVER") # Provider SMTP Server Address.
-#SMTP_PORT = os.getenv("SMTP_PORT") # Provider SMTP Server Port. Default is TCP/587.
-#DISCORD_WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK_URL")
-#LOG_FILE = os.getenv("LOG_FILE")
+EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD") # App Password from Gmail or relevant email provider.
 CF_TURNSTILE_SITE_KEY = os.getenv("CF_TURNSTILE_SITE_KEY") # REQUIRED for CAPTCHA functionality.
 CF_TURNSTILE_SECRET_KEY = os.getenv("CF_TURNSTILE_SECRET_KEY") # REQUIRED for CAPTCHA functionality.
 TAILSCALE_NOTIFY_EMAIL = os.getenv("TAILSCALE_NOTIFY_EMAIL")
-#EMAIL_ENABLED = os.getenv("EMAIL_ENABLED", "false").lower() == "true"
 
-# Example uses:
+core_config = load_core_config()
 TICKETS_FILE = core_config["tickets_file"]
 EMPLOYEE_FILE = core_config["employees_file"]
-
 LOG_LEVEL = core_config["logging"]["level"]
 LOG_FILE = core_config["logging"]["file"]
-
 EMAIL_ENABLED = core_config["email"]["enabled"]
 EMAIL_ACCOUNT = core_config["email"]["account"]
 IMAP_SERVER = core_config["email"]["imap_server"]
 SMTP_SERVER = core_config["email"]["smtp_server"]
 SMTP_PORT = core_config["email"]["smtp_port"]
-
 DISCORD_ENABLED = core_config["discord"]["enabled"]
 SLACK_ENABLED = core_config["slack"]["enabled"]
 
 app = Flask(__name__)
 app.secret_key = os.getenv("FLASKAPP_SECRET_KEY")
 
-"""
-# Standard Logging. basicConfig makes it reusable in other local py modules.
-logging.basicConfig(filename=LOG_FILE, level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
-"""
 logging.basicConfig(
     filename=LOG_FILE,
     level=getattr(logging, LOG_LEVEL.upper(), logging.INFO),
     format="%(asctime)s - %(levelname)s - %(message)s"
 )
-
 """
 Debug - Detailed information
 Info - Successes
@@ -71,7 +47,6 @@ Warning - Unexpected events
 Error - Function failures
 Critical - Serious application failures
 """
-
 # INITIAL ERROR CODES - ENV FILE RELATED
 
 if not LOG_FILE:
@@ -105,13 +80,6 @@ if email_thread_enabler_check is None:
 else:
     EMAIL_ENABLED = email_thread_enabler_check.lower() == "true"
     logging.info(f"EMAIL_ENABLED is set to {EMAIL_ENABLED}.")
-
-"""
-discord_webhook_enabler_check
-
-
-slack_webhook_enabler_check
-"""
 
 # Read/Loads the ticket file into memory. This is the original load_tickets function that works on Windows and Unix.
 def load_tickets():
@@ -251,15 +219,6 @@ def home():
                     logging.error(f"Failed to send email for {ticket_number}: {str(e)}")
                 else:
                     logging.info(f"EMAIL_ENABLED is set to false. Skipping email sending for {ticket_number}.")
-
-            """ This code block may be removed in future releases. It's retained for reference. Hopefully EMAIL_ENABLED functions as intended.
-            try:
-                email_body = render_template("/new-ticket-email.html", ticket=new_ticket)
-                local_email_handler.send_email(requestor_email, f"{ticket_number} - {ticket_subject}", email_body, html=True)
-                logging.info(f"Confirmation Email for {ticket_number} sent successfully.")
-            except Exception as e:
-                logging.error(f"Failed to send email for {ticket_number}: {str(e)}")
-            """
 
             # Send a Discord webhook notification.
             try:
@@ -426,7 +385,7 @@ def uptime_kuma_webhook():
 
         # Build ticket content
         ticket_subject = f"Uptime Kuma Alert - {monitor_name} is DOWN"
-        ticket_body = json.dumps(payload, indent=4)
+        ticket_message = json.dumps(payload, indent=4)
 
         ticket_number = generate_ticket_number()
         new_ticket = {
@@ -434,7 +393,7 @@ def uptime_kuma_webhook():
             "requestor_name": "Uptime Kuma",
             "requestor_email": "noreply@uptimekuma.local",
             "ticket_subject": ticket_subject,
-            "ticket_message": ticket_body,
+            "ticket_message": ticket_message,
             "request_type": "Incident",
             "ticket_impact": "High",
             "ticket_urgency": "High",
@@ -447,10 +406,11 @@ def uptime_kuma_webhook():
         tickets.append(new_ticket)
         save_tickets(tickets)
 
-        logging.info(f"Created Uptime Kuma DOWN ticket: {ticket_number}")
-        send_discord_notification(f"New Uptime-Kuma Ticket: {ticket_number}")
+        logging.info(f"Uptime-Kuma Notification — {ticket_number} created successfully.")
 
-        send_slack_notification(f"New Uptime-Kuma Ticket{ticket_number}")
+        send_discord_notification(ticket_number, ticket_subject, ticket_message)
+
+        send_slack_notification(ticket_number, ticket_subject, ticket_message)
 
         return jsonify({"status": "success", "ticket": ticket_number}), 200
 
@@ -504,6 +464,7 @@ def tailscale_webhook():
         save_tickets(tickets)
         logging.info(f"Tailscale Notification — {ticket_number} created successfully.")
         send_discord_notification(ticket_number, ticket_subject, ticket_message)
+
         send_slack_notification(ticket_number, ticket_subject, ticket_message)
 
         return jsonify({"status": "success", "ticket": ticket_number}), 200
@@ -530,4 +491,4 @@ def page_not_found(e):
 
 if __name__ == "__main__":
     logging.info("GoobyDesk Flask application is starting up.")
-    app.run(debug=True) #debug=True
+    app.run() #debug=True
