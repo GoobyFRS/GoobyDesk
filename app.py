@@ -7,7 +7,7 @@ import logging
 import requests
 import os # Required to load DOTENV files.
 #import fcntl # Unix file locking support. Not currently being used.
-import config_loader # Local module
+from config_loader import load_core_config# Local module
 from dotenv import load_dotenv # Dependant on OS module.
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart # Required for new-ticket-email.html
@@ -18,6 +18,7 @@ import local_email_handler
 
 # Load environment variables from .env in the local folder.
 core_config = load_core_config()
+
 load_dotenv(dotenv_path=".env")
 
 #TICKETS_FILE = os.getenv("TICKETS_FILE")
@@ -502,8 +503,8 @@ def tailscale_webhook():
         tickets.append(new_ticket)
         save_tickets(tickets)
         logging.info(f"Tailscale Notification — {ticket_number} created successfully.")
-        send_discord_notification(f"New Tailscale Notification: {ticket_number}")
-        send_slack_notification(f"New Tailscale Notification: {ticket_number}")
+        send_discord_notification(ticket_number, ticket_subject, ticket_message)
+        send_slack_notification(ticket_number, ticket_subject, ticket_message)
 
         return jsonify({"status": "success", "ticket": ticket_number}), 200
 

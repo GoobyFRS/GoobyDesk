@@ -6,6 +6,7 @@ import json
 import requests
 import logging
 from dotenv import load_dotenv
+# from app import core_config
 
 # Load environment variables from .env file
 load_dotenv(dotenv_path=".env")

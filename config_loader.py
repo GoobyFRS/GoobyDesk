@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # Local module to support yaml based configuration.
 __all__ = ["load_core_config"]
-
 import yaml
 import os
 

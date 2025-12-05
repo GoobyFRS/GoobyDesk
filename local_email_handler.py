@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Local module for send_email, extact_email_body and fetch_email_replies functions.
+# Local module for send_email, extract_email_body and fetch_email_replies functions.
 __all__ = ["send_email", "extract_email_body", "fetch_email_replies"]
 import os
 import smtplib
@@ -13,52 +13,54 @@ from email.header import decode_header
 from dotenv import load_dotenv
 import json
 from datetime import datetime
+from app import core_config
 
-# Load environment variables
 load_dotenv(".env")
-
-EMAIL_ENABLED = os.getenv("EMAIL_ENABLED", "False").lower() == "true"
-IMAP_SERVER = os.getenv("IMAP_SERVER")
-EMAIL_ACCOUNT = os.getenv("EMAIL_ACCOUNT")
 EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD")
-SMTP_SERVER = os.getenv("SMTP_SERVER")
-SMTP_PORT = os.getenv("SMTP_PORT")
-TICKETS_FILE = os.getenv("TICKETS_FILE") # Required for email ticket handling.
+
+# Configuration variables from core_configuration.yml
+EMAIL_ENABLED = core_config["email"]["enabled"]
+EMAIL_ACCOUNT = core_config["email"]["account"]
+IMAP_SERVER = core_config["email"]["imap_server"]
+SMTP_SERVER = core_config["email"]["smtp_server"]
+SMTP_PORT = core_config["email"]["smtp_port"]
+TICKETS_FILE = core_config["tickets_file"]
 
 """
-Debug - Detailed information
-Info - Successes
-Warning - Unexpected events
-Error - Function failures
+Logging expectations:
+Debug - Detailed information for troubleshooting
+Info - Successful operations
+Warning - Unexpected but non-breaking events
+Error - Failures of functions that the app can recover from
 Critical - Serious application failures
 """
-
-# Helper Functions for ticket handling. Not using a locking mechanism for simplicity. Maybe in the future.
 
 def load_tickets():
     try:
         with open(TICKETS_FILE, "r") as tkt_file:
             return json.load(tkt_file)
     except FileNotFoundError:
-        return [] # represents an empty list.
-    
-def save_tickets(tickets): # Required for email ticket handling.
-    with open(TICKETS_FILE, "w") as tkt_file_write_op:
-        json.dump(tickets, tkt_file_write_op, indent=4)
-        logging.debug("The ticket database file was modified.")
+        return []
 
-# Core Email Handling Functions.
+def save_tickets(tickets):
+    with open(TICKETS_FILE, "w") as f:
+        json.dump(tickets, f, indent=4)
+    logging.debug("EMAIL HANDLER - Ticket database updated.")
 
 def send_email(requestor_email, ticket_subject, ticket_message, html=True):
+    """Send an email if EMAIL_ENABLED is True."""
     if not EMAIL_ENABLED:
-        logging.info("EMAIL HANDLER - Email skipped as EMAIL_ENABLED is set to False.")
+        logging.info("EMAIL HANDLER - Email skipped; EMAIL_ENABLED=False.")
+        return False
+
+    if not EMAIL_ACCOUNT or not EMAIL_PASSWORD or not SMTP_SERVER:
+        logging.error("EMAIL HANDLER - Email configuration incomplete. Check core_configuration.yml and .env.")
         return False
 
     msg = MIMEMultipart()
     msg["Subject"] = ticket_subject
     msg["From"] = EMAIL_ACCOUNT
     msg["To"] = requestor_email
-
     msg.attach(MIMEText(ticket_message, "html" if html else "plain"))
 
     try:
@@ -66,86 +68,83 @@ def send_email(requestor_email, ticket_subject, ticket_message, html=True):
             server.starttls()
             server.login(EMAIL_ACCOUNT, EMAIL_PASSWORD)
             server.sendmail(EMAIL_ACCOUNT, requestor_email, msg.as_string())
+
         logging.info(f"EMAIL HANDLER - Email sent to {requestor_email}")
         return True
+
     except Exception as e:
         logging.error(f"EMAIL HANDLER - Email sending failed: {e}")
         return False
 
 def extract_email_body(msg):
-    logging.debug("EMAIL HANDLER - Extracting an email body.")
+    logging.debug("EMAIL HANDLER - Extracting email body.")
     body = ""
-
     if msg.is_multipart():
         for part in msg.walk():
             ctype = part.get_content_type()
             cdisp = str(part.get("Content-Disposition"))
-
             if "attachment" in cdisp:
                 continue
-
             try:
                 if ctype == "text/plain":
-                    body = part.get_payload(decode=True).decode(errors="ignore").strip()
-                    return body
+                    return part.get_payload(decode=True).decode(errors="ignore").strip()
                 elif ctype == "text/html" and not body:
                     body = part.get_payload(decode=True).decode(errors="ignore").strip()
             except Exception as e:
-                logging.warning(f"EMAIL HANDLER - Error decoding email part: {e}")
+                logging.warning(f"EMAIL HANDLER - Failed decoding email part: {e}")
     else:
         try:
             body = msg.get_payload(decode=True).decode(errors="ignore").strip()
         except Exception as e:
-            logging.error(f"EMAIL HANDLER - Error decoding single email: {e}")
-
+            logging.error(f"EMAIL HANDLER - Failed decoding email: {e}")
     return body
 
 def fetch_email_replies():
+    """Fetch unread IMAP emails and append them as ticket notes."""
     if not EMAIL_ENABLED:
-        logging.debug("EMAIL HANDLER - IMAP fetch skipped as EMAIL_ENABLED is set to False.")
+        logging.debug("EMAIL HANDLER - Skipping IMAP fetch; EMAIL_ENABLED=False.")
         return
-    logging.debug("EMAIL HANDLER - Attempting to fetch email replies from IMAP server.")
+
+    logging.debug("EMAIL HANDLER - Checking IMAP for new email replies.")
+
     try:
         mail = imaplib.IMAP4_SSL(IMAP_SERVER)
         mail.login(EMAIL_ACCOUNT, EMAIL_PASSWORD)
         mail.select("inbox")
-
         status, messages = mail.search(None, "UNSEEN")
         if status != "OK":
-            logging.error("EMAIL HANDLER - Failed to search inbox.")
+            logging.error("EMAIL HANDLER - IMAP search failed.")
             return
-
         email_ids = messages[0].split()
         tickets = load_tickets()
-
         for email_id in email_ids:
             status, msg_data = mail.fetch(email_id, "(RFC822)")
             if status != "OK":
                 continue
 
             for part in msg_data:
-                if isinstance(part, tuple):
-                    msg = email.message_from_bytes(part[1])
-                    subject, encoding = decode_header(msg["Subject"])[0]
+                if not isinstance(part, tuple):
+                    continue
 
-                    if isinstance(subject, bytes):
-                        subject = subject.decode(encoding or "utf-8")
+                msg = email.message_from_bytes(part[1])
+                subject_raw, encoding = decode_header(msg["Subject"])[0]
+                if isinstance(subject_raw, bytes):
+                    subject = subject_raw.decode(encoding or "utf-8")
+                else:
+                    subject = subject_raw
+                ticket_match = re.search(r"TKT-\d{4}-\d+", subject)
+                if not ticket_match:
+                    continue
 
-                    match_ticket = re.search(r"TKT-\d{4}-\d+", subject)
-                    if not match_ticket:
-                        continue
-
-                    ticket_id = match_ticket.group(0)
-                    body = extract_email_body(msg)
-
-                    for t in tickets:
-                        if t["ticket_number"] == ticket_id:
-                            t["ticket_notes"].append({"ticket_message": body})
-                            save_tickets(tickets)
-                            logging.info(f"EMAIL HANDLER - Updated {ticket_id} with email reply.")
-                            break
-
+                ticket_id = ticket_match.group(0)
+                body = extract_email_body(msg)
+                for t in tickets:
+                    if t["ticket_number"] == ticket_id:
+                        t["ticket_notes"].append({"ticket_message": body})
+                        save_tickets(tickets)
+                        logging.info(f"EMAIL HANDLER - Email reply added to {ticket_id}.")
+                        break
         mail.logout()
 
     except Exception as e:
-        logging.error(f"EMAIL HANDLER - Error fetching email replies: {e}")
+        logging.error(f"EMAIL HANDLER - IMAP error: {e}")
