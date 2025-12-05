@@ -13,11 +13,12 @@ from email.header import decode_header
 from dotenv import load_dotenv
 import json
 from datetime import datetime
-from app import core_config
+from config_loader import load_core_config
 
 load_dotenv(".env")
 EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD")
 
+core_config = load_core_config()
 # Configuration variables from core_configuration.yml
 EMAIL_ENABLED = core_config["email"]["enabled"]
 EMAIL_ACCOUNT = core_config["email"]["account"]

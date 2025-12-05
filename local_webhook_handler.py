@@ -5,13 +5,8 @@ import os
 import json
 import requests
 import logging
-from dotenv import load_dotenv
-# from app import core_config
-
-# Load environment variables from .env file
-load_dotenv(dotenv_path=".env")
-DISCORD_WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK_URL")
-SLACK_WEBHOOK_URL = os.getenv("SLACK_WEBHOOK_URL")
+from config_loader import load_core_config
+core_config = load_core_config()
 
 """
 Debug - Detailed information
@@ -20,6 +15,8 @@ Warning - Unexpected events
 Error - Function failures
 Critical - Serious application failures
 """
+DISCORD_WEBHOOK_URL = core_config["discord"]["webhook_url"]
+SLACK_WEBHOOK_URL = core_config["slack"]["webhook_url"]
 
 # Sends a Discord webhook notification when a new ticket is created.
 def send_discord_notification(ticket_number, ticket_subject, ticket_message):
