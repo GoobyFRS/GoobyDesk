@@ -1,0 +1,32 @@
+# ==========================================
+# GoobyDesk Core Configuration
+# ==========================================
+
+# Path to stored tickets JSON database
+tickets_file: "./tickets.json"
+
+# Path to stored employees JSON database
+employees_file: "./employees.json"
+
+# Logging configuration
+logging:
+  level: "INFO"        # Valid: DEBUG, INFO, WARNING, ERROR, CRITICAL
+  file: "/var/log/goobyDesk.log" # Relative or absolute path
+
+# Email system configuration
+email:
+  enabled: false        # Enable/disable email integration
+  account: ""           # Username only (password is in .env)
+  imap_server: ""
+  smtp_server: ""
+  smtp_port: 587
+
+# Discord webhook integration
+discord:
+  enabled: false
+  webhook_url: ""       # Store secret in .env or here? Optional.
+
+# Slack webhook integration
+slack:
+  enabled: false
+  webhook_url: ""
