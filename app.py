@@ -80,10 +80,10 @@ else:
     logging.info(f"EMAIL_ENABLED is set to {EMAIL_ENABLED}.")
 
 """
-if not EMAIL_ENABLED:
-    logging.critical("EMAIL_ENABLED is not set in .env file! This must be set to True or False so the local email handler knows whether to run or not.")
-    print("CRITICAL: EMAIL_ENABLED must be configured in .env file. This must be set to True or False so the local email handler knows whether to run or not.")
-    exit(110)
+discord_webhook_enabler_check
+
+
+slack_webhook_enabler_check
 """
 
 # Read/Loads the ticket file into memory. This is the original load_tickets function that works on Windows and Unix.
