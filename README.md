@@ -1,19 +1,16 @@
 # GoobyDesk
 
-Simple, Lightweight, Databaseless Service Desk for Home Labbers, Families, and One Man MSPs.
+The Ultimate Simple, Lightweight, Databaseless Service Desk for Home Labbers, Families, and One Man MSPs.
 
-**Current Version:**  v0.7.0
+**Current Version:**  v0.7.1
 
-**Revision Date:** 2025.12.5
+**Revision Date:** 2025.12.X
 
 [GoobyDesk Repo Wiki](https://github.com/GoobyFRS/GoobyDesk/wiki) & [Production Deployment Guide](https://github.com/GoobyFRS/GoobyDesk/wiki/Production-Deployment-Guide).
 
 ## What is GoobyDesk
 
 GoobyDesk is a Python3, Flask-based web application. Leverages Cloudflare Turnstile for Anti-Spam/Brute force protection.
-
-- Production instances should be ran behind a Python3 WSGI server such as [Gunicorn](https://gunicorn.org/).
-- Production Gunicorn instances should be ran behind a Reverse Proxy such as [Caddy](https://caddyserver.com/).
 
 Mobile-friendly landing page with lightweight ticket submission.
 
