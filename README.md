@@ -10,7 +10,7 @@ The Ultimate Simple, Lightweight, Databaseless Service Desk for Home Labbers, Fa
 
 ## What is GoobyDesk
 
-GoobyDesk is a Python3, Flask-based web application. Leverages Cloudflare Turnstile for Anti-Spam/Brute force protection.
+GoobyDesk is a Python3, Flask-based web application. Leverages Cloudflare Turnstile for Anti-Spam/Brute force protection. It has support for multiple technicians. It can send and receive email replies as well as send notifications to Slack and Discord! Accepts incoming webhooks from Tailscale and Uptime-Kuma!
 
 Mobile-friendly landing page with lightweight ticket submission.
 
@@ -18,31 +18,18 @@ Mobile-friendly landing page with lightweight ticket submission.
 - Requestor Contact Email
 - Ticket Subject/Title
 - Ticket Impact
-  - Low
-  - Medium
-  - High
+  - Low, Medium, High
 - Ticket Urgency
-  - Planning
-  - Low
-  - Medium
-  - High
+  - Planning, Low, Medium, High
 - Ticket Message
 - Ticket Category
-  - Request
-  - Incident
-  - Maintenance
-  - Change
-  - Access
+  - Request, Incident, Maintenance, Change, Access
 
-New Ticket Created confirmation emails are based on a clean HTML5 Jinja template that can be easily customized.
+Simple YAML configuration!
 
-User email replies are appended to the ticket notes.
+New Ticket Created confirmation emails are based on a clean HTML5 Jinja template that can be easily customized. User email replies are appended to the ticket notes.
 
-Technician Dashboard where logged in users can view Open Tickets and manage them.
-
-Support for multiple technicians.
-
-Closed Tickets are hidden from the Dashboard by default.
+Technician Dashboard where logged in users can view Open Tickets and manage them. Closed Tickets are hidden from the Dashboard by default.
 
 ## Goals and Roadmap to Production v1.0
 
@@ -52,30 +39,3 @@ Closed Tickets are hidden from the Dashboard by default.
 - Secure Technician passwords with hashing.
 - Rate Limit without CloudFlare.
 - High Quality User Input Sanitation.
-
-### Linux Project Setup
-
-```shell
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-python3 ./app.py
-```
-
-CTRL+C to break. ```deactivate``` to clean up.
-
-### Windows Project Setup
-
-1. Comment out ```import fcntl``` line 11.
-2. Comment out ```load_tickets``` lines 44-60.
-3. Uncomment top ```load_tickets```. lines 35 - 42.
-4. Enable Debugging at EOF.
-
-```shell
-python -m venv venv
-venv\Scripts\activate
-pip install -r requirements.txt
-python app.py
-```
-
-CTRL+C to break. ```deactivate``` to clean up.
