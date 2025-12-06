@@ -5,7 +5,7 @@ import os
 import json
 import logging
 import requests
-from config_loader import load_core_config
+from local_config_loader import load_core_config
 
 def get_webhook_urls():
     config = load_core_config()

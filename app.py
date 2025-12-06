@@ -3,7 +3,7 @@ from flask import Flask, render_template, request, redirect, url_for, session, j
 import json, threading, time, logging, requests, os
 import local_email_handler
 import local_webhook_handler
-import config_loader
+import local_config_loader
 from dotenv import load_dotenv
 from datetime import datetime
 #from config_loader import load_core_config
@@ -15,7 +15,7 @@ CF_TURNSTILE_SITE_KEY = os.getenv("CF_TURNSTILE_SITE_KEY") # REQUIRED for CAPTCH
 CF_TURNSTILE_SECRET_KEY = os.getenv("CF_TURNSTILE_SECRET_KEY") # REQUIRED for CAPTCHA functionality.
 TAILSCALE_NOTIFY_EMAIL = os.getenv("TAILSCALE_NOTIFY_EMAIL")
 
-core_config = config_loader.load_core_config()
+core_config = local_config_loader.load_core_config()
 TICKETS_FILE = core_config["tickets_file"]
 EMPLOYEE_FILE = core_config["employees_file"]
 LOG_LEVEL = core_config["logging"]["level"]
