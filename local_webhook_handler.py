@@ -1,19 +1,11 @@
 #!/usr/bin/env python3
 # Local module for sending Discord and Slack webhook notifications.
-
+__all__ = ["send_discord_new_ticket","send_discord_update","send_slack_new_ticket","send_slack_update"]
 import os
 import json
 import logging
 import requests
 from config_loader import load_core_config
-
-__all__ = [
-    "send_discord_new_ticket",
-    "send_discord_update",
-    "send_slack_new_ticket",
-    "send_slack_update",
-]
-
 
 def get_webhook_urls():
     config = load_core_config()

@@ -1,16 +1,12 @@
 #!/usr/bin/env python3
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify, flash
 import json, threading, time, logging, requests, os
-import threading
-import time
-import logging
-import requests
-import os
 import local_email_handler
-from config_loader import load_core_config # Local module
+import local_webhook_handler
+import config_loader
 from dotenv import load_dotenv
 from datetime import datetime
-from local_webhook_handler import send_discord_notification, send_TktUpdate_discord_notification, send_slack_notification, send_TktUpdate_slack_notification
+#from config_loader import load_core_config
 #import fcntl # Unix file locking support. Not currently being used.
 
 load_dotenv(dotenv_path=".env")
@@ -19,7 +15,7 @@ CF_TURNSTILE_SITE_KEY = os.getenv("CF_TURNSTILE_SITE_KEY") # REQUIRED for CAPTCH
 CF_TURNSTILE_SECRET_KEY = os.getenv("CF_TURNSTILE_SECRET_KEY") # REQUIRED for CAPTCHA functionality.
 TAILSCALE_NOTIFY_EMAIL = os.getenv("TAILSCALE_NOTIFY_EMAIL")
 
-core_config = load_core_config()
+core_config = config_loader.load_core_config()
 TICKETS_FILE = core_config["tickets_file"]
 EMPLOYEE_FILE = core_config["employees_file"]
 LOG_LEVEL = core_config["logging"]["level"]
@@ -223,14 +219,14 @@ def home():
             # Send a Discord webhook notification.
             try:
                 logging.debug(f"Preparing to send Discord notification for new Ticket {ticket_number}.")
-                send_discord_notification(ticket_number, ticket_subject, ticket_message)
+                local_webhook_handler.send_discord_new_ticket(ticket_number, ticket_subject, ticket_message)
             except Exception as e:
                 logging.error(f"Failed to send Discord notification for {ticket_number}: {str(e)}")
             
             # Send a Slack webhook notification.
             try:
                 logging.debug(f"Preparing to send Slack notification for new Ticket {ticket_number}.")
-                send_slack_notification(ticket_number, ticket_subject, ticket_message)
+                local_webhook_handler.send_slack_new_ticket(ticket_number, ticket_subject, ticket_message)
             except Exception as e:
                 logging.error(f"Failed to send Slack notification for {ticket_number}: {str(e)}")
 
@@ -315,10 +311,10 @@ def update_ticket_status(ticket_number, ticket_status):
             save_tickets(tickets)
             logging.debug(f"Ticket {ticket_number} status updated to {ticket_status} by {loggedInTech}.")
             logging.debug(f"WEBHOOK HANDLER - Preparing to send Ticket {ticket_number} status update notification to Discord.")
-            send_TktUpdate_discord_notification(ticket_number, ticket_status)  # Sends Discord Ticket Update notification.
+            local_webhook_handler.send_discord_update(ticket_number, ticket_status)  # Sends Discord Ticket Update notification.
             logging.info(f"{ticket_number} status successfully sent to Discord.")
             logging.debug(f"WEBHOOK HANDLER - Preparing to send Ticket {ticket_number} status update notification to Slack.")
-            send_TktUpdate_slack_notification(ticket_number, ticket_status) # Sends Slack Ticket Update notification.
+            local_webhook_handler.send_slack_update(ticket_number, ticket_status) # Sends Slack Ticket Update notification.
             logging.info(f"{ticket_number} status successfully sent to Slack.")
             logging.debug(f"Ticket {ticket_number} updated to {ticket_status}.")
             return jsonify({"message": f"Ticket {ticket_number} updated to {ticket_status}."})  # Success popup.
@@ -408,9 +404,9 @@ def uptime_kuma_webhook():
 
         logging.info(f"Uptime-Kuma Notification — {ticket_number} created successfully.")
 
-        send_discord_notification(ticket_number, ticket_subject, ticket_message)
+        local_webhook_handler.send_discord_new_ticket(ticket_number, ticket_subject, ticket_message)
 
-        send_slack_notification(ticket_number, ticket_subject, ticket_message)
+        local_webhook_handler.send_slack_new_ticket(ticket_number, ticket_subject, ticket_message)
 
         return jsonify({"status": "success", "ticket": ticket_number}), 200
 
@@ -463,9 +459,9 @@ def tailscale_webhook():
         tickets.append(new_ticket)
         save_tickets(tickets)
         logging.info(f"Tailscale Notification — {ticket_number} created successfully.")
-        send_discord_notification(ticket_number, ticket_subject, ticket_message)
+        local_webhook_handler.send_discord_new_ticket(ticket_number, ticket_subject, ticket_message)
 
-        send_slack_notification(ticket_number, ticket_subject, ticket_message)
+        local_webhook_handler.send_slack_new_ticket(ticket_number, ticket_subject, ticket_message)
 
         return jsonify({"status": "success", "ticket": ticket_number}), 200
 
