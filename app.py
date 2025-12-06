@@ -17,7 +17,7 @@ TAILSCALE_NOTIFY_EMAIL = os.getenv("TAILSCALE_NOTIFY_EMAIL")
 
 core_config = local_config_loader.load_core_config()
 TICKETS_FILE = core_config["tickets_file"]
-EMPLOYEE_FILE = core_config["employees_file"]
+EMPLOYEE_FILE = core_config["employee_file"]
 LOG_LEVEL = core_config["logging"]["level"]
 LOG_FILE = core_config["logging"]["file"]
 EMAIL_ENABLED = core_config["email"]["enabled"]
