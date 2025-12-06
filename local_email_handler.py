@@ -18,14 +18,14 @@ from local_config_loader import load_core_config
 load_dotenv(".env")
 EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD")
 
-core_config = load_core_config()
+core_yaml_config = load_core_config()
 # Configuration variables from core_configuration.yml
-EMAIL_ENABLED = core_config["email"]["enabled"]
-EMAIL_ACCOUNT = core_config["email"]["account"]
-IMAP_SERVER = core_config["email"]["imap_server"]
-SMTP_SERVER = core_config["email"]["smtp_server"]
-SMTP_PORT = core_config["email"]["smtp_port"]
-TICKETS_FILE = core_config["tickets_file"]
+EMAIL_ENABLED = core_yaml_config["email"]["enabled"]
+EMAIL_ACCOUNT = core_yaml_config["email"]["account"]
+IMAP_SERVER = core_yaml_config["email"]["imap_server"]
+SMTP_SERVER = core_yaml_config["email"]["smtp_server"]
+SMTP_PORT = core_yaml_config["email"]["smtp_port"]
+TICKETS_FILE = core_yaml_config["tickets_file"]
 
 """
 Logging expectations:
