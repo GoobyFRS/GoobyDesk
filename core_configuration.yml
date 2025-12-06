@@ -3,7 +3,7 @@
 # ==========================================
 # Core Files
 tickets_file: "./tickets.json"
-employeee_file: "./employee.json"
+employee_file: "./employee.json"
 
 # Logging
 logging:
