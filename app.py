@@ -88,7 +88,6 @@ def load_tickets():
         return [] # represents an empty list.
 
 # This load_tickets function contains the file locking mechanism for Linux. Not currently being tested or developed.
-
 """
 def load_tickets(retries=5, delay=0.2):
    # Load tickets from JSON file with file locking and retry logic.

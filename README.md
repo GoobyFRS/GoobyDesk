@@ -4,7 +4,7 @@ The Ultimate Simple, Lightweight, Databaseless Service Desk for Home Labbers, Fa
 
 **Current Version:**  v0.7.1
 
-**Revision Date:** 2025.12.X
+**Revision Date:** 2025.12.6
 
 [GoobyDesk Repo Wiki](https://github.com/GoobyFRS/GoobyDesk/wiki) & [Production Deployment Guide](https://github.com/GoobyFRS/GoobyDesk/wiki/Production-Deployment-Guide).
 
@@ -33,9 +33,33 @@ Technician Dashboard where logged in users can view Open Tickets and manage them
 
 ## Goals and Roadmap to Production v1.0
 
-- Rework Webhook system
+- Rework Webhook system to support growth.
 - Accept NewRelic webhooks for ticket creation. 
-- Report Viewer with SLA tables.
+- Reporting Module with SLA tables.
 - Secure Technician passwords with hashing.
 - Rate Limit without CloudFlare.
 - High Quality User Input Sanitation.
+
+### Mobile Landing Page
+
+![Mobile_Landing_Page](https://github.com/user-attachments/assets/f83a13c1-e180-40e7-b911-67c866099bce)
+
+### Login Page
+
+![LoginPage](https://github.com/user-attachments/assets/9f31bdca-6711-49c4-90a3-829544b02194)
+
+### Ticket Commander View
+
+![Ticket_Commander_View](https://github.com/user-attachments/assets/bd0a8798-7cff-455b-8563-1dd0b77a9e2b)
+
+### Email Template
+
+![Email_Template](https://github.com/user-attachments/assets/70f4e4fa-dd39-45e5-bb15-7e71a298e773)
+
+### Slack Alert
+
+Image coming soon.
+
+### Discord Alert
+
+![Discord_Alert](https://github.com/user-attachments/assets/05010365-00fe-4ad6-a3eb-807909708f04)
