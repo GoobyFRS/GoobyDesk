@@ -45,20 +45,6 @@ Critical - Serious application failures
 """
 # INITIAL ERROR CODES - ENV FILE RELATED
 
-if not LOG_FILE:
-    print("CRITICAL: LOG_FILE must be configured in .env file. Its a fundemental requirement for logging, debugging, and issue resolution.")
-    exit(105)
-
-if not TICKETS_FILE:
-    logging.critical("TICKETS_FILE must be configured in .env file. Its required for ticket database functionality.")
-    print("CRITICAL: TICKETS_FILE must be configured in .env file. Its required for ticket database functionality.")
-    exit(106)
-
-if not EMPLOYEE_FILE:
-    logging.critical("EMPLOYEE_FILE must be configured in .env file. Its required for employee login functionality.!")
-    print("CRITICAL: EMPLOYEE_FILE must be configured in .env file. Its required for employee login functionality.")
-    exit(107)
-
 if not CF_TURNSTILE_SITE_KEY:
     logging.critical("CF_TURNSTILE_SITE_KEY must be configured in .env file. Its required for CAPTCHA functionality.")
     print("CRITICAL: CF_TURNSTILE_SITE_KEY must be configured in .env file. Its required for CAPTCHA functionality.")
