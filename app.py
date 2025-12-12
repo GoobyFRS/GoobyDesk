@@ -295,10 +295,8 @@ def update_ticket_status(ticket_number, ticket_status):
 
     for ticket in tickets:
         if ticket["ticket_number"] == ticket_number:
-            
             # Extract subject for webhook notifications
             ticket_subject = ticket.get("ticket_subject", "No Subject Provided")
-
             # Update ticket in memory
             ticket["ticket_status"] = ticket_status
             
@@ -308,13 +306,9 @@ def update_ticket_status(ticket_number, ticket_status):
 
             save_tickets(tickets)
             logging.info(f"Ticket {ticket_number} status updated to {ticket_status} by {loggedInTech}.")
-
-            # WEBHOOK HANDLER FIX
+            # Send webhook notifications for status update.
             try:
-                local_webhook_handler.notify_ticket_event(ticket_number=ticket_number,
-                                                          ticket_status=ticket_status,
-                                                          ticket_subject=ticket_subject
-                                                          )
+                local_webhook_handler.notify_ticket_event(ticket_number=ticket_number,ticket_status=ticket_status,ticket_subject=ticket_subject) # Consider a refactor later.
                 logging.info(f"Ticket {ticket_number} status update notifications sent successfully.")
             except Exception as e:
                 logging.error(f"Failed to send ticket status update notifications for {ticket_number}: {str(e)}")
@@ -403,12 +397,13 @@ def uptime_kuma_webhook():
         tickets = load_tickets()
         tickets.append(new_ticket)
         save_tickets(tickets)
-
         logging.info(f"Uptime-Kuma Notification — {ticket_number} created successfully.")
 
-        local_webhook_handler.send_discord_new_ticket(ticket_number, ticket_subject, ticket_message)
-
-        local_webhook_handler.send_slack_new_ticket(ticket_number, ticket_subject, ticket_message)
+        try:
+            local_webhook_handler.notify_ticket_event(ticket_number=ticket_number,ticket_status="Open",ticket_subject=ticket_subject) # Consider a refactor later.
+            logging.info(f"Ticket {ticket_number} status update notifications sent successfully.")
+        except Exception as e:
+            logging.error(f"Failed to send ticket status update notifications for {ticket_number}: {str(e)}")
 
         return jsonify({"status": "success", "ticket": ticket_number}), 200
 
@@ -461,9 +456,12 @@ def tailscale_webhook():
         tickets.append(new_ticket)
         save_tickets(tickets)
         logging.info(f"Tailscale Notification — {ticket_number} created successfully.")
-        local_webhook_handler.send_discord_new_ticket(ticket_number, ticket_subject, ticket_message)
 
-        local_webhook_handler.send_slack_new_ticket(ticket_number, ticket_subject, ticket_message)
+        try:
+            local_webhook_handler.notify_ticket_event(ticket_number=ticket_number,ticket_status="Open",ticket_subject=ticket_subject) # Consider a refactor later.
+            logging.info(f"Ticket {ticket_number} status update notifications sent successfully.")
+        except Exception as e:
+            logging.error(f"Failed to send ticket status update notifications for {ticket_number}: {str(e)}")
 
         return jsonify({"status": "success", "ticket": ticket_number}), 200
 

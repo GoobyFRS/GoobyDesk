@@ -11,18 +11,18 @@ def load_webhook_config():
     return local_config_loader.load_core_config() or {}
 
 def is_enabled(service_name: str) -> bool:
-    enabled_service_status = load_webhook_config()
-    service_cfg = enabled_service_status.get(service_name.lower(), {})
-    return bool(service_cfg.get("enabled", False))
+    webhook_service_status = load_webhook_config()
+    webhook_service_cfg = webhook_service_status.get(service_name.lower(), {})
+    return bool(webhook_service_cfg.get("enabled", False))
 
 def get_webhook_urls():
+    # LOAD WEBHOOK URLS - Easy to add more services/platforms.
     webhook_url_check = load_webhook_config()
     discord_url = webhook_url_check.get("discord", {}).get("webhook_url")
     slack_url = webhook_url_check.get("slack", {}).get("webhook_url")
 
     return discord_url, slack_url
 
-# -----------------------------------------------------
 # MAIN ENTRY POINT: SEND TICKET EVENTS
 def notify_ticket_event(ticket_number: str, ticket_subject: str, ticket_status: str):
 
@@ -43,9 +43,9 @@ def notify_ticket_event(ticket_number: str, ticket_subject: str, ticket_status: 
 # -----------------------------------------------------
 # GENERIC WEBHOOK SENDER
 def send_webhook(url, payload, service_name):
-    service_key = service_name.lower()
+    enabled_service_key = service_name.lower() 
 
-    if not is_enabled(service_key):
+    if not is_enabled(enabled_service_key):
         logging.info(f"WEBHOOK HANDLER - {service_name} disabled. Skipping.")
         return False
 
@@ -92,7 +92,6 @@ def send_discord_notification(ticket_number, ticket_subject, ticket_status):
 
 # -----------------------------------------------------
 # SLACK PAYLOAD
-# -----------------------------------------------------
 def send_slack_notification(ticket_number, ticket_subject, ticket_status):
     _, slack_url = get_webhook_urls()
 
