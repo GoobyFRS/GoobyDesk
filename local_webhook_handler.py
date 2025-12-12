@@ -11,14 +11,9 @@ def load_webhook_config():
     return local_config_loader.load_core_config()
 
 def is_enabled(service_name: str) -> bool:
-    return load_webhook_config.get(service_name, {}).get("enabled", False)
-
-def get_webhook_urls():
-    get_webhook_config = local_config_loader.load_core_config()
-    return (
-        get_webhook_config.get("discord", {}).get("webhook_url"),
-        get_webhook_config.get("slack", {}).get("webhook_url"),
-    )
+    enable_webhook__config_check = load_webhook_config() or {}
+    webhook_service_cfg = enable_webhook__config_check.get(service_name, {})
+    return bool(webhook_service_cfg.get("enabled", False))
 
 # ---------------------------------------
 # MAIN NOTIFICATION ENTRY POINT
