@@ -13,19 +13,19 @@ from email.header import decode_header
 from dotenv import load_dotenv
 import json
 from datetime import datetime
-from config_loader import load_core_config
+from local_config_loader import load_core_config
 
 load_dotenv(".env")
 EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD")
 
-core_config = load_core_config()
+core_yaml_config = load_core_config()
 # Configuration variables from core_configuration.yml
-EMAIL_ENABLED = core_config["email"]["enabled"]
-EMAIL_ACCOUNT = core_config["email"]["account"]
-IMAP_SERVER = core_config["email"]["imap_server"]
-SMTP_SERVER = core_config["email"]["smtp_server"]
-SMTP_PORT = core_config["email"]["smtp_port"]
-TICKETS_FILE = core_config["tickets_file"]
+EMAIL_ENABLED = core_yaml_config["email"]["enabled"]
+EMAIL_ACCOUNT = core_yaml_config["email"]["account"]
+IMAP_SERVER = core_yaml_config["email"]["imap_server"]
+SMTP_SERVER = core_yaml_config["email"]["smtp_server"]
+SMTP_PORT = core_yaml_config["email"]["smtp_port"]
+TICKETS_FILE = core_yaml_config["tickets_file"]
 
 """
 Logging expectations:
@@ -35,7 +35,7 @@ Warning - Unexpected but non-breaking events
 Error - Failures of functions that the app can recover from
 Critical - Serious application failures
 """
-
+# Helper functions below for loading and saving tickets.
 def load_tickets():
     try:
         with open(TICKETS_FILE, "r") as tkt_file:
@@ -48,8 +48,9 @@ def save_tickets(tickets):
         json.dump(tickets, f, indent=4)
     logging.debug("EMAIL HANDLER - Ticket database updated.")
 
+# Helpers functions above only! Core functions below.
+# Send an email if EMAIL_ENABLED is True.
 def send_email(requestor_email, ticket_subject, ticket_message, html=True):
-    """Send an email if EMAIL_ENABLED is True."""
     if not EMAIL_ENABLED:
         logging.info("EMAIL HANDLER - Email skipped; EMAIL_ENABLED=False.")
         return False

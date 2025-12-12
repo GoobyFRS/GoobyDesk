@@ -1,19 +1,16 @@
 # GoobyDesk
 
-Simple, Lightweight, Databaseless Service Desk for Home Labbers, Families, and One Man MSPs.
+The Ultimate Simple, Lightweight, Databaseless Service Desk for Home Labbers, Families, and One Man MSPs.
 
-**Current Version:**  v0.7.0
+**Current Version:**  v0.7.2
 
-**Revision Date:** 2025.12.5
+**Revision Date:** 2025.12.6
 
 [GoobyDesk Repo Wiki](https://github.com/GoobyFRS/GoobyDesk/wiki) & [Production Deployment Guide](https://github.com/GoobyFRS/GoobyDesk/wiki/Production-Deployment-Guide).
 
 ## What is GoobyDesk
 
-GoobyDesk is a Python3, Flask-based web application. Leverages Cloudflare Turnstile for Anti-Spam/Brute force protection.
-
-- Production instances should be ran behind a Python3 WSGI server such as [Gunicorn](https://gunicorn.org/).
-- Production Gunicorn instances should be ran behind a Reverse Proxy such as [Caddy](https://caddyserver.com/).
+GoobyDesk is a Python3, Flask-based web application. Leverages Cloudflare Turnstile for Anti-Spam/Brute force protection. It has support for multiple technicians. It can send and receive email replies as well as send notifications to Slack and Discord! Accepts incoming webhooks from Tailscale and Uptime-Kuma!
 
 Mobile-friendly landing page with lightweight ticket submission.
 
@@ -21,64 +18,48 @@ Mobile-friendly landing page with lightweight ticket submission.
 - Requestor Contact Email
 - Ticket Subject/Title
 - Ticket Impact
-  - Low
-  - Medium
-  - High
+  - Low, Medium, High
 - Ticket Urgency
-  - Planning
-  - Low
-  - Medium
-  - High
+  - Planning, Low, Medium, High
 - Ticket Message
 - Ticket Category
-  - Request
-  - Incident
-  - Maintenance
-  - Change
-  - Access
+  - Request, Incident, Maintenance, Change, Access
 
-New Ticket Created confirmation emails are based on a clean HTML5 Jinja template that can be easily customized.
+Simple YAML configuration!
 
-User email replies are appended to the ticket notes.
+New Ticket Created confirmation emails are based on a clean HTML5 Jinja template that can be easily customized. User email replies are appended to the ticket notes.
 
-Technician Dashboard where logged in users can view Open Tickets and manage them.
-
-Support for multiple technicians.
-
-Closed Tickets are hidden from the Dashboard by default.
+Technician Dashboard where logged in users can view Open Tickets and manage them. Closed Tickets are hidden from the Dashboard by default.
 
 ## Goals and Roadmap to Production v1.0
 
-- Rework Webhook system
+- Rework Webhook system to support growth.
 - Accept NewRelic webhooks for ticket creation. 
-- Report Viewer with SLA tables.
+- Reporting Module with SLA tables.
 - Secure Technician passwords with hashing.
 - Rate Limit without CloudFlare.
 - High Quality User Input Sanitation.
 
-### Linux Project Setup
+### Mobile Landing Page
 
-```shell
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-python3 ./app.py
-```
+![Mobile_Landing_Page](https://github.com/user-attachments/assets/f83a13c1-e180-40e7-b911-67c866099bce)
 
-CTRL+C to break. ```deactivate``` to clean up.
+### Login Page
 
-### Windows Project Setup
+![LoginPage](https://github.com/user-attachments/assets/9f31bdca-6711-49c4-90a3-829544b02194)
 
-1. Comment out ```import fcntl``` line 11.
-2. Comment out ```load_tickets``` lines 44-60.
-3. Uncomment top ```load_tickets```. lines 35 - 42.
-4. Enable Debugging at EOF.
+### Ticket Commander View
 
-```shell
-python -m venv venv
-venv\Scripts\activate
-pip install -r requirements.txt
-python app.py
-```
+![Ticket_Commander_View](https://github.com/user-attachments/assets/bd0a8798-7cff-455b-8563-1dd0b77a9e2b)
 
-CTRL+C to break. ```deactivate``` to clean up.
+### Email Template
+
+![Email_Template](https://github.com/user-attachments/assets/70f4e4fa-dd39-45e5-bb15-7e71a298e773)
+
+### Slack Alert
+
+Image coming soon.
+
+### Discord Alert
+
+![Discord_Alert](https://github.com/user-attachments/assets/05010365-00fe-4ad6-a3eb-807909708f04)

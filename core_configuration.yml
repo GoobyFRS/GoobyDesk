@@ -3,7 +3,7 @@
 # ==========================================
 # Core Files
 tickets_file: "./tickets.json"
-employees_file: "./employees.json"
+employee_file: "./employee.json"
 
 # Logging
 logging:
@@ -12,8 +12,8 @@ logging:
 
 # Email System
 email:
-  enabled: false        # true / false - false by default.
-  account: ""           # Username/Email Address - Password should be stored in .env
+  enabled: false  # true / false - false by default.
+  account: ""   # Username/Email Address - Password should be stored in .env
   imap_server: ""
   imap_port: 993
   smtp_server: ""
@@ -21,10 +21,10 @@ email:
 
 # Discord Support
 discord:
-  enabled: false        # true / false - false by default.
-  webhook_url: ""       # Store secret in .env or here? Optional.
+  enabled: false  # true / false - false by default.
+  webhook_url: ""
 
 # Slack Support
 slack:
-  enabled: false        # true / false - false by default.
+  enabled: false  # true / false - false by default.
   webhook_url: ""
