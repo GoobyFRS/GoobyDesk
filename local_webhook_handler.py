@@ -28,14 +28,10 @@ def notify_ticket_event(ticket_number: str, ticket_subject: str, ticket_status: 
     results = {}
 
     if is_enabled("discord"):
-        results["discord"] = send_discord_notification(
-            ticket_number, ticket_subject, ticket_status
-        )
+        results["discord"] = send_discord_notification(ticket_number, ticket_subject, ticket_status)
 
     if is_enabled("slack"):
-        results["slack"] = send_slack_notification(
-            ticket_number, ticket_subject, ticket_status
-        )
+        results["slack"] = send_slack_notification(ticket_number, ticket_subject, ticket_status)
 
     return results
 

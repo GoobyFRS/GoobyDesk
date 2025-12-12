@@ -200,9 +200,10 @@ def home():
                     logging.error(f"Failed to send email for {ticket_number}: {str(e)}")
                 else:
                     logging.info(f"EMAIL_ENABLED is set to false. Skipping email sending for {ticket_number}.")
+                    
             # Sends webhook notifications using the local_webhook_handler module.    
             try:
-                local_webhook_handler.notify_new_ticket(ticket_number, ticket_subject, "Open")
+                local_webhook_handler.notify_ticket_event(ticket_number, ticket_subject, "Open")
                 logging.info(f"Webhook notifications for {ticket_number} sent successfully.")
             except Exception as e:
                 logging.error(f"Failed to send webhook notifications for {ticket_number}: {str(e)}")
