@@ -35,7 +35,7 @@ Warning - Unexpected but non-breaking events
 Error - Failures of functions that the app can recover from
 Critical - Serious application failures
 """
-
+# Helper functions below for loading and saving tickets.
 def load_tickets():
     try:
         with open(TICKETS_FILE, "r") as tkt_file:
@@ -48,8 +48,9 @@ def save_tickets(tickets):
         json.dump(tickets, f, indent=4)
     logging.debug("EMAIL HANDLER - Ticket database updated.")
 
+# Helpers functions above only! Core functions below.
+# Send an email if EMAIL_ENABLED is True.
 def send_email(requestor_email, ticket_subject, ticket_message, html=True):
-    """Send an email if EMAIL_ENABLED is True."""
     if not EMAIL_ENABLED:
         logging.info("EMAIL HANDLER - Email skipped; EMAIL_ENABLED=False.")
         return False

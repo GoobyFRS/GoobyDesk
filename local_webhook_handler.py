@@ -1,110 +1,112 @@
 #!/usr/bin/env python3
-# Local module for sending Discord and Slack webhook notifications.
-__all__ = ["send_discord_new_ticket","send_discord_update","send_slack_new_ticket","send_slack_update"]
-import os
-import json
+# Local module for Chat Platform webhook notifications.
 import logging
 import requests
-from local_config_loader import load_core_config
+import local_config_loader
+
+__all__ = ["notify_ticket_event","send_webhook",]
+
+# Helper functions.
+def load_webhook_config():
+    return local_config_loader.load_core_config()
+
+def is_enabled(service_name: str) -> bool:
+    return load_webhook_config.get(service_name, {}).get("enabled", False)
 
 def get_webhook_urls():
-    config = load_core_config()
+    get_webhook_config = local_config_loader.load_core_config()
     return (
-        config.get("discord", {}).get("webhook_url"),
-        config.get("slack", {}).get("webhook_url"),
+        get_webhook_config.get("discord", {}).get("webhook_url"),
+        get_webhook_config.get("slack", {}).get("webhook_url"),
     )
 
+# ---------------------------------------
+# MAIN NOTIFICATION ENTRY POINT
+# ---------------------------------------
+# TICKET NUMBER, SUBJECT, STATUS!
+def notify_ticket_event(ticket_number: str, ticket_subject: str, ticket_status: str):
+    results = {}
 
-def send_webhook(url, payload, service_name):
-    """Generalized webhook sender for Discord & Slack."""
-    if not url:
-        logging.warning(
-            f"WEBHOOK HANDLER - {service_name} webhook URL missing. Check .env configuration."
+    if is_enabled("discord"):
+        results["discord"] = send_discord_notification(
+            ticket_number, ticket_subject, ticket_status
         )
+
+    if is_enabled("slack"):
+        results["slack"] = send_slack_notification(
+            ticket_number, ticket_subject, ticket_status
+        )
+
+    return results
+
+# ---------------------------------------
+# GENERIC WEBHOOK FUNCTION
+# ---------------------------------------
+def send_webhook(url, payload, service_name):
+    if not is_enabled(service_name.lower()):
+        logging.info(f"WEBHOOK HANDLER - {service_name} disabled. Skipping.")
         return False
 
-    headers = {"Content-Type": "application/json"}
+    if not url:
+        logging.warning(f"WEBHOOK HANDLER - {service_name} webhook URL missing in core_configuration.yml")
+        return False
 
     try:
-        response = requests.post(url, json=payload, headers=headers, timeout=5)
+        response = requests.post(url, json=payload, timeout=5)
         response.raise_for_status()
-
-        logging.info(
-            f"WEBHOOK HANDLER - Successfully sent notification to {service_name}. Status: {response.status_code}"
-        )
+        logging.info(f"WEBHOOK HANDLER - Successfully sent notification to {service_name}. ")
         return True
 
     except requests.exceptions.Timeout:
         logging.error(f"WEBHOOK HANDLER - {service_name} request timed out.")
     except requests.exceptions.ConnectionError:
         logging.error(
-            f"WEBHOOK HANDLER - Failed to connect to {service_name}. Check internet and webhook URL."
-        )
+            f"WEBHOOK HANDLER - Failed to connect to {service_name}.")
     except requests.exceptions.RequestException as e:
         logging.error(f"WEBHOOK HANDLER - {service_name} unexpected error: {e}")
 
     return False
-
-# DISCORD NOTIFICATIONS
-
-def send_discord_new_ticket(ticket_number, subject, message):
+# ---------------------------------------
+# Discord
+def send_discord_notification(ticket_number, ticket_subject, ticket_status):
     DISCORD_URL, _ = get_webhook_urls()
+
+    # Better titles depending on whether it's new or updated
+    title = (
+        f"New Ticket {ticket_number}: {ticket_subject}"
+        if ticket_status.lower() == "open"
+        else f"Ticket {ticket_number} updated — Status: {ticket_status}"
+    )
 
     payload = {
         "username": "GoobyDesk",
         "embeds": [
             {
-                "title": f"New Ticket Created: {ticket_number} - {subject}",
-                "description": f"**Details:** {message}",
-                "color": 0x58B9FF,  # Light blue
+                "title": title,
+                "color": 0x58B9FF if ticket_status.lower() == "open" else 0xFFFF00,
             }
         ],
     }
 
     return send_webhook(DISCORD_URL, payload, "Discord")
 
-def send_discord_update(ticket_number, status):
-    DISCORD_URL, _ = get_webhook_urls()
-
-    payload = {
-        "username": "GoobyDesk",
-        "embeds": [
-            {
-                "title": f"Ticket {ticket_number} updated to {status}",
-                "color": 0xFFFF00,  # Yellow
-            }
-        ],
-    }
-
-    return send_webhook(DISCORD_URL, payload, "Discord")
-
-# SLACK NOTIFICATIONS
-
-def send_slack_new_ticket(ticket_number, subject, message):
+# ---------------------------------------
+# Slack
+def send_slack_notification(ticket_number, ticket_subject, ticket_status):
     _, SLACK_URL = get_webhook_urls()
+
+    title = (
+        f"New Ticket {ticket_number}: {ticket_subject}"
+        if ticket_status.lower() == "open"
+        else f"Ticket {ticket_number} updated — Status: {ticket_status}"
+    )
 
     payload = {
         "username": "GoobyDesk",
         "attachments": [
             {
-                "title": f"New Ticket Created: {ticket_number} - {subject}",
-                "text": f"*Details:* {message}",
-                "color": "#58B9FF",
-            }
-        ],
-    }
-
-    return send_webhook(SLACK_URL, payload, "Slack")
-
-def send_slack_update(ticket_number, status):
-    _, SLACK_URL = get_webhook_urls()
-
-    payload = {
-        "username": "GoobyDesk",
-        "attachments": [
-            {
-                "title": f"Ticket {ticket_number} updated to {status}",
-                "color": "#FFFF00",
+                "title": title,
+                "color": "#58B9FF" if ticket_status.lower() == "open" else "#FFFF00",
             }
         ],
     }
