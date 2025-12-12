@@ -50,9 +50,7 @@ def send_webhook(url, payload, service_name):
         return False
 
     if not url:
-        logging.warning(
-            f"WEBHOOK HANDLER - {service_name} webhook URL missing in core_configuration.yml"
-        )
+        logging.warning(f"WEBHOOK HANDLER - {service_name} webhook URL missing in core_configuration.yml")
         return False
 
     try:
@@ -73,7 +71,7 @@ def send_webhook(url, payload, service_name):
 # -----------------------------------------------------
 # DISCORD PAYLOAD
 def send_discord_notification(ticket_number, ticket_subject, ticket_status):
-    DISCORD_URL, _ = get_webhook_urls()
+    DISCORD_URL = get_webhook_urls()
     new_ticket_status = ticket_status.lower() == "open"
     title = (
         f"New Ticket {ticket_number} — {ticket_subject}"
@@ -96,7 +94,7 @@ def send_discord_notification(ticket_number, ticket_subject, ticket_status):
 # SLACK PAYLOAD
 # -----------------------------------------------------
 def send_slack_notification(ticket_number, ticket_subject, ticket_status):
-    SLACK_URL, _ = get_webhook_urls()
+    SLACK_URL = get_webhook_urls()
 
     new_ticket_status = ticket_status.lower() == "open"
     title = (
