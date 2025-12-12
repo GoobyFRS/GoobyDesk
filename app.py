@@ -280,48 +280,48 @@ def ticket_detail(ticket_number):
 
 # Route for updating a ticket. Called from Dashboard and Ticket Commander.
 @app.route("/ticket/<ticket_number>/update_status/<ticket_status>", methods=["POST"])
-def update_ticket_status(ticket_number, ticket_subject, ticket_status):
+def update_ticket_status(ticket_number, ticket_status):
     logging.info(f"{ticket_number} status has been changed to {ticket_status}.")
-    if not session.get("technician"):  # Ensuring only authenticated techs can update tickets.
+    
+    if not session.get("technician"):
         return render_template("403.html"), 403
     
     valid_statuses = ["Open", "In-Progress", "Closed"]
     if ticket_status not in valid_statuses:
         return render_template("400.html"), 400
 
-    loggedInTech = session["technician"]  # Capture the logged-in technician.
-    tickets = load_tickets()  # Load tickets into memory.
+    loggedInTech = session["technician"]
+    tickets = load_tickets()
 
     for ticket in tickets:
-        if ticket["ticket_number"] == ticket_number: 
-            ticket["ticket_status"] = ticket_status  
+        if ticket["ticket_number"] == ticket_number:
+            
+            # Extract subject for webhook notifications
+            ticket_subject = ticket.get("ticket_subject", "No Subject Provided")
 
+            # Update ticket in memory
+            ticket["ticket_status"] = ticket_status
+            
             if ticket_status == "Closed":
-                ticket["closed_by"] = loggedInTech  # Append the Closed_By_Tech to support ticket audits.
-                ticket["closure_date"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")  # Append the ticket closure date.
+                ticket["closed_by"] = loggedInTech
+                ticket["closure_date"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
             save_tickets(tickets)
             logging.info(f"Ticket {ticket_number} status updated to {ticket_status} by {loggedInTech}.")
-            # Send webhook notifications using the local_webhook_handler module.
+
+            # WEBHOOK HANDLER FIX
             try:
-                local_webhook_handler.notify_ticket_event(ticket_number, ticket_subject, ticket_status)
+                local_webhook_handler.notify_ticket_event(ticket_number=ticket_number,
+                                                          ticket_status=ticket_status,
+                                                          ticket_subject=ticket_subject
+                                                          )
                 logging.info(f"Ticket {ticket_number} status update notifications sent successfully.")
             except Exception as e:
                 logging.error(f"Failed to send ticket status update notifications for {ticket_number}: {str(e)}")
-                
-            """
-            logging.debug(f"Ticket {ticket_number} status updated to {ticket_status} by {loggedInTech}.")
-            logging.debug(f"WEBHOOK HANDLER - Preparing to send Ticket {ticket_number} status update notification to Discord.")
-            local_webhook_handler.send_discord_update(ticket_number, ticket_status)  # Sends Discord Ticket Update notification.
-            logging.info(f"{ticket_number} status successfully sent to Discord.")
-            logging.debug(f"WEBHOOK HANDLER - Preparing to send Ticket {ticket_number} status update notification to Slack.")
-            local_webhook_handler.send_slack_update(ticket_number, ticket_status) # Sends Slack Ticket Update notification.
-            logging.info(f"{ticket_number} status successfully sent to Slack.")
-            logging.debug(f"Ticket {ticket_number} updated to {ticket_status}.")
-            """
-            return jsonify({"message": f"Ticket {ticket_number} updated to {ticket_status}."})  # Success popup.
 
-    return render_template("404.html"), 404  # If ticket not found.
+            return jsonify({"message": f"Ticket {ticket_number} updated to {ticket_status}."})
+
+    return render_template("404.html"), 404
 
 # Route for appending a new note to a ticket.
 @app.route("/ticket/<ticket_number>/append_note", methods=["POST"])

@@ -69,9 +69,9 @@ def send_discord_notification(ticket_number, ticket_subject, ticket_status):
 
     # Better titles depending on whether it's new or updated
     title = (
-        f"New Ticket {ticket_number}: {ticket_subject}"
+        f"New Ticket {ticket_number} - {ticket_subject}"
         if ticket_status.lower() == "open"
-        else f"Ticket {ticket_number} updated — Status: {ticket_status}"
+        else f"{ticket_number} updated — Status: {ticket_status}"
     )
 
     payload = {
