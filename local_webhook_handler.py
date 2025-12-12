@@ -71,7 +71,7 @@ def send_webhook(url, payload, service_name):
 # -----------------------------------------------------
 # DISCORD PAYLOAD
 def send_discord_notification(ticket_number, ticket_subject, ticket_status):
-    DISCORD_URL = get_webhook_urls()
+    discord_url, _ = get_webhook_urls()
     new_ticket_status = ticket_status.lower() == "open"
     title = (
         f"New Ticket {ticket_number} — {ticket_subject}"
@@ -88,18 +88,18 @@ def send_discord_notification(ticket_number, ticket_subject, ticket_status):
         ],
     }
 
-    return send_webhook(DISCORD_URL, payload, "Discord")
+    return send_webhook(discord_url, payload, "Discord")
 
 # -----------------------------------------------------
 # SLACK PAYLOAD
 # -----------------------------------------------------
 def send_slack_notification(ticket_number, ticket_subject, ticket_status):
-    SLACK_URL = get_webhook_urls()
+    _, slack_url = get_webhook_urls()
 
-    new_ticket_status = ticket_status.lower() == "open"
+    ticket_status_new = ticket_status.lower() == "open"
     title = (
         f"New Ticket {ticket_number}: {ticket_subject}"
-        if new_ticket_status
+        if ticket_status_new
         else f"Ticket {ticket_number} updated — Status: {ticket_status}"
     )
     payload = {
@@ -107,9 +107,9 @@ def send_slack_notification(ticket_number, ticket_subject, ticket_status):
         "attachments": [
             {
                 "title": title,
-                "color": "#58B9FF" if new_ticket_status else "#FFFF00",
+                "color": "#58B9FF" if ticket_status_new else "#FFFF00",
             }
         ],
     }
 
-    return send_webhook(SLACK_URL, payload, "Slack")
+    return send_webhook(slack_url, payload, "Slack")
