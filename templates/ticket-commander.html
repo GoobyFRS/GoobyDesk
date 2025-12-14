@@ -10,7 +10,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge"> <!-- Force IE to use latest rendering engine available.-->
     <meta http-equiv="refresh" content="600"> <!-- 10 Minute Page Refresh -->
     <title>GoobyDesk - Ticket Commander</title>
-    <!--- <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}"> --->
+    <!--- <link rel="stylesheet" href="{{ url_for('static', filename='ticket_commander_styles.css') }}"> --->
     <!-- Style/CSS goes in the HTML5 head -->
     <style>
         body {
@@ -131,7 +131,9 @@
 
         <button class="status-btn" onclick="updateTicketStatus('{{ ticket.ticket_number }}', 'In-Progress')">Mark In-Progress</button>
         <button class="close-tkt-btn" onclick="updateTicketStatus('{{ ticket.ticket_number }}', 'Closed')">Close Ticket</button>
+        <br>
         <textarea id="noteContent" placeholder="New note...."></textarea>
+        <br>
         <button class="addNote-btn" onclick="submitNote('{{ ticket.ticket_number }}')">Add Note</button>
         <!-- By keeping this script near the bottom of the page, this ensures all attributes load first.-->
         <!-- Script to enable status buttons. -->
