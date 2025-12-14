@@ -20,8 +20,8 @@
     <meta name="twitter:image" content="https://raw.githubusercontent.com/GoobyFRS/GoobyDesk/refs/heads/main/static/GoobyDesk-color.webp">
 
     <!-- Performance Enhancements -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.bunny.net/css">
+    <link rel="preconnect" href="https://fonts.bunny.net/css" crossorigin>
 
     <title>GoobyDesk - Submit a Ticket</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
@@ -158,10 +158,10 @@
             <input type="text" id="name" name="requestor_name" placeholder="Jeremy Clarkson" minlength="2" maxlength="24" autocomplete="name" required>
 
             <label for="email">Your Email:</label>
-            <input type="email" id="email" name="requestor_email" placeholder="hammond@example.com" title="Provide a VALID contact address." minlength="6" maxlength="48" autocomplete="email" pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}" required>
+            <input type="email" id="email" name="requestor_email" placeholder="richard.hammond@example.com" title="Provide a VALID contact address." minlength="6" maxlength="48" autocomplete="email" pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}" required>
 
             <label for="subject">Ticket Title:</label>
-            <input type="text" id="subject" name="ticket_subject" placeholder="Replace Tires" minlength="4" maxlength="48" required>
+            <input type="text" id="subject" name="ticket_subject" placeholder="Replace Tires for Captain Slow" minlength="4" maxlength="48" required>
 
             <label for="message">Ticket Message:</label>
             <textarea id="message" name="ticket_message" placeholder="Please provide some detail in order to submit your request." minlength="4" maxlength="512" required></textarea>
@@ -203,7 +203,7 @@
             {% endfor %}
           {% endif %}
         {% endwith %}
-        <p class="footer-text">©2025 GoobyDesk, FOSS created by <a href="https://github.com/GoobyFRS">GoobyFRS</a> | <a href="{{ url_for('login') }}">Tech Login</a></p>
+        <p class="footer-text">©2025 GoobyDesk, FOSS created by <a href="https://github.com/GoobyFRS">GoobyFRS</a> | <a href="{{ url_for('login') }}">Technician Login</a></p>
     </div>
 </body>
 </html>
