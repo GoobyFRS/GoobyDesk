@@ -10,6 +10,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge"> <!-- Force IE to use latest rendering engine available.-->
     <meta http-equiv="refresh" content="600"> <!-- 10 Minute Page Refresh -->
     <title>GoobyDesk - Technician Dashboard</title>
+    <!--- <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}"> --->
     <!-- Style/CSS goes in the HTML5 head -->
     <style>
         * {
@@ -170,7 +171,7 @@
         <!-- Technician logout button -->
         <a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
         <!-- Footer Text -->
-        <p class="footer-text">©2025 GoobyDesk, FOSS created by <a href="https://github.com/goobyfrs">GoobyFRS</a> | Logged In as: {{ loggedInTech }} | BuildID: {{ BUILDID}}</p>
+        <p class="footer-text">©2025 GoobyDesk, FOSS created by <a href="https://github.com/goobyfrs">GoobyFRS</a> | Logged In as: {{ loggedInTech }} | BuildID: {{ BUILDID }}</p>
     </div>
 </body>
 </html>
