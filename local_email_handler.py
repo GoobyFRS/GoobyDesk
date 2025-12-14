@@ -106,7 +106,6 @@ def fetch_email_replies():
     if not EMAIL_ENABLED:
         logging.debug("EMAIL HANDLER - Skipping IMAP fetch; EMAIL_ENABLED=False.")
         return
-
     logging.debug("EMAIL HANDLER - Checking IMAP for new email replies.")
 
     try:

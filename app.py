@@ -9,6 +9,8 @@ from datetime import datetime
 #from local_config_loader import load_core_config
 #import fcntl # Unix file locking support. Not currently being used.
 
+BUILDID=str("0.7.3-beta-a")
+
 load_dotenv(dotenv_path=".env")
 EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD") # App Password from Gmail or relevant email provider.
 CF_TURNSTILE_SITE_KEY = os.getenv("CF_TURNSTILE_SITE_KEY") # REQUIRED for CAPTCHA functionality.
@@ -208,20 +210,6 @@ def home():
             except Exception as e:
                 logging.error(f"Failed to send webhook notifications for {ticket_number}: {str(e)}")
 
-            # Send a Discord webhook notification.
-            """try:
-                logging.debug(f"Preparing to send Discord notification for new Ticket {ticket_number}.")
-                local_webhook_handler.send_discord_new_ticket(ticket_number, ticket_subject, ticket_message)
-            except Exception as e:
-                logging.error(f"Failed to send Discord notification for {ticket_number}: {str(e)}")
-            
-            # Send a Slack webhook notification.
-            try:
-                logging.debug(f"Preparing to send Slack notification for new Ticket {ticket_number}.")
-                local_webhook_handler.send_slack_new_ticket(ticket_number, ticket_subject, ticket_message)
-            except Exception as e:
-                logging.error(f"Failed to send Slack notification for {ticket_number}: {str(e)}")"""
-
             # Prompt the users web interface of a successful ticket submission.
             flash(f"Ticket {ticket_number} has been submitted successfully!", "success")
             return redirect(url_for("home"))
@@ -262,7 +250,7 @@ def dashboard():
     tickets = load_tickets()
     # Filtering out tickets with the Closed Status on the main Dashboard.
     open_tickets = [ticket for ticket in tickets if ticket["ticket_status"].lower() != "closed"]
-    return render_template("dashboard.html", tickets=open_tickets, loggedInTech=session["technician"])
+    return render_template("dashboard.html", tickets=open_tickets, loggedInTech=session["technician"], BUILDID=BUILDID)
 
 # Route for viewing a ticket in the Ticket Commander view.
 @app.route("/ticket/<ticket_number>")
@@ -400,7 +388,7 @@ def uptime_kuma_webhook():
         logging.info(f"Uptime-Kuma Notification — {ticket_number} created successfully.")
 
         try:
-            local_webhook_handler.notify_ticket_event(ticket_number=ticket_number,ticket_status="Open",ticket_subject=ticket_subject) # Consider a refactor later.
+            local_webhook_handler.notify_ticket_event(ticket_number=ticket_number,ticket_status="Open",ticket_subject=ticket_subject) # Considering a refactor later.
             logging.info(f"Ticket {ticket_number} status update notifications sent successfully.")
         except Exception as e:
             logging.error(f"Failed to send ticket status update notifications for {ticket_number}: {str(e)}")
@@ -458,8 +446,8 @@ def tailscale_webhook():
         logging.info(f"Tailscale Notification — {ticket_number} created successfully.")
 
         try:
-            local_webhook_handler.notify_ticket_event(ticket_number=ticket_number,ticket_status="Open",ticket_subject=ticket_subject) # Consider a refactor later.
-            logging.info(f"Ticket {ticket_number} status update notifications sent successfully.")
+            local_webhook_handler.notify_ticket_event(ticket_number=ticket_number,ticket_status="Open",ticket_subject=ticket_subject) # Considering a refactor later.
+            logging.info(f"Ticket {ticket_number} status notifications sent successfully.")
         except Exception as e:
             logging.error(f"Failed to send ticket status update notifications for {ticket_number}: {str(e)}")
 
