@@ -74,9 +74,9 @@ def send_discord_notification(ticket_number, ticket_subject, ticket_status):
     discord_url, _ = get_webhook_urls()
     new_ticket_status = ticket_status.lower() == "open"
     title = (
-        f"New Ticket {ticket_number} — {ticket_subject}"
+        f"New Ticket: {ticket_number} - Subject: {ticket_subject}"
         if new_ticket_status
-        else f"Ticket {ticket_number} updated — Status: {ticket_status}"
+        else f"Ticket: {ticket_number} updated — Status: {ticket_status}"
     )
     payload = {
         "username": "GoobyDesk",
@@ -97,9 +97,9 @@ def send_slack_notification(ticket_number, ticket_subject, ticket_status):
 
     ticket_status_new = ticket_status.lower() == "open"
     title = (
-        f"New Ticket {ticket_number}: {ticket_subject}"
+        f"New Ticket: {ticket_number} - Subject: {ticket_subject}"
         if ticket_status_new
-        else f"Ticket {ticket_number} updated — Status: {ticket_status}"
+        else f"Ticket: {ticket_number} updated — Status: {ticket_status}"
     )
     payload = {
         "username": "GoobyDesk",
