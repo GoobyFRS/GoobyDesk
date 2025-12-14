@@ -2,9 +2,8 @@
 @import url(https://fonts.bunny.net/css?family=ubuntu-mono:400);
 /* Placeholder styles.css for Ticket Commander Pages*/
 body {
-    background-color: #ffffff;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 
-        'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+    background-color: #29292B;
+    font-family: 'Ubuntu', 'Ubuntu-mono', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     margin: 0;
     padding: 0;
     display: flex;
@@ -16,7 +15,8 @@ body {
     max-width: 600px;
     margin: 20px;
     padding: 20px;
-    border: 1px solid #ddd;
+    background-color: #FAF0E6;
+    border: 1px solid #556B2F;
     border-radius: 8px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     text-align: center;
