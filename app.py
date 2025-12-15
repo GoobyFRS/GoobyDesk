@@ -9,7 +9,7 @@ from datetime import datetime
 #from local_config_loader import load_core_config
 #import fcntl # Unix file locking support. Not currently being used.
 
-BUILDID=str("0.7.4-beta-f")
+BUILDID=str("0.7.4-beta-g")
 
 load_dotenv(dotenv_path=".env")
 EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD") # App Password from Gmail or relevant email provider.
