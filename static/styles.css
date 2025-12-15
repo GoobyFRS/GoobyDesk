@@ -1,6 +1,6 @@
 @import url(https://fonts.bunny.net/css?family=ubuntu:300,400,700);
 @import url(https://fonts.bunny.net/css?family=ubuntu-mono:400);
-/* Placeholder styles.css for future use - Based on the Index Page*/
+/* Global CSS - Page Specific Items Defined in Segments Below*/
 
 body {
     background-color: #29292B;
@@ -36,6 +36,14 @@ h2 {
     font-size: 20px;
     font-weight: 700;
 }
+.footer-text {
+    font-size: 12px;
+    color: #b7b7b7;
+    margin-top: 20px;
+}
+
+/* Index/Home Page Specific */
+
 label {
     font-size: 16px;
     font-weight: 600;
@@ -81,8 +89,54 @@ textarea {
     margin-top: 15px;
     width: 48%;
 }
-.footer-text {
-    font-size: 12px;
-    color: #b7b7b7;
-    margin-top: 20px;
+
+/* Dashboard Specific Items */
+
+a { /* I'm not really sure what "a" is. I mean, I see it. But not sure whats blue. */
+    text-decoration: none;
+    color: #284389;
+    font-size: 16px;
+    font-weight: 600;
+}
+a:hover {
+    color: #1f356b;
+}
+.logout-btn {
+    display: block;
+    background-color: #284389;
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+    padding: 10px;
+    border-radius: 4px;
+    margin: 10px 0 20px;
+}
+.logout-btn:hover {
+    background-color: #1f356b;
+}
+.close-ticket-btn {
+    display: block;
+    background-color: #284389;
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+    padding: 10px;
+    border-radius: 4px;
+    margin: 10px 0 20px;
+    border: none;
+    cursor: pointer;
+    text-align: center;
+    width: 100%;
+}
+.ticket-list {
+    list-style-type: none;
+    padding: 0;
+    text-align: left;
+}
+.ticket-list li {
+    background: #f8f8f8;
+    padding: 10px;
+    border-radius: 5px;
+    margin: 5px 0;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
