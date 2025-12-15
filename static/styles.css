@@ -1,8 +1,8 @@
-@import url(https://fonts.bunny.net/css?family=ubuntu:300,400,700);
+@import url(https://fonts.bunny.net/css?family=ubuntu:300,400,600,700);
 @import url(https://fonts.bunny.net/css?family=ubuntu-mono:400);
 /* Global CSS - Page Specific Items Defined in Segments Below*/
 body {
-    background-color: #29292B;
+    background-color: #29292B; /* Windows 10 Dark Mode Task Bar */
     font-family: 'Ubuntu', 'Ubuntu-mono', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     margin: 0;
     padding: 0;
@@ -18,8 +18,7 @@ body {
     margin: 20px auto;  /* Center the container */
     padding: 30px;  /* More padding for larger screens */
     background-color: #FAF0E6;
-    border: 3px solid #556B2F
-    ;
+    border: 3px solid #556B2F;
     border-radius: 8px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     text-align: center;
@@ -120,7 +119,7 @@ a:hover {
     color: #000;
 }
 .status-btn { /* In-Progress Button */
-    background-color: green;
+    background-color: #08872B; /* GitHub Green 4 */
     color: #fff;
     font-size: 16px;
     padding: 10px;
@@ -131,7 +130,7 @@ a:hover {
     width: 48%;
 }
 .status-btn:hover {
-    background-color: #1f356b;
+    background-color: #5FED83; /* GitHub Green 3 */
 }
 .addNote-btn {
     background-color: #284389;
@@ -159,5 +158,7 @@ a:hover {
     width: 48%;
 }
 .close-tkt-btn:hover {
-background-color: #1f356b;
+background-color: #ff8080;
 }
+
+/* SCRIPTS - LABEL THEM WELL! - RE-USE WHERE POSSIBLE*/ 
