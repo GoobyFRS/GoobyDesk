@@ -12,9 +12,8 @@
     <title>GoobyDesk - Ticket Commander</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <!-- Style/CSS goes in the HTML5 head -->
-    <!-- <style></style> -->
 </head>
-<!-- <script src="{{ url_for('static', filename='ticket_controls.js') }}"></script> -->
+<script src="{{ url_for('static', filename='ticket_controls.js') }}"></script>
 <body>
     <div class="container">
         <div class="logo">
@@ -40,54 +39,7 @@
         <textarea id="noteContent" placeholder="Append a ticket note...."></textarea>
         <br>
         <button class="addNote-btn" onclick="submitNote('{{ ticket.ticket_number }}')">Add Note</button>
-        <!-- By keeping this script near the bottom of the page, this ensures all attributes load first.-->
-        <!-- Script to enable status buttons. -->
-        <script>
-            function updateTicketStatus(ticketId, newStatus) {
-                if (!ticketId) {
-                    alert("Ticket Number was NOT found. Try again.");
-                    return;  // Proper indentation
-                }
-        
-                fetch(`/ticket/${ticketId}/update_status/${newStatus}`, {  
-                    method: "POST"
-                })
-                .then(response => response.json())
-                .then(data => {
-                    alert(data.message);
-                    location.reload();  // Refresh page after update
-                })
-                .catch(error => console.error("Error:", error));
-            }
-        </script>
         <p class="footer-text">©2025 GoobyDesk, FOSS created by <a href="https://github.com/goobyfrs">GoobyFRS</a> | Logged In as: {{ loggedInTech }} | <a href="{{ url_for('dashboard') }}">Back to Dashboard</a></p>
     </div>
-<!-- Script to append a note to the ticket. -->
-    <script>
-        async function submitNote(ticketNumber) {
-            let noteContent = document.getElementById("noteContent").value.trim();
-            if (!noteContent) {
-                alert("Note content cannot be empty.");
-                return;
-            }
-        
-            try {
-                let response = await fetch(`/ticket/${ticketNumber}/append_note`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                    body: new URLSearchParams({ note_content: noteContent }) // Ensure the key is "note_content"
-                });
-            
-                let data = await response.json();  // Parse JSON response
-                if (!response.ok) throw new Error(data.message || "Unknown error");
-            
-                alert(data.message);
-                location.reload(); // Refresh to show the new note
-            } catch (error) {
-                console.error("Error:", error);
-                alert("Failed to add note. Please try again.");
-            }
-        }
-    </script>
 </body>
 </html>

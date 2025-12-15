@@ -9,7 +9,7 @@ from datetime import datetime
 #from local_config_loader import load_core_config
 #import fcntl # Unix file locking support. Not currently being used.
 
-BUILDID=str("0.7.4-beta-h")
+BUILDID=str("0.7.4-beta-i")
 
 load_dotenv(dotenv_path=".env")
 EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD") # App Password from Gmail or relevant email provider.
@@ -27,8 +27,6 @@ EMAIL_ACCOUNT = core_yaml_config["email"]["account"]
 IMAP_SERVER = core_yaml_config["email"]["imap_server"]
 SMTP_SERVER = core_yaml_config["email"]["smtp_server"]
 SMTP_PORT = core_yaml_config["email"]["smtp_port"]
-#DISCORD_ENABLED = core_yaml_config["discord"]["enabled"]
-#SLACK_ENABLED = core_yaml_config["slack"]["enabled"]
 
 app = Flask(__name__)
 app.secret_key = os.getenv("FLASKAPP_SECRET_KEY")
