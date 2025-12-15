@@ -10,104 +10,9 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge"> <!-- Force IE to use latest rendering engine available.-->
     <meta http-equiv="refresh" content="600"> <!-- 10 Minute Page Refresh -->
     <title>GoobyDesk - Ticket Commander</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <!-- Style/CSS goes in the HTML5 head -->
-    <style>
-        body {
-            background-color: #ffffff;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 
-                'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
-
-        .container {
-            max-width: 600px;
-            margin: 20px;
-            padding: 20px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            text-align: center;
-        }
-
-        .logo img {
-            width: 200px;
-            height: 90px;
-            margin-bottom: 20px;
-        }
-
-        h2 {
-            color: #284389;
-            font-size: 20px;
-            font-weight: 700;
-        }
-
-        .ticket-details {
-            text-align: left;
-            font-size: 16px;
-            line-height: 1.5;
-            color: #333;
-            margin-top: 15px;
-        }
-
-        .ticket-details strong {
-            color: #000;
-        }
-
-        .status-btn {
-            background-color: green;
-            color: #fff;
-            font-size: 16px;
-            padding: 10px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            margin-top: 15px;
-            width: 48%;
-        }
-
-        .status-btn:hover {
-            background-color: #1f356b;
-        }
-
-        .close-tkt-btn {
-            background-color: red;
-            color: #fff;
-            font-size: 16px;
-            padding: 10px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            margin-top: 15px;
-            width: 48%;
-        }
-        .close-tkt-btn:hover {
-        background-color: #1f356b;
-        }
-        .addNote-btn {
-            background-color: #284389;
-            color: #fff;
-            font-size: 16px;
-            padding: 10px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            margin-top: 15px;
-            width: 48%;
-        }
-        .addNote-btn:hover {
-            background-color: #A8C0E2;
-        }
-        .footer-text {
-            font-size: 12px;
-            color: #b7b7b7;
-            margin-top: 20px;
-        }
-    </style>
+    <!-- <style></style> -->
 </head>
 <body>
     <div class="container">
@@ -130,7 +35,9 @@
 
         <button class="status-btn" onclick="updateTicketStatus('{{ ticket.ticket_number }}', 'In-Progress')">Mark In-Progress</button>
         <button class="close-tkt-btn" onclick="updateTicketStatus('{{ ticket.ticket_number }}', 'Closed')">Close Ticket</button>
-        <textarea id="noteContent" placeholder="New note...."></textarea>
+        <br>
+        <textarea id="noteContent" placeholder="Append a ticket note...."></textarea>
+        <br>
         <button class="addNote-btn" onclick="submitNote('{{ ticket.ticket_number }}')">Add Note</button>
         <!-- By keeping this script near the bottom of the page, this ensures all attributes load first.-->
         <!-- Script to enable status buttons. -->

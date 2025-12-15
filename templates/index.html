@@ -20,121 +20,13 @@
     <meta name="twitter:image" content="https://raw.githubusercontent.com/GoobyFRS/GoobyDesk/refs/heads/main/static/GoobyDesk-color.webp">
 
     <!-- Performance Enhancements -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.bunny.net/css">
+    <link rel="preconnect" href="https://fonts.bunny.net/css" crossorigin>
 
     <title>GoobyDesk - Submit a Ticket</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <!-- Style/CSS goes in the HTML5 head -->
-    <!-- Fonts below include some Google Fonts. Includes MacOS, iOS, Chrome on MacOS, Windows Default, MacOS Default, and Generic Fallback.-->
-    <style>
-        body {
-            background-color: #ffffff;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 
-                'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
-
-        .container {
-            width: 70%;  /* Allows flexibility */
-            max-width: 1200px;  /* Expands on larger screens */
-            min-width: 320px;  /* Prevents it from getting too small */
-            margin: 20px auto;  /* Center the container */
-            padding: 30px;  /* More padding for larger screens */
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            text-align: center;
-            transition: all 0.3s ease-in-out;  /* Smooth resizing */
-        }
-
-        .logo img {
-            width: 200px;
-            height: 90px;
-            margin-bottom: 20px;
-        }
-
-        h2 {
-            color: #284389;
-            font-size: 20px;
-            font-weight: 700;
-        }
-
-        label {
-            font-size: 16px;
-            font-weight: 600;
-            display: block;
-            margin-top: 10px;
-            text-align: left;
-            color: #000;
-        }
-
-        input, select, textarea {
-            width: 100%;
-            padding: 4px;
-            margin-top: 5px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            font-size: 16px;
-        }
-
-        textarea {
-            height: 100px;
-            resize: both;
-        }
-
-        .submit-btn {
-            background-color: #284389;
-            color: #fff;
-            font-size: 16px;
-            padding: 10px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            margin-top: 15px;
-            width: 100%;
-        }
-
-        .submit-btn:hover {
-            background-color: #A8C0E2;
-        }
-        .alert {
-            background-color: green;
-            color: #fff;
-            font-size: 16px;
-            padding: 10px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            margin-top: 15px;
-            width: 48%;
-        }
-
-        .footer-text {
-            font-size: 12px;
-            color: #b7b7b7;
-            margin-top: 20px;
-        }
-        /* Dark Mode
-        body.dark-mode {
-            background-color: #121212;
-            color: #ffffff;
-        }       
-        /* Adjust Other UI Elements 
-        .dark-mode .card {
-            background-color: #1e1e1e;
-            border-color: #333;
-        }
-        .dark-mode .btn {
-            background-color: #444;
-            color: #fff;
-        }
-        */
-    </style>
+    <!--- <style></style> --->
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 <!-- Ticket Submission Confirmation Flash fade out.-->
 <script>
@@ -155,10 +47,10 @@
             <input type="text" id="name" name="requestor_name" placeholder="Jeremy Clarkson" minlength="2" maxlength="24" autocomplete="name" required>
 
             <label for="email">Your Email:</label>
-            <input type="email" id="email" name="requestor_email" placeholder="hammond@example.com" title="Provide a VALID contact address." minlength="6" maxlength="48" autocomplete="email" pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}" required>
+            <input type="email" id="email" name="requestor_email" placeholder="richard.hammond@example.com" title="Provide a VALID contact address." minlength="6" maxlength="48" autocomplete="email" pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}" required>
 
             <label for="subject">Ticket Title:</label>
-            <input type="text" id="subject" name="ticket_subject" placeholder="Replace Tires" minlength="4" maxlength="48" required>
+            <input type="text" id="subject" name="ticket_subject" placeholder="Replace Tires for Captain Slow" minlength="4" maxlength="48" required>
 
             <label for="message">Ticket Message:</label>
             <textarea id="message" name="ticket_message" placeholder="Please provide some detail in order to submit your request." minlength="4" maxlength="512" required></textarea>
@@ -200,7 +92,7 @@
             {% endfor %}
           {% endif %}
         {% endwith %}
-        <p class="footer-text">©2025 GoobyDesk, FOSS created by <a href="https://github.com/GoobyFRS">GoobyFRS</a> | <a href="{{ url_for('login') }}">Tech Login</a></p>
+        <p class="footer-text">©2025 GoobyDesk, FOSS created by <a href="https://github.com/GoobyFRS">GoobyFRS</a> | <a href="{{ url_for('login') }}">Technician Login</a></p>
     </div>
 </body>
 </html>
