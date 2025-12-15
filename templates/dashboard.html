@@ -17,7 +17,7 @@
     <!-- Style/CSS goes in the HTML5 head -->
     <!-- <style></style> -->
 </head>
-<!-- Start of the displayed HTML -->
+<script src="{{ url_for('static', filename='dashboard.js') }}"></script>
 <body>
     <div class="container">
         <div class="logo">
@@ -38,41 +38,11 @@
             <input type="text" id="ticketIdInput" placeholder="Close Ticket Number">
             <button class="submit-btn" button onclick="closeTicket()">Close Ticket</button>
         </div>
-        <!-- Below is the Javascript required for the close ticket button. -->
-        <script>
-            async function updateTicketStatus(ticketId, newStatus) { // Reusable function for status updates
-                ticketId = ticketId.trim();
-        
-                if (!ticketId) {
-                    alert("Ticket Number was NOT found. Try again.");
-                    return;
-                }
-        
-                try {
-                    let response = await fetch(`/ticket/${ticketId}/update_status/${newStatus}`, {
-                        method: "POST",
-                        headers: { "Accept": "application/json" }
-                    });
-        
-                    if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
-        
-                    let data = await response.json();
-                    alert(data.message);
-                    location.reload();  // Refresh dashboard after updating ticket.
-                } catch (error) {
-                    console.error("Error:", error);
-                    alert("An error occurred while updating the ticket. Please try again.");
-                }
-            }
-        
-            function closeTicket() {
-                let ticketId = document.getElementById("ticketIdInput").value;
-                updateTicketStatus(ticketId, "Closed");
-            }
-        </script>
         <br>
         <!-- Technician logout button -->
-        <a href="{{ url_for('logout') }}" class="submit-btn">Logout</a>
+        <form action="{{ url_for('logout') }}" method="GET">
+        <button type="submit" class="submit-btn">Logout</button>
+        </form>
         <!-- Footer Text -->
         <p class="footer-text">©2025 GoobyDesk, FOSS created by <a href="https://github.com/goobyfrs">GoobyFRS</a> | Logged In as: {{ loggedInTech }} | BuildID: {{ BUILDID }}</p>
     </div>
