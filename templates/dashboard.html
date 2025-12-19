@@ -8,16 +8,15 @@
     <meta name="robots" content="noindex, nofollow"> <!--Discourage Search Engine Indexing of this page-->
     <meta name="theme-color" content="#284389"> <!-- Mobile Browser stylized address bar.-->
     <meta http-equiv="X-UA-Compatible" content="IE=edge"> <!-- Force IE to use latest rendering engine available.-->
-    <meta http-equiv="refresh" content="600"> <!-- 10 Minute Page Refresh -->
+    <meta http-equiv="refresh" content="300"> <!-- 5 Minute Page Refresh -->
     <title>GoobyDesk - Technician Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <!-- Performance Enhancements -->
     <link rel="preconnect" href="https://fonts.bunny.net/css">
     <link rel="preconnect" href="https://fonts.bunny.net/css" crossorigin>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-    <!-- Style/CSS goes in the HTML5 head -->
-    <!-- <style></style> -->
+
 </head>
-<script src="{{ url_for('static', filename='dashboard.js') }}"></script>
+<script src="{{ url_for('static', filename='helpdesk.js') }}"></script>
 <body>
     <div class="container">
         <div class="logo">

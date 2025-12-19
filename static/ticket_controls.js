@@ -17,6 +17,7 @@ function updateTicketStatus(ticketId, newStatus) {
     })
     .catch(error => console.error("Error:", error));
 }
+
 /* Submit Note */
 async function submitNote(ticketNumber) {
     let noteContent = document.getElementById("noteContent").value.trim();

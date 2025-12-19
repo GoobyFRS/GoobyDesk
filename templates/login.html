@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <link rel="icon" type="image/x-icon" href="/static/favicon.ico"/>
+    <link rel="icon" type="image/x-icon" href="static/favicon.ico"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="author" content="Matt Faulkner">
     <meta name="robots" content="noindex, nofollow"> <!--Discourage Search Engine Indexing of this page-->
@@ -13,6 +13,12 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <!-- Style/CSS goes in the HTML5 head -->
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+
+<!-- Performance Enhancements -->
+<link rel="preconnect" href="https://fonts.bunny.net/css">
+<link rel="preconnect" href="https://fonts.bunny.net/css" crossorigin>
+<link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+
 </head>
 <body>
     <div class="container">
