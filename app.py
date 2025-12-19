@@ -6,7 +6,7 @@ import local_authentication_handler
 from dotenv import load_dotenv
 from datetime import datetime, timedelta
 
-BUILDID=str("0.7.5-beta-d")
+BUILDID=str("0.7.5-beta-e")
 
 load_dotenv(dotenv_path=".env")
 EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD") # App Password from Gmail or relevant email provider.
@@ -108,6 +108,7 @@ def load_employees():
         exit(107)
         return {} # represents an empty dictionary
     
+# Helper script for secure password hasing auto-migration.
 def save_employees(employees):
     with open(EMPLOYEE_FILE, "w") as emp_file_write_op:
         json.dump(employees, emp_file_write_op, indent=4)
