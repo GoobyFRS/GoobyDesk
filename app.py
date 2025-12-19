@@ -6,13 +6,18 @@ import local_authentication_handler
 from dotenv import load_dotenv
 from datetime import datetime, timedelta
 
-BUILDID=str("0.7.5-beta-e")
+BUILDID=str("0.8.0-beta-a")
 
 load_dotenv(dotenv_path=".env")
 EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD") # App Password from Gmail or relevant email provider.
 CF_TURNSTILE_SITE_KEY = os.getenv("CF_TURNSTILE_SITE_KEY") # REQUIRED for CAPTCHA functionality.
 CF_TURNSTILE_SECRET_KEY = os.getenv("CF_TURNSTILE_SECRET_KEY") # REQUIRED for CAPTCHA functionality.
 TAILSCALE_NOTIFY_EMAIL = os.getenv("TAILSCALE_NOTIFY_EMAIL")
+
+"""
+Rest in Peace Alex, July 2nd 2005 - December 14th 2024
+Rest in Peace Dave, August 15th 19XX - December 19th 2025
+"""
 
 core_yaml_config = local_config_loader.load_core_config()
 TICKETS_FILE = core_yaml_config["tickets_file"]
