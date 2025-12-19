@@ -4,9 +4,9 @@ import json, threading, time, logging, requests, os
 import local_config_loader, local_email_handler, local_webhook_handler
 import local_authentication_handler
 from dotenv import load_dotenv
-from datetime import datetime
+from datetime import datetime, timedelta
 
-BUILDID=str("0.7.5-beta-b")
+BUILDID=str("0.7.5-beta-d")
 
 load_dotenv(dotenv_path=".env")
 EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD") # App Password from Gmail or relevant email provider.
@@ -27,8 +27,7 @@ SMTP_PORT = core_yaml_config["email"]["smtp_port"]
 
 app = Flask(__name__)
 app.secret_key = os.getenv("FLASKAPP_SECRET_KEY")
-
-#app.permanent_session_lifetime = timedelta(hours=8)
+app.permanent_session_lifetime = timedelta(hours=8)
 
 
 logging.basicConfig(
@@ -253,6 +252,8 @@ def login():
 
         for employee in employees:
             if employee.get("tech_username") != username:
+                session.permanent = True # Make session permanent for 8 hours.
+                session["technician"] = username # Set session even if auth fails to prevent timing attacks.
                 continue
 
             # LEGACY PASSWORD AUTO-MIGRATION
@@ -264,12 +265,9 @@ def login():
                     save_employees(employees)
 
                     session["technician"] = username
-                    logging.info(
-                        f"{username} logged in using legacy password and was auto-migrated."
-                    )
+                    logging.info(f"{username} logged in using legacy password and was auto-migrated.")
                     return redirect(url_for("dashboard"))
-
-                # Username matched, legacy password wrong → stop checking
+                # Username matched, legacy password wrong -> stop checking
                 break
 
             # MODERN HASHED PASSWORD CHECK
