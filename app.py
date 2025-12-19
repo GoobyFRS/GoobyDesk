@@ -1,15 +1,12 @@
 #!/usr/bin/env python3
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify, flash
 import json, threading, time, logging, requests, os
-import local_config_loader
-import local_email_handler
-import local_webhook_handler
+import local_config_loader, local_email_handler, local_webhook_handler
+import local_authentication_handler
 from dotenv import load_dotenv
 from datetime import datetime
-#from local_config_loader import load_core_config
-#import fcntl # Unix file locking support. Not currently being used.
 
-BUILDID=str("0.7.5-beta-a")
+BUILDID=str("0.7.5-beta-b")
 
 load_dotenv(dotenv_path=".env")
 EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD") # App Password from Gmail or relevant email provider.
@@ -30,6 +27,9 @@ SMTP_PORT = core_yaml_config["email"]["smtp_port"]
 
 app = Flask(__name__)
 app.secret_key = os.getenv("FLASKAPP_SECRET_KEY")
+
+#app.permanent_session_lifetime = timedelta(hours=8)
+
 
 logging.basicConfig(
     filename=LOG_FILE,
@@ -73,8 +73,7 @@ def load_tickets():
         exit(106)
         return [] # represents an empty list.
 
-# This load_tickets function contains the file locking mechanism for Linux. Not currently being tested or developed.
-"""
+""" This load_tickets function contains the file locking mechanism for Linux. Not currently being tested or developed.
 def load_tickets(retries=5, delay=0.2):
    # Load tickets from JSON file with file locking and retry logic.
    for attempt in range(retries):
@@ -108,7 +107,12 @@ def load_employees():
     except FileNotFoundError:
         logging.debug("Employee Database file could not be located.")
         exit(107)
-        return {} # represents an empty dictionary.
+        return {} # represents an empty dictionary
+    
+def save_employees(employees):
+    with open(EMPLOYEE_FILE, "w") as emp_file_write_op:
+        json.dump(employees, emp_file_write_op, indent=4)
+    logging.debug("The employee database file was modified.")
 
 # Generate a new ticket number.
 def generate_ticket_number():
@@ -220,7 +224,7 @@ def home():
     return render_template("index.html", sitekey=CF_TURNSTILE_SITE_KEY)
 
 # Route/routine for the technician login page/process.
-@app.route("/login", methods=["GET", "POST"])
+"""@app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
         username = request.form["tech_username_box"] # query from HTML form name.
@@ -237,6 +241,51 @@ def login():
             else:
                 return render_template("404.html"), 404 # Send our custom 404 page.
         
+    return render_template("login.html", sitekey=CF_TURNSTILE_SITE_KEY)"""
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        username = request.form.get("tech_username_box", "").strip()
+        password = request.form.get("tech_password_box", "")
+
+        employees = load_employees()
+
+        for employee in employees:
+            if employee.get("tech_username") != username:
+                continue
+
+            # LEGACY PASSWORD AUTO-MIGRATION
+            if "tech_authcode" in employee:
+                if password == employee["tech_authcode"]:
+                    employee["password_hash"] = local_authentication_handler.hash_password(password)
+                    del employee["tech_authcode"]
+
+                    save_employees(employees)
+
+                    session["technician"] = username
+                    logging.info(
+                        f"{username} logged in using legacy password and was auto-migrated."
+                    )
+                    return redirect(url_for("dashboard"))
+
+                # Username matched, legacy password wrong → stop checking
+                break
+
+            # MODERN HASHED PASSWORD CHECK
+            stored_hash = employee.get("password_hash")
+            if stored_hash and local_authentication_handler.verify_password(password, stored_hash):
+                session["technician"] = username
+                logging.info(f"{username} logged in successfully.")
+                return redirect(url_for("dashboard"))
+
+            # Username matched but password incorrect
+            break
+
+        # If we reach here -> authentication failed
+        logging.warning(f"Failed login attempt for username: {username}")
+        return render_template("login.html", error="Invalid credentials.")
+
     return render_template("login.html", sitekey=CF_TURNSTILE_SITE_KEY)
 
 # Route/routine for rendering the core technician dashboard. Displays all Open and In-Progress tickets.
