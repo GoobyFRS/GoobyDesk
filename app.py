@@ -16,7 +16,7 @@ TAILSCALE_NOTIFY_EMAIL = os.getenv("TAILSCALE_NOTIFY_EMAIL")
 
 """
 Rest in Peace Alex, July 2nd 2005 - December 14th 2024
-Rest in Peace Dave, August 15th 19XX - December 19th 2025
+Rest in Peace Dave, August 15th 1967 - December 19th 2025
 """
 
 core_yaml_config = local_config_loader.load_core_config()
