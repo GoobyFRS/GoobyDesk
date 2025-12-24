@@ -4,8 +4,9 @@ import json, threading, time, logging, requests, os
 import local_config_loader, local_email_handler, local_webhook_handler, local_authentication_handler
 from dotenv import load_dotenv
 from datetime import datetime, timedelta
+from functools import wraps
 
-BUILDID=str("0.7.6-beta-e")
+BUILDID=str("0.7.6-beta-f")
 
 load_dotenv(dotenv_path=".env")
 EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD") # App Password from Gmail or relevant email provider.
@@ -145,6 +146,18 @@ else:
     logging.info("EMAIL_ENABLED is set to false. Skipping...")
 
 #threading.Thread(target=background_email_monitor, daemon=True).start()
+
+# Decorator to force authentication checking. Easy to append to routes.
+def technician_required(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        # Session-based auth check
+        if not session.get("technician"):
+            # Unauthorized access attempt
+            return render_template("403.html"), 403
+        # Authorized technician → proceed to the route
+        return func(*args, **kwargs)
+    return wrapper
 
 @app.route("/", methods=["GET", "POST"])
 def home():
@@ -300,6 +313,7 @@ def login():
 
 # Route/routine for rendering the core technician dashboard. Displays all Open and In-Progress tickets.
 @app.route("/dashboard")
+#@technician_required
 def dashboard():
     if not session.get("technician"): # Check for technician login cookie.
         return redirect(url_for("login")) #else redirect them to the login page.
@@ -311,6 +325,7 @@ def dashboard():
 
 # Route for viewing a ticket in the Ticket Commander view.
 @app.route("/ticket/<ticket_number>")
+#@technician_required
 def ticket_detail(ticket_number):
     if "technician" not in session:  # Validate the logged-in user cookie...
         return render_template("403.html"), 403  # Return our custom HTTP 403 page.
@@ -384,7 +399,8 @@ def add_ticket_note(ticket_number):
 # ABOVE THIS LINE SHOULD ONLY BE TECHNICIAN/TICKETING PAGES ONLY!
 
 @app.route("/reports_home")
-def reporting_home():
+@technician_required
+def reports_home():
     # Enforce technician authentication
     if not session.get("technician"):
         return render_template("403.html"), 403
@@ -602,5 +618,4 @@ def internal_server_error(e):
     return render_template("500.html"), 500
 
 if __name__ == "__main__":
-    logging.info("GoobyDesk Flask application is starting up.")
     app.run() #debug=True

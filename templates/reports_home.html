@@ -2,31 +2,60 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <link rel="icon" type="image/x-icon" href="static/favicon.ico"/>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="author" content="Matt Faulkner">
-    <meta name="robots" content="noindex, nofollow"> <!--Discourage Search Engine Indexing of this page-->
-    <meta name="theme-color" content="#284389"> <!-- Mobile Browser stylized address bar.-->
-    <meta http-equiv="X-UA-Compatible" content="IE=edge"> <!-- Force IE to use latest rendering engine available.-->
-    <title>Reports Home - GoobyDesk</title>
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="theme-color" content="#284389">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>GoobyDesk – Reporting</title>
+
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-    <style></style>
+    <link rel="preconnect" href="https://fonts.bunny.net/css">
+    <link rel="preconnect" href="https://fonts.bunny.net/css" crossorigin>
 </head>
 
-<h2>GoobyDesk Reporting</h2>
+<body>
+    <div class="container">
 
-<ul>
-  <li><strong>Total Tickets:</strong> {{ total_tickets }}</li>
-  <li><strong>Open:</strong> {{ open_tickets }}</li>
-  <li><strong>In-Progress:</strong> {{ in_progress_tickets }}</li>
-  <li><strong>Closed:</strong> {{ closed_tickets }}</li>
-</ul>
+        <!-- Logo -->
+        <div class="logo">
+            <img src="https://raw.githubusercontent.com/GoobyFRS/GoobyDesk/refs/heads/main/static/GoobyDesk-color.webp"
+                 alt="GoobyDesk Logo">
+        </div>
 
-<h3>Recent Activity</h3>
-<ul>
-  <li>Last 60 days: {{ last_60_days }}</li>
-  <li>Last 30 days: {{ last_30_days }}</li>
-  <li>Last 14 days: {{ last_14_days }}</li>
-  <li>Last 7 days: {{ last_7_days }}</li>
-</ul>
+        <h2>GoobyDesk Reporting</h2>
 
+        <!-- Ticket Summary -->
+        <ul class="ticket-list">
+            <li><strong>Total Tickets:</strong> {{ total_tickets }}</li>
+            <li><strong>Open:</strong> {{ open_tickets }}</li>
+            <li><strong>In-Progress:</strong> {{ in_progress_tickets }}</li>
+            <li><strong>Closed:</strong> {{ closed_tickets }}</li>
+        </ul>
+
+        <h2>Recent Activity</h2>
+
+        <ul class="ticket-list">
+            <li><strong>Last 60 Days:</strong> {{ last_60_days }}</li>
+            <li><strong>Last 30 Days:</strong> {{ last_30_days }}</li>
+            <li><strong>Last 14 Days:</strong> {{ last_14_days }}</li>
+            <li><strong>Last 7 Days:</strong> {{ last_7_days }}</li>
+        </ul>
+
+        <!-- Navigation -->
+        <form action="{{ url_for('dashboard') }}" method="GET">
+            <button type="submit" class="submit-btn">Back to Dashboard</button>
+        </form>
+
+        <!-- Footer -->
+        <p class="footer-text">
+            ©2025 GoobyDesk, FOSS created by
+            <a href="https://github.com/goobyfrs">GoobyFRS</a>
+            | Logged In as: {{ loggedInTech }}
+            | BuildID: {{ BUILDID }}
+        </p>
+
+    </div>
+</body>
+</html>
