@@ -8,7 +8,7 @@
     <meta name="robots" content="noindex, nofollow">
     <meta name="theme-color" content="#284389">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>GoobyDesk Reporting</title>
+    <title>GoobyDesk Reporting Home</title>
 
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <link rel="preconnect" href="https://fonts.bunny.net/css">
@@ -25,22 +25,15 @@
         </div>
 
         <h2>GoobyDesk Reporting</h2>
-        <div class="kpi-grid">
-            <div class="kpi-card">
-                <h3>Total Tickets</h3>
-                <div class="kpi-value">{{ total_tickets }}</div>
-            </div>
-        
+        <div class="kpi-grid">        
             <div class="kpi-card">
                 <h3>Open</h3>
                 <div class="kpi-value">{{ open_tickets }}</div>
             </div>
-        
             <div class="kpi-card">
                 <h3>In-Progress</h3>
                 <div class="kpi-value">{{ in_progress_tickets }}</div>
             </div>
-        
             <div class="kpi-card">
                 <h3>Closed</h3>
                 <div class="kpi-value">{{ closed_tickets }}</div>
@@ -55,7 +48,7 @@
             <li><strong>Closed:</strong> {{ closed_tickets }}</li>
         </ul>
 
-        <h2>Recent Activity</h2>
+        <h2>Trends over Time</h2>
 
         <ul class="ticket-list">
             <li><strong>Last 60 Days:</strong> {{ last_60_days }}</li>
@@ -73,10 +66,7 @@
         <!-- Footer -->
         <p class="footer-text">
             ©2025 GoobyDesk, FOSS created by
-            <a href="https://github.com/goobyfrs">GoobyFRS</a>
-            | Logged In as: {{ loggedInTech }}
-            | BuildID: {{ BUILDID }}
-        </p>
+            <a href="https://github.com/goobyfrs">GoobyFRS</a> | Logged In as: {{ loggedInTech }} | BuildID: {{ BUILDID }} | <a href="{{ url_for('dashboard') }}">Back to Dashboard</a></p>
 
     </div>
 </body>

@@ -22,7 +22,7 @@
         <div class="logo">
             <img src="https://raw.githubusercontent.com/GoobyFRS/GoobyDesk/refs/heads/main/static/GoobyDesk-color.webp" alt=" GoobyDesk Logo">
         </div>
-        <h2>GoobyDesk Technician Dashboard</h2>
+        <h2>Technician Dashboard</h2>
         <ul class="ticket-list">
             {% for ticket in tickets %}
                 <li>
@@ -43,7 +43,11 @@
         <button type="submit" class="submit-btn">Logout</button>
         </form>
         <!-- Footer Text -->
-        <p class="footer-text">©2025 GoobyDesk, FOSS created by <a href="https://github.com/goobyfrs">GoobyFRS</a> | Logged In as: {{ loggedInTech }} | BuildID: {{ BUILDID }}</p>
+        <p class="footer-text">©2025 GoobyDesk, FOSS created by <a href="https://github.com/goobyfrs">GoobyFRS</a> | Logged In as: {{ loggedInTech }} | BuildID: {{ BUILDID }} |
+            <br>
+            | <a href="{{ url_for('reports_home') }}">Reporting Home</a>
+        
+        </p>
     </div>
 </body>
 </html>
