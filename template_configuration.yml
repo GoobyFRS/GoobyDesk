@@ -1,0 +1,30 @@
+# ==========================================
+# GoobyDesk TEMPLATE Core Configuration - DO NOT MODIFY THIS FILE
+# ==========================================
+# Core Files
+tickets_file: "./tickets.json"
+employee_file: "./employee.json"
+
+# Logging
+logging:
+  level: "INFO"         # Valid: DEBUG, INFO, WARNING, ERROR, CRITICAL
+  file: "/var/log/goobydesk.log" # Relative or absolute path
+
+# Email System
+email:
+  enabled: false  # true / false - false by default.
+  account: ""   # Username/Email Address - Password should be stored in .env
+  imap_server: ""
+  imap_port: 993
+  smtp_server: ""
+  smtp_port: 587
+
+# Discord Support
+discord:
+  enabled: false  # true / false - false by default.
+  webhook_url: ""
+
+# Slack Support
+slack:
+  enabled: false  # true / false - false by default.
+  webhook_url: ""

@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 from datetime import datetime, timedelta
 from functools import wraps
 
-BUILDID=str("0.7.7-beta-d")
+BUILDID=str("0.7.7-beta-e")
 
 load_dotenv(dotenv_path=".env")
 EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD") # App Password from Gmail or relevant email provider.
@@ -467,7 +467,9 @@ def export_tickets_csv():
         "Ticket Number",
         "Subject",
         "Status",
-        "Submission Date"
+        "Submission Date",
+        "Closed By",
+        "Closure Date"
     ])
 
     # Rows
@@ -476,7 +478,9 @@ def export_tickets_csv():
             ticket.get("ticket_number", ""),
             ticket.get("ticket_subject", ""),
             ticket.get("ticket_status", ""),
-            ticket.get("submission_date", "")
+            ticket.get("submission_date", ""),
+            ticket.get("closed_by", ""),
+            ticket.get("closure_date", "")
         ])
     output.seek(0)
     return Response(output, mimetype="text/csv", headers={"Content-Disposition": "attachment; filename=goobydesk_tickets_report_basic.csv"})
