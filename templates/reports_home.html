@@ -25,6 +25,27 @@
         </div>
 
         <h2>GoobyDesk Reporting</h2>
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <h3>Total Tickets</h3>
+                <div class="kpi-value">{{ total_tickets }}</div>
+            </div>
+        
+            <div class="kpi-card">
+                <h3>Open</h3>
+                <div class="kpi-value">{{ open_tickets }}</div>
+            </div>
+        
+            <div class="kpi-card">
+                <h3>In-Progress</h3>
+                <div class="kpi-value">{{ in_progress_tickets }}</div>
+            </div>
+        
+            <div class="kpi-card">
+                <h3>Closed</h3>
+                <div class="kpi-value">{{ closed_tickets }}</div>
+            </div>
+        </div>
 
         <!-- Ticket Summary -->
         <ul class="ticket-list">
@@ -42,6 +63,10 @@
             <li><strong>Last 14 Days:</strong> {{ last_14_days }}</li>
             <li><strong>Last 7 Days:</strong> {{ last_7_days }}</li>
         </ul>
+        <form action="{{ url_for('export_tickets_csv') }}" method="GET">
+            <button type="submit" class="submit-btn">Export Tickets (CSV)</button>
+        </form>
+
 
         <!-- Navigation -->
         <form action="{{ url_for('dashboard') }}" method="GET">

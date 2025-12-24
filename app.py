@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 from datetime import datetime, timedelta
 from functools import wraps
 
-BUILDID=str("0.7.6-beta-f")
+BUILDID=str("0.7.7-beta-a")
 
 load_dotenv(dotenv_path=".env")
 EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD") # App Password from Gmail or relevant email provider.
@@ -313,11 +313,8 @@ def login():
 
 # Route/routine for rendering the core technician dashboard. Displays all Open and In-Progress tickets.
 @app.route("/dashboard")
-#@technician_required
+@technician_required
 def dashboard():
-    if not session.get("technician"): # Check for technician login cookie.
-        return redirect(url_for("login")) #else redirect them to the login page.
-    
     tickets = load_tickets()
     # Filtering out tickets with the Closed Status on the main Dashboard.
     open_tickets = [ticket for ticket in tickets if ticket["ticket_status"].lower() != "closed"]
@@ -325,11 +322,8 @@ def dashboard():
 
 # Route for viewing a ticket in the Ticket Commander view.
 @app.route("/ticket/<ticket_number>")
-#@technician_required
+@technician_required
 def ticket_detail(ticket_number):
-    if "technician" not in session:  # Validate the logged-in user cookie...
-        return render_template("403.html"), 403  # Return our custom HTTP 403 page.
-
     tickets = load_tickets()
     ticket = next((t for t in tickets if t["ticket_number"] == ticket_number), None)
     
@@ -340,6 +334,7 @@ def ticket_detail(ticket_number):
 
 # Route for updating a ticket. Called from Dashboard and Ticket Commander.
 @app.route("/ticket/<ticket_number>/update_status/<ticket_status>", methods=["POST"])
+@technician_required
 def update_ticket_status(ticket_number, ticket_status):
     logging.info(f"{ticket_number} status has been changed to {ticket_status}.")
     
@@ -379,6 +374,7 @@ def update_ticket_status(ticket_number, ticket_status):
 
 # Route for appending a new note to a ticket.
 @app.route("/ticket/<ticket_number>/append_note", methods=["POST"])
+@technician_required
 def add_ticket_note(ticket_number):
     new_tkt_note = request.form.get("note_content")  # Ensure the key matches the JS request
 
@@ -401,9 +397,6 @@ def add_ticket_note(ticket_number):
 @app.route("/reports_home")
 @technician_required
 def reports_home():
-    # Enforce technician authentication
-    if not session.get("technician"):
-        return render_template("403.html"), 403
 
     tickets = load_tickets()
     now = datetime.now()
@@ -449,8 +442,7 @@ def reports_home():
         except (KeyError, ValueError):
             logging.warning("REPORTING - Invalid submission_date on ticket")
 
-    return render_template(
-        "reports_home.html",
+    return render_template("reports_home.html",
         total_tickets=total_tickets,
         open_tickets=status_counts["Open"],
         in_progress_tickets=status_counts["In-Progress"],
@@ -459,6 +451,8 @@ def reports_home():
         last_30_days=time_buckets["last_30_days"],
         last_14_days=time_buckets["last_14_days"],
         last_7_days=time_buckets["last_7_days"],
+        loggedInTech=session["technician"], 
+        BUILDID=BUILDID
     )
 
 # BELOW THIS LINE IS RESERVED FOR LOGOUT AND API INGEST ROUTES ONLY!
