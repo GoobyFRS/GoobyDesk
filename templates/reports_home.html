@@ -17,13 +17,11 @@
 
 <body>
     <div class="container">
-
         <!-- Logo -->
         <div class="logo">
             <img src="https://raw.githubusercontent.com/GoobyFRS/GoobyDesk/refs/heads/main/static/GoobyDesk-color.webp"
                  alt="GoobyDesk Logo">
         </div>
-
         <h2>GoobyDesk Reporting</h2>
         <div class="kpi-grid">        
             <div class="kpi-card">
@@ -39,7 +37,6 @@
                 <div class="kpi-value">{{ closed_tickets }}</div>
             </div>
         </div>
-
         <!-- Ticket Summary -->
         <ul class="ticket-list">
             <li><strong>Total Tickets:</strong> {{ total_tickets }}</li>
@@ -57,16 +54,13 @@
             <li><strong>Last 7 Days:</strong> {{ last_7_days }}</li>
         </ul>
 
-
         <!-- Navigation -->
         <form action="{{ url_for('dashboard') }}" method="GET">
             <button type="submit" class="submit-btn">Back to Dashboard</button>
         </form>
 
         <!-- Footer -->
-        <p class="footer-text">
-            ©2025 GoobyDesk, FOSS created by
-            <a href="https://github.com/goobyfrs">GoobyFRS</a> | Logged In as: {{ loggedInTech }} | BuildID: {{ BUILDID }} | <a href="{{ url_for('dashboard') }}">Back to Dashboard</a></p>
+        <p class="footer-text">©2025 GoobyDesk, FOSS created by<a href="https://github.com/goobyfrs">GoobyFRS</a> | Logged In as: {{ loggedInTech }} | BuildID: {{ BUILDID }} | <a href="{{ url_for('dashboard') }}">Back to Dashboard</a></p>
 
     </div>
 </body>

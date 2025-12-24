@@ -12,6 +12,8 @@ The Ultimate Simple, Lightweight, Databaseless Service Desk for Home Labbers, Fa
 
 GoobyDesk is a Python3, Flask-based web application. Leverages Cloudflare Turnstile for Anti-Spam/Brute force protection. It has support for multiple technicians. It can send and receive email replies as well as send notifications to Slack and Discord! Accepts incoming webhooks from Tailscale and Uptime-Kuma!
 
+> Lightweight, Readable, Ops-Friendly
+
 Mobile-friendly landing page with lightweight ticket submission.
 
 - Requestor Name
