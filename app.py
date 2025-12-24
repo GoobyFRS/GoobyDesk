@@ -1,18 +1,23 @@
 #!/usr/bin/env python3
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify, flash
 import json, threading, time, logging, requests, os
-import local_config_loader, local_email_handler, local_webhook_handler
-import local_authentication_handler
+import local_config_loader, local_email_handler, local_webhook_handler, local_authentication_handler
 from dotenv import load_dotenv
 from datetime import datetime, timedelta
+from functools import wraps
 
-BUILDID=str("0.7.5-beta-e")
+BUILDID=str("0.7.6-beta-f")
 
 load_dotenv(dotenv_path=".env")
 EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD") # App Password from Gmail or relevant email provider.
 CF_TURNSTILE_SITE_KEY = os.getenv("CF_TURNSTILE_SITE_KEY") # REQUIRED for CAPTCHA functionality.
 CF_TURNSTILE_SECRET_KEY = os.getenv("CF_TURNSTILE_SECRET_KEY") # REQUIRED for CAPTCHA functionality.
 TAILSCALE_NOTIFY_EMAIL = os.getenv("TAILSCALE_NOTIFY_EMAIL")
+
+"""
+Rest in Peace Alex, July 2nd 2005 - December 14th 2024
+Rest in Peace Dave, August 15th 1967 - December 19th 2025
+"""
 
 core_yaml_config = local_config_loader.load_core_config()
 TICKETS_FILE = core_yaml_config["tickets_file"]
@@ -27,8 +32,15 @@ SMTP_PORT = core_yaml_config["email"]["smtp_port"]
 
 app = Flask(__name__)
 app.secret_key = os.getenv("FLASKAPP_SECRET_KEY")
-app.permanent_session_lifetime = timedelta(hours=8)
+app.permanent_session_lifetime = timedelta(hours=4)
 
+app.config.update(
+    SESSION_COOKIE_NAME="goobies_cookie",
+    SESSION_COOKIE_HTTPONLY=True, # XSS Cookie Theft Prevention
+    SESSION_COOKIE_SECURE=not app.debug, 
+    SESSION_COOKIE_SAMESITE="Lax", # Strict, Lax, None
+    SESSION_REFRESH_EACH_REQUEST=True
+)
 
 logging.basicConfig(
     filename=LOG_FILE,
@@ -135,6 +147,18 @@ else:
 
 #threading.Thread(target=background_email_monitor, daemon=True).start()
 
+# Decorator to force authentication checking. Easy to append to routes.
+def technician_required(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        # Session-based auth check
+        if not session.get("technician"):
+            # Unauthorized access attempt
+            return render_template("403.html"), 403
+        # Authorized technician → proceed to the route
+        return func(*args, **kwargs)
+    return wrapper
+
 @app.route("/", methods=["GET", "POST"])
 def home():
     if request.method == "POST":
@@ -223,7 +247,7 @@ def home():
     # Refresh and Reload the Home/Index
     return render_template("index.html", sitekey=CF_TURNSTILE_SITE_KEY)
 
-# Route/routine for the technician login page/process.
+# The old route for the technician login page/process. This has been depricated as of v0.7.5. Consider removing this code.
 """@app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
@@ -253,8 +277,8 @@ def login():
 
         for employee in employees:
             if employee.get("tech_username") != username:
-                session.permanent = True # Make session permanent for 8 hours.
-                session["technician"] = username # Set session even if auth fails to prevent timing attacks.
+                session.permanent = True # Make session permanent for 'x' time defined above in app.config.
+                session["technician"] = username # Define a session even if auth fails to prevent timing attacks.
                 continue
 
             # LEGACY PASSWORD AUTO-MIGRATION
@@ -289,6 +313,7 @@ def login():
 
 # Route/routine for rendering the core technician dashboard. Displays all Open and In-Progress tickets.
 @app.route("/dashboard")
+#@technician_required
 def dashboard():
     if not session.get("technician"): # Check for technician login cookie.
         return redirect(url_for("login")) #else redirect them to the login page.
@@ -300,6 +325,7 @@ def dashboard():
 
 # Route for viewing a ticket in the Ticket Commander view.
 @app.route("/ticket/<ticket_number>")
+#@technician_required
 def ticket_detail(ticket_number):
     if "technician" not in session:  # Validate the logged-in user cookie...
         return render_template("403.html"), 403  # Return our custom HTTP 403 page.
@@ -370,7 +396,74 @@ def add_ticket_note(ticket_number):
 
     return jsonify({"message": "Ticket not found."}), 404
 
+# ABOVE THIS LINE SHOULD ONLY BE TECHNICIAN/TICKETING PAGES ONLY!
+
+@app.route("/reports_home")
+@technician_required
+def reports_home():
+    # Enforce technician authentication
+    if not session.get("technician"):
+        return render_template("403.html"), 403
+
+    tickets = load_tickets()
+    now = datetime.now()
+
+    # Ticket counters
+    total_tickets = len(tickets)
+
+    status_counts = {
+        "Open": 0,
+        "In-Progress": 0,
+        "Closed": 0,
+    }
+
+    time_buckets = {
+        "last_60_days": 0,
+        "last_30_days": 0,
+        "last_14_days": 0,
+        "last_7_days": 0,
+    }
+
+    for ticket in tickets:
+        # ---- Status counts ----
+        status = ticket.get("ticket_status")
+        if status in status_counts:
+            status_counts[status] += 1
+
+        # ---- Time-based counts ----
+        try:
+            submitted_at = datetime.strptime(
+                ticket["submission_date"], "%Y-%m-%d %H:%M:%S"
+            )
+            age = now - submitted_at
+
+            if age <= timedelta(days=60):
+                time_buckets["last_60_days"] += 1
+            if age <= timedelta(days=30):
+                time_buckets["last_30_days"] += 1
+            if age <= timedelta(days=14):
+                time_buckets["last_14_days"] += 1
+            if age <= timedelta(days=7):
+                time_buckets["last_7_days"] += 1
+
+        except (KeyError, ValueError):
+            logging.warning("REPORTING - Invalid submission_date on ticket")
+
+    return render_template(
+        "reports_home.html",
+        total_tickets=total_tickets,
+        open_tickets=status_counts["Open"],
+        in_progress_tickets=status_counts["In-Progress"],
+        closed_tickets=status_counts["Closed"],
+        last_60_days=time_buckets["last_60_days"],
+        last_30_days=time_buckets["last_30_days"],
+        last_14_days=time_buckets["last_14_days"],
+        last_7_days=time_buckets["last_7_days"],
+    )
+
+# BELOW THIS LINE IS RESERVED FOR LOGOUT AND API INGEST ROUTES ONLY!
 # Removes the session cookie from the user browser, sending the Technician/user back to the login page.
+
 @app.route("/logout")
 def logout():
     session.pop("technician", None)
@@ -519,6 +612,10 @@ def forbidden(e):
 def page_not_found(e):
     return render_template("404.html"), 404
 
+# Handles 500 errors.
+@app.errorhandler(500)
+def internal_server_error(e):
+    return render_template("500.html"), 500
+
 if __name__ == "__main__":
-    logging.info("GoobyDesk Flask application is starting up.")
     app.run() #debug=True
