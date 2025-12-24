@@ -5,7 +5,7 @@ import local_config_loader, local_email_handler, local_webhook_handler, local_au
 from dotenv import load_dotenv
 from datetime import datetime, timedelta
 
-BUILDID=str("0.7.6-beta-d")
+BUILDID=str("0.7.6-beta-e")
 
 load_dotenv(dotenv_path=".env")
 EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD") # App Password from Gmail or relevant email provider.
@@ -382,10 +382,68 @@ def add_ticket_note(ticket_number):
     return jsonify({"message": "Ticket not found."}), 404
 
 # ABOVE THIS LINE SHOULD ONLY BE TECHNICIAN/TICKETING PAGES ONLY!
-"""
-@app.route("reporting_home")
-def reporting_home(ticket_number):
-"""
+
+@app.route("/reports_home")
+def reporting_home():
+    # Enforce technician authentication
+    if not session.get("technician"):
+        return render_template("403.html"), 403
+
+    tickets = load_tickets()
+    now = datetime.now()
+
+    # Ticket counters
+    total_tickets = len(tickets)
+
+    status_counts = {
+        "Open": 0,
+        "In-Progress": 0,
+        "Closed": 0,
+    }
+
+    time_buckets = {
+        "last_60_days": 0,
+        "last_30_days": 0,
+        "last_14_days": 0,
+        "last_7_days": 0,
+    }
+
+    for ticket in tickets:
+        # ---- Status counts ----
+        status = ticket.get("ticket_status")
+        if status in status_counts:
+            status_counts[status] += 1
+
+        # ---- Time-based counts ----
+        try:
+            submitted_at = datetime.strptime(
+                ticket["submission_date"], "%Y-%m-%d %H:%M:%S"
+            )
+            age = now - submitted_at
+
+            if age <= timedelta(days=60):
+                time_buckets["last_60_days"] += 1
+            if age <= timedelta(days=30):
+                time_buckets["last_30_days"] += 1
+            if age <= timedelta(days=14):
+                time_buckets["last_14_days"] += 1
+            if age <= timedelta(days=7):
+                time_buckets["last_7_days"] += 1
+
+        except (KeyError, ValueError):
+            logging.warning("REPORTING - Invalid submission_date on ticket")
+
+    return render_template(
+        "reporting.html",
+        total_tickets=total_tickets,
+        open_tickets=status_counts["Open"],
+        in_progress_tickets=status_counts["In-Progress"],
+        closed_tickets=status_counts["Closed"],
+        last_60_days=time_buckets["last_60_days"],
+        last_30_days=time_buckets["last_30_days"],
+        last_14_days=time_buckets["last_14_days"],
+        last_7_days=time_buckets["last_7_days"],
+    )
 
 # BELOW THIS LINE IS RESERVED FOR LOGOUT AND API INGEST ROUTES ONLY!
 # Removes the session cookie from the user browser, sending the Technician/user back to the login page.
