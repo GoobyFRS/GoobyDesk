@@ -39,10 +39,10 @@
         </div>
         <!-- Ticket Summary -->
         <ul class="ticket-list">
-            <li><strong>Total Tickets:</strong> {{ total_tickets }}</li>
-            <li><strong>Open:</strong> {{ open_tickets }}</li>
+            <li><strong>Lifetime Tickets:</strong> {{ total_tickets }}</li>
+            <li><strong>Lifetime Closed:</strong> {{ closed_tickets }}</li>
+            <li><strong>Tickets Open:</strong> {{ open_tickets }}</li>
             <li><strong>In-Progress:</strong> {{ in_progress_tickets }}</li>
-            <li><strong>Closed:</strong> {{ closed_tickets }}</li>
         </ul>
 
         <h2>Trends over Time</h2>
@@ -58,7 +58,9 @@
         <form action="{{ url_for('dashboard') }}" method="GET">
             <button type="submit" class="submit-btn">Back to Dashboard</button>
         </form>
-
+        <form action="{{ url_for('export_tickets_csv') }}" method="GET">
+            <button type="submit" class="submit-btn">Export CSV Report</button>
+        </form>
         <!-- Footer -->
         <p class="footer-text">©2025 GoobyDesk, FOSS created by<a href="https://github.com/goobyfrs">GoobyFRS</a> | Logged In as: {{ loggedInTech }} | BuildID: {{ BUILDID }} | <a href="{{ url_for('dashboard') }}">Back to Dashboard</a></p>
 
