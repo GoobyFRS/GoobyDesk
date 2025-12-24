@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify, flash
 import json, threading, time, logging, requests, os
-import local_config_loader, local_email_handler, local_webhook_handler
-import local_authentication_handler
+import local_config_loader, local_email_handler, local_webhook_handler, local_authentication_handler
 from dotenv import load_dotenv
 from datetime import datetime, timedelta
 
-BUILDID=str("0.8.0-beta-a")
+BUILDID=str("0.7.6-beta-c")
 
 load_dotenv(dotenv_path=".env")
 EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD") # App Password from Gmail or relevant email provider.
@@ -32,8 +31,15 @@ SMTP_PORT = core_yaml_config["email"]["smtp_port"]
 
 app = Flask(__name__)
 app.secret_key = os.getenv("FLASKAPP_SECRET_KEY")
-app.permanent_session_lifetime = timedelta(hours=8)
+app.permanent_session_lifetime = timedelta(hours=4)
 
+app.config.update(
+    SESSION_COOKIE_NAME="goobies_cookie",
+    SESSION_COOKIE_HTTPONLY=True, # XSS Cookie Theft Prevention
+    SESSION_COOKIE_SECURE=not app.debug, 
+    SESSION_COOKIE_SAMESITE="Lax", # Strict, Lax, None
+    SESSION_REFRESH_EACH_REQUEST=True
+)
 
 logging.basicConfig(
     filename=LOG_FILE,
