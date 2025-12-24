@@ -5,7 +5,7 @@ import local_config_loader, local_email_handler, local_webhook_handler, local_au
 from dotenv import load_dotenv
 from datetime import datetime, timedelta
 
-BUILDID=str("0.7.6-beta-c")
+BUILDID=str("0.7.6-beta-d")
 
 load_dotenv(dotenv_path=".env")
 EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD") # App Password from Gmail or relevant email provider.
@@ -234,7 +234,7 @@ def home():
     # Refresh and Reload the Home/Index
     return render_template("index.html", sitekey=CF_TURNSTILE_SITE_KEY)
 
-# Route/routine for the technician login page/process.
+# The old route for the technician login page/process. This has been depricated as of v0.7.5. Consider removing this code.
 """@app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
@@ -264,8 +264,8 @@ def login():
 
         for employee in employees:
             if employee.get("tech_username") != username:
-                session.permanent = True # Make session permanent for 8 hours.
-                session["technician"] = username # Set session even if auth fails to prevent timing attacks.
+                session.permanent = True # Make session permanent for 'x' time defined above in app.config.
+                session["technician"] = username # Define a session even if auth fails to prevent timing attacks.
                 continue
 
             # LEGACY PASSWORD AUTO-MIGRATION
@@ -381,7 +381,15 @@ def add_ticket_note(ticket_number):
 
     return jsonify({"message": "Ticket not found."}), 404
 
+# ABOVE THIS LINE SHOULD ONLY BE TECHNICIAN/TICKETING PAGES ONLY!
+"""
+@app.route("reporting_home")
+def reporting_home(ticket_number):
+"""
+
+# BELOW THIS LINE IS RESERVED FOR LOGOUT AND API INGEST ROUTES ONLY!
 # Removes the session cookie from the user browser, sending the Technician/user back to the login page.
+
 @app.route("/logout")
 def logout():
     session.pop("technician", None)
@@ -529,6 +537,11 @@ def forbidden(e):
 @app.errorhandler(404)
 def page_not_found(e):
     return render_template("404.html"), 404
+
+# Handles 500 errors.
+@app.errorhandler(500)
+def internal_server_error(e):
+    return render_template("500.html"), 500
 
 if __name__ == "__main__":
     logging.info("GoobyDesk Flask application is starting up.")
