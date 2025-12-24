@@ -434,7 +434,7 @@ def reporting_home():
             logging.warning("REPORTING - Invalid submission_date on ticket")
 
     return render_template(
-        "reporting.html",
+        "reports_home.html",
         total_tickets=total_tickets,
         open_tickets=status_counts["Open"],
         in_progress_tickets=status_counts["In-Progress"],
