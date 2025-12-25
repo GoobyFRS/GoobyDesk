@@ -1,4 +1,8 @@
 # MY IGNORED FILES
+core_configuration.yml
+employee.json
+tickets.json
+goobydesk.log
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
