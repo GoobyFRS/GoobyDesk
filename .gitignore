@@ -4,7 +4,7 @@ employee.json
 tickets.json
 goobydesk.log
 # My Data Folder - To be used for perma-configs in the future.
-#my_data/
+my_data/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
