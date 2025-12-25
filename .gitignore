@@ -1,7 +1,5 @@
 # MY IGNORED FILES
-employee.json
-tickets.json
-goobydesk.log
+my_data/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
