@@ -1,5 +1,5 @@
 #!/bin/bash
-# GoobyDesk Production Setup Script for Debian 12 / Ubuntu 24.04 LTS
+# GoobyDesk Production Setup Script for Debian 12 / Ubuntu 24.04 LTS 
 # This script automates the deployment process for VPS environments
 
 set -e  # Exit on any error
@@ -105,12 +105,12 @@ check_dependencies() {
     fi
 }
 
-# Setup directory structure
+# Setup directory structure and clone repository
 setup_directories() {
     print_header "Setting Up Directory Structure"
     
-    if [ -d "$APP_DIR" ]; then
-        print_warning "Directory $APP_DIR already exists"
+    if [ -d "$APP_DIR" ] && [ "$(ls -A $APP_DIR)" ]; then
+        print_warning "Directory $APP_DIR already exists and is not empty"
         read -p "Continue and potentially overwrite files? (y/N): " -n 1 -r
         echo
         if [[ ! $REPLY =~ ^[Yy]$ ]]; then
@@ -133,33 +133,46 @@ setup_directories() {
     print_success "Directory structure ready"
 }
 
-# Clone or update repository
+# Clone repository directly into APP_DIR
 clone_repository() {
     print_header "Cloning Repository"
     
     cd "$APP_DIR"
     
-    if [ -d "$APP_DIR/GoobyDesk" ]; then
-        print_warning "Repository already exists"
+    # Check if this looks like a git repository already
+    if [ -d ".git" ]; then
+        print_warning "Git repository already exists in $APP_DIR"
         read -p "Pull latest changes? (Y/n): " -n 1 -r
         echo
         if [[ ! $REPLY =~ ^[Nn]$ ]]; then
-            cd "$APP_DIR/GoobyDesk"
             git pull
             print_success "Repository updated"
         fi
     else
-        print_info "Cloning from $REPO_URL"
-        git clone "$REPO_URL"
+        print_info "Cloning from $REPO_URL directly into $APP_DIR"
+        # Clone into a temp directory first, then move contents
+        git clone "$REPO_URL" /tmp/goobydesk_temp
+        # Move all files including hidden ones from temp to APP_DIR
+        shopt -s dotglob
+        sudo mv /tmp/goobydesk_temp/* "$APP_DIR/"
+        sudo rmdir /tmp/goobydesk_temp
+        
+        # Fix ownership after moving files
+        if id "caddy" &>/dev/null; then
+            sudo chown -R caddy:caddy "$APP_DIR"
+        else
+            sudo chown -R "$USER:$USER" "$APP_DIR"
+        fi
+        
         print_success "Repository cloned"
     fi
-    
-    cd "$APP_DIR/GoobyDesk"
 }
 
 # Setup configuration files
 setup_config_files() {
     print_header "Setting Up Configuration Files"
+    
+    cd "$APP_DIR"
     
     local files=(
         "example_dotenv:.env"
@@ -195,6 +208,8 @@ setup_config_files() {
 # Setup Python virtual environment
 setup_python_env() {
     print_header "Setting Up Python Environment"
+    
+    cd "$APP_DIR"
     
     if [ -d "venv" ]; then
         print_warning "Virtual environment already exists"
@@ -232,7 +247,7 @@ prompt_manual_config() {
     echo "1. Edit .env file with correct variables"
     echo "2. Update employee.json with desired login credentials"
     echo "3. Verify content of core_configuration.yml file"
-    echo -e "\n${CYAN}Configuration files location: $APP_DIR/GoobyDesk${NC}\n"
+    echo -e "\n${CYAN}Configuration files location: $APP_DIR${NC}\n"
     
     read -p "Press Enter when configuration is complete..."
     echo
@@ -241,6 +256,8 @@ prompt_manual_config() {
 # Test application
 test_application() {
     print_header "Testing Application"
+    
+    cd "$APP_DIR"
     
     read -p "Run Flask application test? (Y/n): " -n 1 -r
     echo
@@ -259,6 +276,8 @@ test_application() {
 # Test Gunicorn
 test_gunicorn() {
     print_header "Testing Gunicorn"
+    
+    cd "$APP_DIR"
     
     read -p "Run Gunicorn test? (Y/n): " -n 1 -r
     echo
@@ -290,9 +309,9 @@ After=network.target
 [Service]
 User=$USER
 Group=www-data
-WorkingDirectory=$APP_DIR/GoobyDesk
-Environment="PATH=$APP_DIR/GoobyDesk/venv/bin"
-ExecStart=$APP_DIR/GoobyDesk/venv/bin/gunicorn -w 3 -b 127.0.0.1:8000 app:app
+WorkingDirectory=$APP_DIR
+Environment="PATH=$APP_DIR/venv/bin"
+ExecStart=$APP_DIR/venv/bin/gunicorn -w 3 -b 127.0.0.1:8000 app:app
 
 [Install]
 WantedBy=multi-user.target
@@ -338,7 +357,7 @@ show_completion() {
     echo "  2. Set up SSL certificates for your domain"
     echo "  3. Configure firewall rules if needed"
     echo
-    echo -e "${CYAN}Application location: $APP_DIR/GoobyDesk${NC}"
+    echo -e "${CYAN}Application location: $APP_DIR${NC}"
     echo
 }
 

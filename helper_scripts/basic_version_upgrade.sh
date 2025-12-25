@@ -15,7 +15,7 @@ NC='\033[0m' # No Color
 BOLD='\033[1m'
 
 # Configuration
-APP_DIR="/var/www/GoobyDesk/GoobyDesk"
+APP_DIR="/var/www/GoobyDesk"
 SERVICE_NAME="goobydesk"
 LOG_FILE="/var/log/goobydesk.log"
 
@@ -63,6 +63,12 @@ check_directory() {
     if [ ! -d "$APP_DIR/venv" ]; then
         print_error "Virtual environment not found at $APP_DIR/venv"
         print_info "Please run the setup script first"
+        exit 1
+    fi
+    
+    if [ ! -d "$APP_DIR/.git" ]; then
+        print_error "Git repository not found at $APP_DIR"
+        print_info "This doesn't appear to be a valid GoobyDesk installation"
         exit 1
     fi
     
