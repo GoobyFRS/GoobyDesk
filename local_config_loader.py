@@ -4,7 +4,7 @@ __all__ = ["load_core_config"]
 import yaml
 import os
 
-CONFIG_PATH = "my_data/core_configuration.yml"
+CONFIG_PATH = "./my_data/core_configuration.yml"
 
 def load_core_config():
     if not os.path.exists(CONFIG_PATH):
