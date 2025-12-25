@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # GoobyDesk First Time Setup Script
-# This script automates the installation and configuration of GoobyDesk
+# This script automates the basic installation and configuration of GoobyDesk
 
 set -e  # Exit on error
 

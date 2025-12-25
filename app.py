@@ -246,26 +246,6 @@ def home():
     # Refresh and Reload the Home/Index
     return render_template("index.html", sitekey=CF_TURNSTILE_SITE_KEY)
 
-# The old route for the technician login page/process. This has been depricated as of v0.7.5. Consider removing this code.
-"""@app.route("/login", methods=["GET", "POST"])
-def login():
-    if request.method == "POST":
-        username = request.form["tech_username_box"] # query from HTML form name.
-        password = request.form["tech_password_box"]
-        employees = load_employees() # Loading the employee database into memory.
-
-        # Iterate through the list of employees to check for a match.
-        # After adding this feature/function the simplified ability to only have one defined technician is broke. This should be resolved before production release.
-        for defined_technician in employees:
-            if username == defined_technician["tech_username"] and password == defined_technician["tech_authcode"]:
-                session["technician"] = username
-                logging.info(f"{username} has logged in.") # Store the technician's username in the session cookie.
-                return redirect(url_for("dashboard")) # On successful login, send to Dashboard.
-            else:
-                return render_template("404.html"), 404 # Send our custom 404 page.
-        
-    return render_template("login.html", sitekey=CF_TURNSTILE_SITE_KEY)"""
-
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
@@ -392,6 +372,7 @@ def add_ticket_note(ticket_number):
     return jsonify({"message": "Ticket not found."}), 404
 
 # ABOVE THIS LINE SHOULD ONLY BE TECHNICIAN/TICKETING PAGES ONLY!
+# BELOW THIS LINE SHOULD ONLY BE REPORTING, LOGOUT, AND API INGEST ROUTES!
 
 @app.route("/reports_home")
 @technician_required
