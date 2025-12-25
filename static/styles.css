@@ -166,3 +166,33 @@ a:hover {
 .close-tkt-btn:hover {
 background-color: #ff8080;
 }
+/* Reporting */
+/* Reporting – KPI Cards */
+.kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 15px;
+    margin: 20px 0;
+}
+
+.kpi-card {
+    background-color: #f8f8f8;
+    border-radius: 6px;
+    padding: 15px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+.kpi-card h3 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #555;
+}
+
+.kpi-card .kpi-value {
+    font-size: 28px;
+    font-weight: 700;
+    color: #284389;
+    margin-top: 5px;
+}

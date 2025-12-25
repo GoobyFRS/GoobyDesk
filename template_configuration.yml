@@ -1,14 +1,14 @@
 # ==========================================
-# GoobyDesk Core Configuration
+# GoobyDesk TEMPLATE Core Configuration - DO NOT MODIFY THIS FILE
 # ==========================================
 # Core Files
-tickets_file: "./tickets.json"
-employee_file: "./employee.json"
+tickets_file: "./my_data/tickets.json"
+employee_file: "./my_data/employee.json"
 
 # Logging
 logging:
   level: "INFO"         # Valid: DEBUG, INFO, WARNING, ERROR, CRITICAL
-  file: "./goobydesk.log" # Relative or absolute path
+  file: "/var/log/goobydesk.log" # Relative or absolute path
 
 # Email System
 email:

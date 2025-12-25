@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-from flask import Flask, render_template, request, redirect, url_for, session, jsonify, flash
-import json, threading, time, logging, requests, os
+from flask import Flask, Response, render_template, request, redirect, url_for, session, jsonify, flash
+import json, threading, time, logging, requests, os, io, csv
 import local_config_loader, local_email_handler, local_webhook_handler, local_authentication_handler
 from dotenv import load_dotenv
 from datetime import datetime, timedelta
 from functools import wraps
 
-BUILDID=str("0.7.6-beta-f")
+BUILDID=str("0.7.7-beta-j")
 
 load_dotenv(dotenv_path=".env")
 EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD") # App Password from Gmail or relevant email provider.
@@ -138,14 +138,13 @@ def background_email_monitor():
     while True:
         local_email_handler.fetch_email_replies()
         time.sleep(600)  # Wait for emails every 10 minutes.
+#threading.Thread(target=background_email_monitor, daemon=True).start()
 
 if EMAIL_ENABLED:
     logging.info("Starting background email monitoring thread...")
     threading.Thread(target=background_email_monitor, daemon=True).start()
 else:
     logging.info("EMAIL_ENABLED is set to false. Skipping...")
-
-#threading.Thread(target=background_email_monitor, daemon=True).start()
 
 # Decorator to force authentication checking. Easy to append to routes.
 def technician_required(func):
@@ -247,26 +246,6 @@ def home():
     # Refresh and Reload the Home/Index
     return render_template("index.html", sitekey=CF_TURNSTILE_SITE_KEY)
 
-# The old route for the technician login page/process. This has been depricated as of v0.7.5. Consider removing this code.
-"""@app.route("/login", methods=["GET", "POST"])
-def login():
-    if request.method == "POST":
-        username = request.form["tech_username_box"] # query from HTML form name.
-        password = request.form["tech_password_box"]
-        employees = load_employees() # Loading the employee database into memory.
-
-        # Iterate through the list of employees to check for a match.
-        # After adding this feature/function the simplified ability to only have one defined technician is broke. This should be resolved before production release.
-        for defined_technician in employees:
-            if username == defined_technician["tech_username"] and password == defined_technician["tech_authcode"]:
-                session["technician"] = username
-                logging.info(f"{username} has logged in.") # Store the technician's username in the session cookie.
-                return redirect(url_for("dashboard")) # On successful login, send to Dashboard.
-            else:
-                return render_template("404.html"), 404 # Send our custom 404 page.
-        
-    return render_template("login.html", sitekey=CF_TURNSTILE_SITE_KEY)"""
-
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
@@ -313,11 +292,8 @@ def login():
 
 # Route/routine for rendering the core technician dashboard. Displays all Open and In-Progress tickets.
 @app.route("/dashboard")
-#@technician_required
+@technician_required
 def dashboard():
-    if not session.get("technician"): # Check for technician login cookie.
-        return redirect(url_for("login")) #else redirect them to the login page.
-    
     tickets = load_tickets()
     # Filtering out tickets with the Closed Status on the main Dashboard.
     open_tickets = [ticket for ticket in tickets if ticket["ticket_status"].lower() != "closed"]
@@ -325,11 +301,8 @@ def dashboard():
 
 # Route for viewing a ticket in the Ticket Commander view.
 @app.route("/ticket/<ticket_number>")
-#@technician_required
+@technician_required
 def ticket_detail(ticket_number):
-    if "technician" not in session:  # Validate the logged-in user cookie...
-        return render_template("403.html"), 403  # Return our custom HTTP 403 page.
-
     tickets = load_tickets()
     ticket = next((t for t in tickets if t["ticket_number"] == ticket_number), None)
     
@@ -340,6 +313,7 @@ def ticket_detail(ticket_number):
 
 # Route for updating a ticket. Called from Dashboard and Ticket Commander.
 @app.route("/ticket/<ticket_number>/update_status/<ticket_status>", methods=["POST"])
+@technician_required
 def update_ticket_status(ticket_number, ticket_status):
     logging.info(f"{ticket_number} status has been changed to {ticket_status}.")
     
@@ -379,6 +353,7 @@ def update_ticket_status(ticket_number, ticket_status):
 
 # Route for appending a new note to a ticket.
 @app.route("/ticket/<ticket_number>/append_note", methods=["POST"])
+@technician_required
 def add_ticket_note(ticket_number):
     new_tkt_note = request.form.get("note_content")  # Ensure the key matches the JS request
 
@@ -397,13 +372,11 @@ def add_ticket_note(ticket_number):
     return jsonify({"message": "Ticket not found."}), 404
 
 # ABOVE THIS LINE SHOULD ONLY BE TECHNICIAN/TICKETING PAGES ONLY!
+# BELOW THIS LINE SHOULD ONLY BE REPORTING, LOGOUT, AND API INGEST ROUTES!
 
 @app.route("/reports_home")
 @technician_required
 def reports_home():
-    # Enforce technician authentication
-    if not session.get("technician"):
-        return render_template("403.html"), 403
 
     tickets = load_tickets()
     now = datetime.now()
@@ -449,8 +422,7 @@ def reports_home():
         except (KeyError, ValueError):
             logging.warning("REPORTING - Invalid submission_date on ticket")
 
-    return render_template(
-        "reports_home.html",
+    return render_template("reports_home.html",
         total_tickets=total_tickets,
         open_tickets=status_counts["Open"],
         in_progress_tickets=status_counts["In-Progress"],
@@ -459,11 +431,43 @@ def reports_home():
         last_30_days=time_buckets["last_30_days"],
         last_14_days=time_buckets["last_14_days"],
         last_7_days=time_buckets["last_7_days"],
+        loggedInTech=session["technician"], 
+        BUILDID=BUILDID
     )
+
+@app.route("/reports/export/csv")
+@technician_required
+def export_tickets_csv():
+    tickets = load_tickets()
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+
+    # CSV Header
+    writer.writerow([
+        "Ticket Number",
+        "Subject",
+        "Status",
+        "Submission Date",
+        "Closed By",
+        "Closure Date"
+    ])
+
+    # Rows
+    for ticket in tickets:
+        writer.writerow([
+            ticket.get("ticket_number", ""),
+            ticket.get("ticket_subject", ""),
+            ticket.get("ticket_status", ""),
+            ticket.get("submission_date", ""),
+            ticket.get("closed_by", ""),
+            ticket.get("closure_date", "")
+        ])
+    output.seek(0)
+    return Response(output, mimetype="text/csv", headers={"Content-Disposition": "attachment; filename=goobydesk_tickets_report_basic.csv"})
 
 # BELOW THIS LINE IS RESERVED FOR LOGOUT AND API INGEST ROUTES ONLY!
 # Removes the session cookie from the user browser, sending the Technician/user back to the login page.
-
 @app.route("/logout")
 def logout():
     session.pop("technician", None)
