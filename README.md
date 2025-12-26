@@ -36,6 +36,8 @@ Technician Dashboard where logged in users can view Open Tickets and manage them
 ## Goals and Roadmap to Production v1.0
 
 - High Quality User Input Sanitation.
+- /status page
+- Password Reset functionality.
 
 ### Mobile Landing Page
 
