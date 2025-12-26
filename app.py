@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 from datetime import datetime, timedelta
 from functools import wraps
 
-BUILDID=str("0.7.7-beta-L")
+BUILDID=str("0.7.7-beta-m")
 
 load_dotenv(dotenv_path=".env")
 EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD") # App Password from Gmail or relevant email provider.
@@ -633,6 +633,16 @@ def forbidden(e):
 @app.errorhandler(404)
 def page_not_found(e):
     return render_template("404.html"), 404
+
+# Handle 418 errors.
+@app.errorhandler(404)
+def http_teapot(e):
+    return render_template("404.html), 418
+
+# Handle 420 errors. Rate-Limit v1
+@app.errorhandler(404)
+def http_enhance_your_calm(e):
+    return render_template("404.html), 420
 
 # Handles 500 errors.
 @app.errorhandler(500)
