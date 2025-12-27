@@ -2,7 +2,7 @@
 
 The Ultimate Simple, Lightweight, Databaseless Service Desk for Home Labbers, Families, and One Man MSPs.
 
-**Current Version:**  v0.7.8
+**Current Version:**  v0.7.7
 
 **Revision Date:** 2025.12.26
 
