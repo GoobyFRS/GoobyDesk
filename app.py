@@ -75,14 +75,6 @@ else:
     EMAIL_ENABLED = email_thread_enabler_check.lower() == "true"
     logging.info(f"EMAIL_ENABLED is set to {EMAIL_ENABLED}.")
 
-# Delegate core file IO to local_core_files_handler (lcfh).
-# Use the lcfh module directly for ticket/employee persistence.
-# Keep simple aliases for backwards compatibility where needed.
-load_tickets = lcfh.load_tickets
-save_tickets = lcfh.save_tickets
-load_employees = lcfh.load_employees
-save_employees = lcfh.save_employees
-
 # Generate a new ticket number.
 def generate_ticket_number():
     tickets = lcfh.load_tickets() # Read/Load the tickets-db into memory.
