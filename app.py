@@ -591,16 +591,6 @@ def forbidden(e):
 def page_not_found(e):
     return render_template("404.html"), 404
 
-# Handle 418 Teapot errors.
-@app.errorhandler(418)
-def http_teapot(e):
-    return render_template("404.html"), 418
-
-# Handle 420 errors. Rate-Limit v1
-@app.errorhandler(420)
-def http_enhance_your_calm(e):
-    return render_template("404.html"), 420
-
 # Handles 500 errors.
 @app.errorhandler(500)
 def internal_server_error(e):
