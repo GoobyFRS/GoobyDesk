@@ -2,11 +2,12 @@
 from flask import Flask, Response, render_template, request, redirect, url_for, session, jsonify, flash
 import json, threading, time, logging, requests, os, io, csv
 import local_config_loader, local_email_handler, local_webhook_handler, local_authentication_handler
+import local_core_files_handler as lcfh
 from dotenv import load_dotenv
 from datetime import datetime, timedelta
 from functools import wraps
 
-BUILDID=str("0.7.7-beta-m")
+BUILDID=str("0.8.0-beta-a")
 
 load_dotenv(dotenv_path=".env")
 EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD") # App Password from Gmail or relevant email provider.
@@ -74,61 +75,17 @@ else:
     EMAIL_ENABLED = email_thread_enabler_check.lower() == "true"
     logging.info(f"EMAIL_ENABLED is set to {EMAIL_ENABLED}.")
 
-# Read/Loads the ticket file into memory. This is the original load_tickets function that works on Windows and Unix.
-def load_tickets():
-    try:
-        with open(TICKETS_FILE, "r") as tkt_file:
-            return json.load(tkt_file)
-    except FileNotFoundError:
-        logging.critical("Ticket Database file could not be located.")
-        exit(106)
-        return [] # represents an empty list.
-
-""" This load_tickets function contains the file locking mechanism for Linux. Not currently being tested or developed.
-def load_tickets(retries=5, delay=0.2):
-   # Load tickets from JSON file with file locking and retry logic.
-   for attempt in range(retries):
-       try:
-           with open(TICKETS_FILE, "r") as file:
-               fcntl.flock(file, fcntl.LOCK_SH)  # Shared lock for reading
-               tickets = json.load(file)
-               fcntl.flock(file, fcntl.LOCK_UN)  # Unlock the file.
-               return tickets
-       except (json.JSONDecodeError, FileNotFoundError) as e:
-           logging.critical(f"Error loading tickets: {e}")
-           print(f"ERROR - Error loading tickets: {e}")
-           return []
-       except BlockingIOError:
-           logging.critical(f"File is locked, retrying... ({attempt+1}/{retries})")
-           time.sleep(delay)  # Wait before retrying
-   raise Exception("ERROR - Failed to load tickets after multiple attempts.")
-"""
-
-# Writes to the ticket file database. Eventually needs file locking for Linux.
-def save_tickets(tickets):
-    with open(TICKETS_FILE, "w") as tkt_file_write_op:
-        json.dump(tickets, tkt_file_write_op, indent=4)
-        logging.debug("The ticket database file was modified.")
-
-# Read/Loads the employee file into memory.
-def load_employees():
-    try:
-        with open(EMPLOYEE_FILE, "r") as tech_file_read_op:
-            return json.load(tech_file_read_op)
-    except FileNotFoundError:
-        logging.debug("Employee Database file could not be located.")
-        exit(107)
-        return {} # represents an empty dictionary
-    
-# Helper script for secure password hasing auto-migration.
-def save_employees(employees):
-    with open(EMPLOYEE_FILE, "w") as emp_file_write_op:
-        json.dump(employees, emp_file_write_op, indent=4)
-    logging.debug("The employee database file was modified.")
+# Delegate core file IO to local_core_files_handler (lcfh).
+# Use the lcfh module directly for ticket/employee persistence.
+# Keep simple aliases for backwards compatibility where needed.
+load_tickets = lcfh.load_tickets
+save_tickets = lcfh.save_tickets
+load_employees = lcfh.load_employees
+save_employees = lcfh.save_employees
 
 # Generate a new ticket number.
 def generate_ticket_number():
-    tickets = load_tickets() # Read/Load the tickets-db into memory.
+    tickets = lcfh.load_tickets() # Read/Load the tickets-db into memory.
     current_year = datetime.now().year  # Get the current year dynamically
     ticket_count = str(len(tickets) + 1).zfill(4)  # Zero-padded ticket count
     return f"TKT-{current_year}-{ticket_count}"  # Format: TKT-YYYY-XXXX
@@ -211,9 +168,9 @@ def home():
                 "ticket_notes": []
             }
 
-            tickets = load_tickets()
+            tickets = lcfh.load_tickets()
             tickets.append(new_ticket)
-            save_tickets(tickets)
+            lcfh.save_tickets(tickets)
             logging.info(f"{ticket_number} has been created.")
 
             # Sends confirmation email to the requestor using the local_email_handler module.
@@ -252,7 +209,7 @@ def login():
         username = request.form.get("tech_username_box", "").strip()
         password = request.form.get("tech_password_box", "")
 
-        employees = load_employees()
+        employees = lcfh.load_employees()
 
         for employee in employees:
             if employee.get("tech_username") != username:
@@ -266,7 +223,7 @@ def login():
                     employee["password_hash"] = local_authentication_handler.hash_password(password)
                     del employee["tech_authcode"]
 
-                    save_employees(employees)
+                    lcfh.save_employees(employees)
 
                     session["technician"] = username
                     logging.info(f"{username} logged in using legacy password and was auto-migrated.")
@@ -294,7 +251,7 @@ def login():
 @app.route("/dashboard")
 @technician_required
 def dashboard():
-    tickets = load_tickets()
+    tickets = lcfh.load_tickets()
     # Filtering out tickets with the Closed Status on the main Dashboard.
     open_tickets = [ticket for ticket in tickets if ticket["ticket_status"].lower() != "closed"]
     return render_template("dashboard.html", tickets=open_tickets, loggedInTech=session["technician"], BUILDID=BUILDID)
@@ -303,7 +260,7 @@ def dashboard():
 @app.route("/ticket/<ticket_number>")
 @technician_required
 def ticket_detail(ticket_number):
-    tickets = load_tickets()
+    tickets = lcfh.load_tickets()
     ticket = next((t for t in tickets if t["ticket_number"] == ticket_number), None)
     
     if ticket:
@@ -325,7 +282,7 @@ def update_ticket_status(ticket_number, ticket_status):
         return render_template("400.html"), 400
 
     loggedInTech = session["technician"]
-    tickets = load_tickets()
+    tickets = lcfh.load_tickets()
 
     for ticket in tickets:
         if ticket["ticket_number"] == ticket_number:
@@ -338,7 +295,7 @@ def update_ticket_status(ticket_number, ticket_status):
                 ticket["closed_by"] = loggedInTech
                 ticket["closure_date"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-            save_tickets(tickets)
+            lcfh.save_tickets(tickets)
             logging.info(f"Ticket {ticket_number} status updated to {ticket_status} by {loggedInTech}.")
             # Send webhook notifications for status update.
             try:
@@ -360,12 +317,12 @@ def add_ticket_note(ticket_number):
     if not new_tkt_note:
         return jsonify({"message": "Note Contents cannot be empty!"}), 400
 
-    tickets = load_tickets()  # Load tickets into memory.
+    tickets = lcfh.load_tickets()  # Load tickets into memory.
 
     for ticket in tickets:
         if ticket["ticket_number"] == ticket_number:
             ticket["ticket_notes"].append(new_tkt_note)  # Append note
-            save_tickets(tickets)  # Save updates
+            lcfh.save_tickets(tickets)  # Save updates
             logging.info(f"Note successfully appended to {ticket_number}.")
             return jsonify({"message": "Note added successfully."}), 200  # Return JSON response
 
@@ -378,7 +335,7 @@ def add_ticket_note(ticket_number):
 @technician_required
 def reports_home():
 
-    tickets = load_tickets()
+    tickets = lcfh.load_tickets()
     now = datetime.now()
 
     # Ticket counters
@@ -438,7 +395,7 @@ def reports_home():
 @app.route("/reports/export/csv")
 @technician_required
 def export_tickets_csv():
-    tickets = load_tickets()
+    tickets = lcfh.load_tickets()
 
     output = io.StringIO()
     writer = csv.writer(output)
@@ -538,9 +495,9 @@ def uptime_kuma_webhook():
             "ticket_notes": []
         }
         
-        tickets = load_tickets()
+        tickets = lcfh.load_tickets()
         tickets.append(new_ticket)
-        save_tickets(tickets)
+        lcfh.save_tickets(tickets)
         
         logging.info(f"Uptime-Kuma Notification — {ticket_number} created successfully (Status: {status_text}).")
         
@@ -601,9 +558,9 @@ def tailscale_webhook():
             "ticket_notes": []
         }
 
-        tickets = load_tickets()
+        tickets = lcfh.load_tickets()
         tickets.append(new_ticket)
-        save_tickets(tickets)
+        lcfh.save_tickets(tickets)
         logging.info(f"Tailscale Notification — {ticket_number} created successfully.")
 
         try:
@@ -634,8 +591,8 @@ def forbidden(e):
 def page_not_found(e):
     return render_template("404.html"), 404
 
-# Handle 418 errors.
-@app.errorhandler(404)
+# Handle 418 Teapot errors.
+@app.errorhandler(418)
 def http_teapot(e):
     return render_template("404.html"), 418
 

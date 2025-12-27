@@ -1,12 +1,12 @@
 [
     {
         "tech_username": "demouser",
-        "tech_authcode": "NoPassword123",
+        "tech_authcode": "StrongPassword123",
         "tech_type": "Technician"
     },
     {
         "tech_username": "otheruser",
-        "tech_authcode": "demoPassword2020",
+        "tech_authcode": "AnotherStrongPassword456",
         "tech_type": "DISABLED"
     }
 ]

@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Local module to support all the reading/writing of data inside my_data folder.
 [__all__] = ["load_tickets","save_tickets","load_employees","save_employees"]
 
 import local_config_loader
