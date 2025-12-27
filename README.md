@@ -35,10 +35,9 @@ Technician Dashboard where logged in users can view Open Tickets and manage them
 
 ## Goals and Roadmap to Production v1.0
 
-- Accept NewRelic webhooks for ticket creation. 
-- Reporting Module with SLA tables.
-- Rate Limit without CloudFlare.
+- /status Page
 - High Quality User Input Sanitation.
+- Password Reset functionality.
 
 ### Mobile Landing Page
 
