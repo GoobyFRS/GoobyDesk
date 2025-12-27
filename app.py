@@ -479,7 +479,6 @@ def uptime_kuma_webhook():
         if not request.is_json:
             logging.warning("Uptime-Kuma webhook sent invalid content type.")
             return jsonify({"error": "Invalid content type"}), 400
-
         payload = request.json
         logging.info(f"Uptime Kuma payload received: {payload}")
 
@@ -490,48 +489,67 @@ def uptime_kuma_webhook():
         # Extract fields
         status = heartbeat.get("status")
         monitor_name = monitor.get("name", "Unknown Monitor")
-        monitor_url = monitor.get("url", "Unknown URL") # Not currently used.
-        message = heartbeat.get("msg", payload.get("msg", "No message")) # Not currently used.
-        timestamp = heartbeat.get("time", int(time.time())) # Not currently used.
+        monitor_url = monitor.get("url", "Unknown URL")
+        message = heartbeat.get("msg", payload.get("msg", "No message"))
+        timestamp = heartbeat.get("time", int(time.time()))
 
         # Status mapping for readability
         status_text = {
             0: "DOWN",
             1: "UP",
-            2: "PENDING"
+            2: "PENDING",
+            3: "MAINTENANCE"
         }.get(status, "UNKNOWN")
 
-        # Only trigger for DOWN events
-        if status != 0:
+        # Only trigger for DOWN (0) and PENDING (2) events
+        if status not in [0, 2]:
             logging.info(f"Skipping ticket creation for {monitor_name} (status={status_text}).")
-            return jsonify({"status": "ignored", "reason": "not down"}), 200
+            return jsonify({"status": "ignored", "reason": f"status {status_text} not tracked"}), 200
+
+        # Determine ticket properties based on status
+        if status == 0:
+            # DOWN event - High impact/urgency
+            ticket_subject = f"Uptime Kuma Alert - {monitor_name} is DOWN"
+            ticket_impact = "High"
+            ticket_urgency = "High"
+            request_type = "Incident"
+        elif status == 2:
+            # PENDING event - Medium impact/urgency
+            ticket_subject = f"Uptime Kuma Alert - {monitor_name} is PENDING"
+            ticket_impact = "Medium"
+            ticket_urgency = "Medium"
+            request_type = "Incident"
 
         # Build ticket content
-        ticket_subject = f"Uptime Kuma Alert - {monitor_name} is DOWN"
         ticket_message = json.dumps(payload, indent=4)
-
         ticket_number = generate_ticket_number()
+
         new_ticket = {
             "ticket_number": ticket_number,
             "requestor_name": "Uptime Kuma",
             "requestor_email": "noreply@uptimekuma.local",
             "ticket_subject": ticket_subject,
             "ticket_message": ticket_message,
-            "request_type": "Incident",
-            "ticket_impact": "High",
-            "ticket_urgency": "High",
+            "request_type": request_type,
+            "ticket_impact": ticket_impact,
+            "ticket_urgency": ticket_urgency,
             "ticket_status": "Open",
             "submission_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             "ticket_notes": []
         }
 
-        tickets = load_tickets()
+        tickets = lcfh.load_tickets()
         tickets.append(new_ticket)
-        save_tickets(tickets)
-        logging.info(f"Uptime-Kuma Notification — {ticket_number} created successfully.")
+        lcfh.save_tickets(tickets)
+
+        logging.info(f"Uptime-Kuma Notification — {ticket_number} created successfully (Status: {status_text}).")
 
         try:
-            local_webhook_handler.notify_ticket_event(ticket_number=ticket_number,ticket_status="Open",ticket_subject=ticket_subject) # Considering a refactor later.
+            local_webhook_handler.notify_ticket_event(
+                ticket_number=ticket_number,
+                ticket_status="Open",
+                ticket_subject=ticket_subject
+            )
             logging.info(f"Ticket {ticket_number} status update notifications sent successfully.")
         except Exception as e:
             logging.error(f"Failed to send ticket status update notifications for {ticket_number}: {str(e)}")
