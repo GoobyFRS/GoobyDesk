@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 from datetime import datetime, timedelta
 from functools import wraps
 
-BUILDID=str("0.8.0-beta-a")
+BUILDID=str("0.8.0-beta-b")
 
 load_dotenv(dotenv_path=".env")
 EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD") # App Password from Gmail or relevant email provider.
@@ -32,14 +32,16 @@ SMTP_PORT = core_yaml_config["email"]["smtp_port"]
 
 app = Flask(__name__)
 app.secret_key = os.getenv("FLASKAPP_SECRET_KEY")
-app.permanent_session_lifetime = timedelta(hours=4)
+app.permanent_session_lifetime = timedelta(hours=6)
 
 app.config.update(
-    SESSION_COOKIE_NAME="goobies_cookie",
+    SESSION_COOKIE_NAME="goobbydesk_session_cookie",
     SESSION_COOKIE_HTTPONLY=True, # XSS Cookie Theft Prevention
     SESSION_COOKIE_SECURE=not app.debug, 
     SESSION_COOKIE_SAMESITE="Lax", # Strict, Lax, None
-    SESSION_REFRESH_EACH_REQUEST=True
+    SESSION_REFRESH_EACH_REQUEST=True,
+    PERMANENT_SESSION_LIFETIME=timedelta(hours=6),
+    MAX_CONTENT_LENGTH=16 * 1024 * 1024,
 )
 
 logging.basicConfig(
@@ -157,6 +159,46 @@ def technician_required(func):
         # Authorized technician → proceed to the route
         return func(*args, **kwargs)
     return wrapper
+
+# Security Headers for all responses.
+@app.after_request
+def set_security_headers(response):
+    # Prevent clickjacking attacks
+    response.headers['X-Frame-Options'] = 'DENY'
+    
+    # Prevent MIME type sniffing
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    
+    # Enable browser XSS protection
+    response.headers['X-XSS-Protection'] = '1; mode=block'
+    
+    # Control referrer information
+    response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+    
+    # Content Security Policy - start restrictive and adjust as needed
+    response.headers['Content-Security-Policy'] = (
+        "default-src 'self'; "
+        "script-src 'self'; "
+        "style-src 'self' 'unsafe-inline'; "
+        "img-src 'self' data: https:; "
+        "font-src 'self'; "
+        "connect-src 'self'; "
+        "frame-ancestors 'none'"
+    )
+    
+    # HTTP Strict Transport Security (forces HTTPS)
+    # Start with a short max-age, then increase to 31536000 (1 year)
+    if not app.debug:
+        response.headers['Strict-Transport-Security'] = (
+            'max-age=63072000; includeSubDomains; preload'
+        )
+    
+    # Permissions Policy (formerly Feature-Policy)
+    response.headers['Permissions-Policy'] = (
+        'geolocation=(), microphone=(), camera=()'
+    )
+    
+    return response
 
 @app.route("/", methods=["GET", "POST"])
 def home():
@@ -290,7 +332,7 @@ def login():
 
     return render_template("login.html", sitekey=CF_TURNSTILE_SITE_KEY)
 
-# Route/routine for rendering the core technician dashboard. Displays all Open and In-Progress tickets.
+# Route for rendering the core technician dashboard. Displays all Open and In-Progress tickets.
 @app.route("/dashboard")
 @technician_required
 def dashboard():
