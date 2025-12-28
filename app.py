@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 from datetime import datetime, timedelta
 from functools import wraps
 
-BUILDID=str("0.8.0-beta-b")
+BUILDID=str("0.8.0-beta-c")
 
 load_dotenv(dotenv_path=".env")
 EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD") # App Password from Gmail or relevant email provider.
@@ -178,10 +178,10 @@ def set_security_headers(response):
     # Content Security Policy - start restrictive and adjust as needed
     response.headers['Content-Security-Policy'] = (
         "default-src 'self'; "
-        "script-src 'self'; "
+        "script-src 'self'; 'unsafe-inline'; "
         "style-src 'self' 'unsafe-inline'; "
         "img-src 'self' data: https:; "
-        "font-src 'self'; "
+        "font-src 'self'; https://fonts.bunny.net; "
         "connect-src 'self'; "
         "frame-ancestors 'none'"
     )
