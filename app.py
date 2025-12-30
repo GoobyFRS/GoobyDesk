@@ -178,7 +178,7 @@ def set_security_headers(response):
     # Content Security Policy - start restrictive and adjust as needed
     response.headers['Content-Security-Policy'] = (
         "default-src 'self'; "
-        "script-src 'self'; 'unsafe-inline'; "
+        "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com; "
         "style-src 'self' 'unsafe-inline' https://fonts.bunny.net; "
         "img-src 'self' data: https:; "
         "font-src 'self'; https://fonts.bunny.net; "
