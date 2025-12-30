@@ -181,7 +181,7 @@ def set_security_headers(response):
         "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com; "
         "style-src 'self' 'unsafe-inline' https://fonts.bunny.net; "
         "img-src 'self' data: https:; "
-        "font-src 'self'; https://fonts.bunny.net; "
+        "font-src 'self'; data: https://fonts.bunny.net; "
         "connect-src 'self'; "
         "frame-src https://challenges.cloudflare.com; "
         "frame-ancestors 'none'"
