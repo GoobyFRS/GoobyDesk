@@ -183,6 +183,7 @@ def set_security_headers(response):
         "img-src 'self' data: https:; "
         "font-src 'self'; https://fonts.bunny.net; "
         "connect-src 'self'; "
+        "frame-src https://challenges.cloudflare.com; "
         "frame-ancestors 'none'"
     )
     
