@@ -190,7 +190,7 @@ def set_security_headers(response):
     # Start with a short max-age, then increase to 31536000 (1 year)
     if not app.debug:
         response.headers['Strict-Transport-Security'] = (
-            'max-age=63072000; includeSubDomains; preload'
+            'max-age=86400; includeSubDomains; preload'
         )
     
     # Permissions Policy (formerly Feature-Policy)
