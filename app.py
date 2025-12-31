@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 from datetime import datetime, timedelta
 from functools import wraps
 
-BUILDID=str("0.7.7-beta-j")
+BUILDID=str("0.8.0-beta-d")
 
 load_dotenv(dotenv_path=".env")
 EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD") # App Password from Gmail or relevant email provider.
@@ -16,7 +16,7 @@ TAILSCALE_NOTIFY_EMAIL = os.getenv("TAILSCALE_NOTIFY_EMAIL")
 
 """
 Rest in Peace Alex, July 2nd 2005 - December 14th 2024
-Rest in Peace Dave, August 15th 1967 - December 19th 2025
+Rest in Peace Dave, August 16th 1967 - December 19th 2025
 """
 
 core_yaml_config = local_config_loader.load_core_config()
@@ -32,14 +32,16 @@ SMTP_PORT = core_yaml_config["email"]["smtp_port"]
 
 app = Flask(__name__)
 app.secret_key = os.getenv("FLASKAPP_SECRET_KEY")
-app.permanent_session_lifetime = timedelta(hours=4)
+app.permanent_session_lifetime = timedelta(hours=6)
 
 app.config.update(
-    SESSION_COOKIE_NAME="goobies_cookie",
+    SESSION_COOKIE_NAME="goobbydesk_session_cookie",
     SESSION_COOKIE_HTTPONLY=True, # XSS Cookie Theft Prevention
     SESSION_COOKIE_SECURE=not app.debug, 
     SESSION_COOKIE_SAMESITE="Lax", # Strict, Lax, None
-    SESSION_REFRESH_EACH_REQUEST=True
+    SESSION_REFRESH_EACH_REQUEST=True,
+    PERMANENT_SESSION_LIFETIME=timedelta(hours=6),
+    MAX_CONTENT_LENGTH=16 * 1024 * 1024,
 )
 
 logging.basicConfig(
@@ -157,6 +159,47 @@ def technician_required(func):
         # Authorized technician → proceed to the route
         return func(*args, **kwargs)
     return wrapper
+
+# Security Headers for all responses.
+@app.after_request
+def set_security_headers(response):
+    # Prevent clickjacking attacks
+    response.headers['X-Frame-Options'] = 'DENY'
+    
+    # Prevent MIME type sniffing
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    
+    # Enable browser XSS protection
+    response.headers['X-XSS-Protection'] = '1; mode=block'
+    
+    # Control referrer information
+    response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+    
+    # Content Security Policy - start restrictive and adjust as needed
+    response.headers['Content-Security-Policy'] = (
+        "default-src 'self'; "
+        "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com; "
+        "style-src 'self' 'unsafe-inline' https://fonts.bunny.net; "
+        "img-src 'self' data: https:; "
+        "font-src 'self'; data: https://fonts.bunny.net; "
+        "connect-src 'self'; "
+        "frame-src https://challenges.cloudflare.com; "
+        "frame-ancestors 'none'"
+    )
+    
+    # HTTP Strict Transport Security (forces HTTPS)
+    # Start with a short max-age, then increase to 31536000 (1 year)
+    if not app.debug:
+        response.headers['Strict-Transport-Security'] = (
+            'max-age=86400; includeSubDomains; preload'
+        )
+    
+    # Permissions Policy (formerly Feature-Policy)
+    response.headers['Permissions-Policy'] = (
+        'geolocation=(), microphone=(), camera=()'
+    )
+    
+    return response
 
 @app.route("/", methods=["GET", "POST"])
 def home():
@@ -290,7 +333,7 @@ def login():
 
     return render_template("login.html", sitekey=CF_TURNSTILE_SITE_KEY)
 
-# Route/routine for rendering the core technician dashboard. Displays all Open and In-Progress tickets.
+# Route for rendering the core technician dashboard. Displays all Open and In-Progress tickets.
 @app.route("/dashboard")
 @technician_required
 def dashboard():
@@ -479,7 +522,6 @@ def uptime_kuma_webhook():
         if not request.is_json:
             logging.warning("Uptime-Kuma webhook sent invalid content type.")
             return jsonify({"error": "Invalid content type"}), 400
-
         payload = request.json
         logging.info(f"Uptime Kuma payload received: {payload}")
 
@@ -490,48 +532,67 @@ def uptime_kuma_webhook():
         # Extract fields
         status = heartbeat.get("status")
         monitor_name = monitor.get("name", "Unknown Monitor")
-        monitor_url = monitor.get("url", "Unknown URL") # Not currently used.
-        message = heartbeat.get("msg", payload.get("msg", "No message")) # Not currently used.
-        timestamp = heartbeat.get("time", int(time.time())) # Not currently used.
+        monitor_url = monitor.get("url", "Unknown URL")
+        message = heartbeat.get("msg", payload.get("msg", "No message"))
+        timestamp = heartbeat.get("time", int(time.time()))
 
         # Status mapping for readability
         status_text = {
             0: "DOWN",
             1: "UP",
-            2: "PENDING"
+            2: "PENDING",
+            3: "MAINTENANCE"
         }.get(status, "UNKNOWN")
 
-        # Only trigger for DOWN events
-        if status != 0:
+        # Only trigger for DOWN (0) and PENDING (2) events
+        if status not in [0, 2]:
             logging.info(f"Skipping ticket creation for {monitor_name} (status={status_text}).")
-            return jsonify({"status": "ignored", "reason": "not down"}), 200
+            return jsonify({"status": "ignored", "reason": f"status {status_text} not tracked"}), 200
+
+        # Determine ticket properties based on status
+        if status == 0:
+            # DOWN event - High impact/urgency
+            ticket_subject = f"Uptime Kuma Alert - {monitor_name} is DOWN"
+            ticket_impact = "High"
+            ticket_urgency = "High"
+            request_type = "Incident"
+        elif status == 2:
+            # PENDING event - Medium impact/urgency
+            ticket_subject = f"Uptime Kuma Alert - {monitor_name} is PENDING"
+            ticket_impact = "Medium"
+            ticket_urgency = "Medium"
+            request_type = "Incident"
 
         # Build ticket content
-        ticket_subject = f"Uptime Kuma Alert - {monitor_name} is DOWN"
         ticket_message = json.dumps(payload, indent=4)
-
         ticket_number = generate_ticket_number()
+
         new_ticket = {
             "ticket_number": ticket_number,
             "requestor_name": "Uptime Kuma",
             "requestor_email": "noreply@uptimekuma.local",
             "ticket_subject": ticket_subject,
             "ticket_message": ticket_message,
-            "request_type": "Incident",
-            "ticket_impact": "High",
-            "ticket_urgency": "High",
+            "request_type": request_type,
+            "ticket_impact": ticket_impact,
+            "ticket_urgency": ticket_urgency,
             "ticket_status": "Open",
             "submission_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             "ticket_notes": []
         }
 
-        tickets = load_tickets()
+        tickets = lcfh.load_tickets()
         tickets.append(new_ticket)
-        save_tickets(tickets)
-        logging.info(f"Uptime-Kuma Notification — {ticket_number} created successfully.")
+        lcfh.save_tickets(tickets)
+
+        logging.info(f"Uptime-Kuma Notification — {ticket_number} created successfully (Status: {status_text}).")
 
         try:
-            local_webhook_handler.notify_ticket_event(ticket_number=ticket_number,ticket_status="Open",ticket_subject=ticket_subject) # Considering a refactor later.
+            local_webhook_handler.notify_ticket_event(
+                ticket_number=ticket_number,
+                ticket_status="Open",
+                ticket_subject=ticket_subject
+            )
             logging.info(f"Ticket {ticket_number} status update notifications sent successfully.")
         except Exception as e:
             logging.error(f"Failed to send ticket status update notifications for {ticket_number}: {str(e)}")
