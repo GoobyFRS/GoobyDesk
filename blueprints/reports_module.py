@@ -9,9 +9,9 @@ def get_app_functions():
     from app import load_tickets, technician_required
     return load_tickets, technician_required
 
-@reports_module_bp.route("/")
+@reports_module_bp.route("/reports_home", endpoint='reports_home')
 def reports_home():
-    from app import load_tickets, technician_required, BUILDID
+    from app import load_tickets, BUILDID
     
     # Apply decorator manually
     load_tickets_func = load_tickets
