@@ -58,7 +58,7 @@
         <form action="{{ url_for('dashboard') }}" method="GET">
             <button type="submit" class="submit-btn">Back to Dashboard</button>
         </form>
-        <form action="{{ url_for('export_tickets_csv') }}" method="GET">
+        <form action="{{ url_for('reports.export_tickets_csv') }}" method="GET">
             <button type="submit" class="submit-btn">Export CSV Report</button>
         </form>
         <!-- Footer -->
