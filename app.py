@@ -9,7 +9,7 @@ from functools import wraps
 from blueprints.api_ingest import api_ingest_bp
 from blueprints.reports_module import reports_module_bp
 
-BUILDID=str("0.9.0-beta-a")
+BUILDID=str("0.9.0-beta-c")
 
 """
 Rest in Peace Alex, July 2nd 2005 - December 14th 2024
