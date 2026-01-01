@@ -6,19 +6,23 @@ from dotenv import load_dotenv
 from datetime import datetime, timedelta
 from functools import wraps
 
-BUILDID=str("0.8.0-beta-d")
+from blueprints.api_ingest import api_ingest_bp
+from blueprints.reports_module import reports_module_bp
 
+BUILDID=str("0.9.0-beta-a")
+
+"""
+Rest in Peace Alex, July 2nd 2005 - December 14th 2024
+Rest in Peace Dave, August 16th 1967 - December 19th 2025
+"""
+# Secrets loaded from .env file.
 load_dotenv(dotenv_path=".env")
 EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD") # App Password from Gmail or relevant email provider.
 CF_TURNSTILE_SITE_KEY = os.getenv("CF_TURNSTILE_SITE_KEY") # REQUIRED for CAPTCHA functionality.
 CF_TURNSTILE_SECRET_KEY = os.getenv("CF_TURNSTILE_SECRET_KEY") # REQUIRED for CAPTCHA functionality.
 TAILSCALE_NOTIFY_EMAIL = os.getenv("TAILSCALE_NOTIFY_EMAIL")
 
-"""
-Rest in Peace Alex, July 2nd 2005 - December 14th 2024
-Rest in Peace Dave, August 16th 1967 - December 19th 2025
-"""
-
+# Configuration non-secret data loaded from YAML.
 core_yaml_config = local_config_loader.load_core_config()
 TICKETS_FILE = core_yaml_config["tickets_file"]
 EMPLOYEE_FILE = core_yaml_config["employee_file"]
@@ -30,12 +34,13 @@ IMAP_SERVER = core_yaml_config["email"]["imap_server"]
 SMTP_SERVER = core_yaml_config["email"]["smtp_server"]
 SMTP_PORT = core_yaml_config["email"]["smtp_port"]
 
+# Flask App core setup and configuration.
 app = Flask(__name__)
 app.secret_key = os.getenv("FLASKAPP_SECRET_KEY")
 app.permanent_session_lifetime = timedelta(hours=6)
 
 app.config.update(
-    SESSION_COOKIE_NAME="goobbydesk_session_cookie",
+    SESSION_COOKIE_NAME="goobydesk_session_cookie",
     SESSION_COOKIE_HTTPONLY=True, # XSS Cookie Theft Prevention
     SESSION_COOKIE_SECURE=not app.debug, 
     SESSION_COOKIE_SAMESITE="Lax", # Strict, Lax, None
@@ -44,19 +49,55 @@ app.config.update(
     MAX_CONTENT_LENGTH=16 * 1024 * 1024,
 )
 
+api_ingest_bp.config = {'TAILSCALE_NOTIFY_EMAIL': TAILSCALE_NOTIFY_EMAIL}
+app.register_blueprint(api_ingest_bp)
+app.register_blueprint(reports_module_bp)
+
+# Security Headers for all responses.
+@app.after_request
+def set_security_headers(response):
+    # Prevent clickjacking attacks
+    response.headers['X-Frame-Options'] = 'DENY'
+    # Prevent MIME type sniffing
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    # Enable browser XSS protection
+    response.headers['X-XSS-Protection'] = '1; mode=block'
+    # Control referrer information
+    response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+    # Content Security Policy - start restrictive and adjust as needed
+    response.headers['Content-Security-Policy'] = (
+        "default-src 'self'; "
+        "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com; "
+        "style-src 'self' 'unsafe-inline' https://fonts.bunny.net; "
+        "img-src 'self' data: https:; "
+        "font-src 'self'; data: https://fonts.bunny.net; "
+        "connect-src 'self'; "
+        "frame-src https://challenges.cloudflare.com; "
+        "frame-ancestors 'none'"
+    )
+    # HTTP Strict Transport Security (forces HTTPS) set to 1 Day.
+    if not app.debug:
+        response.headers['Strict-Transport-Security'] = ('max-age=86400; includeSubDomains; preload')
+    
+    # Permissions Policy (formerly Feature-Policy)
+    response.headers['Permissions-Policy'] = ('geolocation=(), microphone=(), camera=()')
+    
+    return response
+
 logging.basicConfig(
     filename=LOG_FILE,
     level=getattr(logging, LOG_LEVEL.upper(), logging.INFO),
     format="%(asctime)s - %(levelname)s - %(message)s"
 )
-"""
+""" Above is the default logging configuration.
 Debug - Detailed information
 Info - Successes
 Warning - Unexpected events
 Error - Function failures
 Critical - Serious application failures
 """
-# INITIAL ERROR CODES - ENV FILE RELATED
+
+# INITIAL ERROR CODES
 
 if not CF_TURNSTILE_SITE_KEY:
     logging.critical("CF_TURNSTILE_SITE_KEY must be configured in .env file. Its required for CAPTCHA functionality.")
@@ -85,26 +126,6 @@ def load_tickets():
         logging.critical("Ticket Database file could not be located.")
         exit(106)
         return [] # represents an empty list.
-
-""" This load_tickets function contains the file locking mechanism for Linux. Not currently being tested or developed.
-def load_tickets(retries=5, delay=0.2):
-   # Load tickets from JSON file with file locking and retry logic.
-   for attempt in range(retries):
-       try:
-           with open(TICKETS_FILE, "r") as file:
-               fcntl.flock(file, fcntl.LOCK_SH)  # Shared lock for reading
-               tickets = json.load(file)
-               fcntl.flock(file, fcntl.LOCK_UN)  # Unlock the file.
-               return tickets
-       except (json.JSONDecodeError, FileNotFoundError) as e:
-           logging.critical(f"Error loading tickets: {e}")
-           print(f"ERROR - Error loading tickets: {e}")
-           return []
-       except BlockingIOError:
-           logging.critical(f"File is locked, retrying... ({attempt+1}/{retries})")
-           time.sleep(delay)  # Wait before retrying
-   raise Exception("ERROR - Failed to load tickets after multiple attempts.")
-"""
 
 # Writes to the ticket file database. Eventually needs file locking for Linux.
 def save_tickets(tickets):
@@ -159,47 +180,6 @@ def technician_required(func):
         # Authorized technician → proceed to the route
         return func(*args, **kwargs)
     return wrapper
-
-# Security Headers for all responses.
-@app.after_request
-def set_security_headers(response):
-    # Prevent clickjacking attacks
-    response.headers['X-Frame-Options'] = 'DENY'
-    
-    # Prevent MIME type sniffing
-    response.headers['X-Content-Type-Options'] = 'nosniff'
-    
-    # Enable browser XSS protection
-    response.headers['X-XSS-Protection'] = '1; mode=block'
-    
-    # Control referrer information
-    response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
-    
-    # Content Security Policy - start restrictive and adjust as needed
-    response.headers['Content-Security-Policy'] = (
-        "default-src 'self'; "
-        "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com; "
-        "style-src 'self' 'unsafe-inline' https://fonts.bunny.net; "
-        "img-src 'self' data: https:; "
-        "font-src 'self'; data: https://fonts.bunny.net; "
-        "connect-src 'self'; "
-        "frame-src https://challenges.cloudflare.com; "
-        "frame-ancestors 'none'"
-    )
-    
-    # HTTP Strict Transport Security (forces HTTPS)
-    # Start with a short max-age, then increase to 31536000 (1 year)
-    if not app.debug:
-        response.headers['Strict-Transport-Security'] = (
-            'max-age=86400; includeSubDomains; preload'
-        )
-    
-    # Permissions Policy (formerly Feature-Policy)
-    response.headers['Permissions-Policy'] = (
-        'geolocation=(), microphone=(), camera=()'
-    )
-    
-    return response
 
 @app.route("/", methods=["GET", "POST"])
 def home():
@@ -416,7 +396,7 @@ def add_ticket_note(ticket_number):
 
 # ABOVE THIS LINE SHOULD ONLY BE TECHNICIAN/TICKETING PAGES ONLY!
 # BELOW THIS LINE SHOULD ONLY BE REPORTING, LOGOUT, AND API INGEST ROUTES!
-
+"""
 @app.route("/reports_home")
 @technician_required
 def reports_home():
@@ -477,7 +457,8 @@ def reports_home():
         loggedInTech=session["technician"], 
         BUILDID=BUILDID
     )
-
+"""
+"""
 @app.route("/reports/export/csv")
 @technician_required
 def export_tickets_csv():
@@ -508,7 +489,7 @@ def export_tickets_csv():
         ])
     output.seek(0)
     return Response(output, mimetype="text/csv", headers={"Content-Disposition": "attachment; filename=goobydesk_tickets_report_basic.csv"})
-
+"""
 # BELOW THIS LINE IS RESERVED FOR LOGOUT AND API INGEST ROUTES ONLY!
 # Removes the session cookie from the user browser, sending the Technician/user back to the login page.
 @app.route("/logout")
@@ -516,6 +497,7 @@ def logout():
     session.pop("technician", None)
     return redirect(url_for("login"))
 
+"""
 @app.route("/api/uptime-kuma", methods=["POST"])
 def uptime_kuma_webhook():
     try:
@@ -602,12 +584,9 @@ def uptime_kuma_webhook():
     except Exception as e:
         logging.critical(f"Uptime Kuma webhook error: {str(e)}")
         return jsonify({"error": "Internal server error"}), 500
-
-"""
-@app.route("/api/newrelic", methods=["POST"])
-
 """
 
+"""
 @app.route("/api/tailscale", methods=["POST"])
 def tailscale_webhook():
     try:
@@ -660,7 +639,7 @@ def tailscale_webhook():
     except Exception as e:
         logging.critical(f"Tailscale webhook error: {str(e)}")
         return jsonify({"error": "Internal server error"}), 500
-
+"""
 # BELOW THIS LINE IS RESERVED FOR FLASK ERROR ROUTES. PUT ALL CORE APP FUNCTIONS ABOVE THIS LINE!
 # Handle 400 errors.
 @app.errorhandler(400)
