@@ -26,6 +26,14 @@ IMAP_SERVER = core_yaml_config["email"]["imap_server"]
 SMTP_SERVER = core_yaml_config["email"]["smtp_server"]
 SMTP_PORT = core_yaml_config["email"]["smtp_port"]
 TICKETS_FILE = core_yaml_config["tickets_file"]
+LOG_LEVEL = core_yaml_config["logging"]["level"]
+LOG_FILE = core_yaml_config["logging"]["file"]
+
+logging.basicConfig(
+    filename=LOG_FILE,
+    level=getattr(logging, LOG_LEVEL.upper(), logging.INFO),
+    format="%(asctime)s - %(levelname)s - %(message)s"
+)
 
 """
 Logging expectations:
@@ -46,7 +54,7 @@ def load_tickets():
 def save_tickets(tickets):
     with open(TICKETS_FILE, "w") as f:
         json.dump(tickets, f, indent=4)
-    logging.debug("EMAIL HANDLER - Ticket database updated.")
+    logging.debug("EMAIL HANDLER - Ticket database was updated.")
 
 # Helpers functions above only! Core functions below.
 # Send an email if EMAIL_ENABLED is True.
