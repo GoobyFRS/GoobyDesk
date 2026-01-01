@@ -9,7 +9,7 @@ def get_app_functions():
     from app import load_tickets, technician_required
     return load_tickets, technician_required
 
-@reports_module_bp.route("/reports_home", endpoint='reports_home')
+@reports_module_bp.route("/", endpoint='reports_home')
 def reports_home():
     from app import load_tickets, BUILDID
     
@@ -71,8 +71,7 @@ def reports_home():
         last_14_days=time_buckets["last_14_days"],
         last_7_days=time_buckets["last_7_days"],
         loggedInTech=session["technician"], 
-        BUILDID=BUILDID
-    )
+        BUILDID=BUILDID)
 
 
 @reports_module_bp.route("/reports/export/csv", endpoint='export_tickets_csv')
