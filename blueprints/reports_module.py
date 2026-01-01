@@ -75,7 +75,7 @@ def reports_home():
     )
 
 
-@reports_module_bp.route("/export/csv")
+@reports_module_bp.route("/reports/export/csv", endpoint='export_tickets_csv')
 def export_tickets_csv():
     from app import load_tickets
     
