@@ -46,8 +46,7 @@ app.config.update(
     SESSION_COOKIE_SAMESITE="Lax", # Strict, Lax, None
     SESSION_REFRESH_EACH_REQUEST=True,
     PERMANENT_SESSION_LIFETIME=timedelta(hours=6),
-    MAX_CONTENT_LENGTH=16 * 1024 * 1024,
-)
+    MAX_CONTENT_LENGTH=16 * 1024 * 1024,)
 
 api_ingest_bp.config = {'TAILSCALE_NOTIFY_EMAIL': TAILSCALE_NOTIFY_EMAIL}
 app.register_blueprint(api_ingest_bp)
@@ -395,251 +394,19 @@ def add_ticket_note(ticket_number):
     return jsonify({"message": "Ticket not found."}), 404
 
 # ABOVE THIS LINE SHOULD ONLY BE TECHNICIAN/TICKETING PAGES ONLY!
-# BELOW THIS LINE SHOULD ONLY BE REPORTING, LOGOUT, AND API INGEST ROUTES!
-"""
-@app.route("/reports_home")
-@technician_required
-def reports_home():
 
-    tickets = load_tickets()
-    now = datetime.now()
+# Thanks to Claude Sonnet 4.5, API Ingest has moved to ./blueprints/reports_module.py
 
-    # Ticket counters
-    total_tickets = len(tickets)
-
-    status_counts = {
-        "Open": 0,
-        "In-Progress": 0,
-        "Closed": 0,
-    }
-
-    time_buckets = {
-        "last_60_days": 0,
-        "last_30_days": 0,
-        "last_14_days": 0,
-        "last_7_days": 0,
-    }
-
-    for ticket in tickets:
-        # ---- Status counts ----
-        status = ticket.get("ticket_status")
-        if status in status_counts:
-            status_counts[status] += 1
-
-        # ---- Time-based counts ----
-        try:
-            submitted_at = datetime.strptime(
-                ticket["submission_date"], "%Y-%m-%d %H:%M:%S"
-            )
-            age = now - submitted_at
-
-            if age <= timedelta(days=60):
-                time_buckets["last_60_days"] += 1
-            if age <= timedelta(days=30):
-                time_buckets["last_30_days"] += 1
-            if age <= timedelta(days=14):
-                time_buckets["last_14_days"] += 1
-            if age <= timedelta(days=7):
-                time_buckets["last_7_days"] += 1
-
-        except (KeyError, ValueError):
-            logging.warning("REPORTING - Invalid submission_date on ticket")
-
-    return render_template("reports_home.html",
-        total_tickets=total_tickets,
-        open_tickets=status_counts["Open"],
-        in_progress_tickets=status_counts["In-Progress"],
-        closed_tickets=status_counts["Closed"],
-        last_60_days=time_buckets["last_60_days"],
-        last_30_days=time_buckets["last_30_days"],
-        last_14_days=time_buckets["last_14_days"],
-        last_7_days=time_buckets["last_7_days"],
-        loggedInTech=session["technician"], 
-        BUILDID=BUILDID
-    )
-"""
-"""
-@app.route("/reports/export/csv")
-@technician_required
-def export_tickets_csv():
-    tickets = load_tickets()
-
-    output = io.StringIO()
-    writer = csv.writer(output)
-
-    # CSV Header
-    writer.writerow([
-        "Ticket Number",
-        "Subject",
-        "Status",
-        "Submission Date",
-        "Closed By",
-        "Closure Date"
-    ])
-
-    # Rows
-    for ticket in tickets:
-        writer.writerow([
-            ticket.get("ticket_number", ""),
-            ticket.get("ticket_subject", ""),
-            ticket.get("ticket_status", ""),
-            ticket.get("submission_date", ""),
-            ticket.get("closed_by", ""),
-            ticket.get("closure_date", "")
-        ])
-    output.seek(0)
-    return Response(output, mimetype="text/csv", headers={"Content-Disposition": "attachment; filename=goobydesk_tickets_report_basic.csv"})
-"""
 # BELOW THIS LINE IS RESERVED FOR LOGOUT AND API INGEST ROUTES ONLY!
 # Removes the session cookie from the user browser, sending the Technician/user back to the login page.
+
+# Thanks to Claude Sonnet 4.5, API Ingest has moved to ./blueprints/api_ingest.py
+
 @app.route("/logout")
 def logout():
     session.pop("technician", None)
     return redirect(url_for("login"))
 
-"""
-@app.route("/api/uptime-kuma", methods=["POST"])
-def uptime_kuma_webhook():
-    try:
-        if not request.is_json:
-            logging.warning("Uptime-Kuma webhook sent invalid content type.")
-            return jsonify({"error": "Invalid content type"}), 400
-        payload = request.json
-        logging.info(f"Uptime Kuma payload received: {payload}")
-
-        # Uptime Kuma Heartbeat Structure
-        heartbeat = payload.get("heartbeat", {})
-        monitor = payload.get("monitor", {})
-
-        # Extract fields
-        status = heartbeat.get("status")
-        monitor_name = monitor.get("name", "Unknown Monitor")
-        monitor_url = monitor.get("url", "Unknown URL")
-        message = heartbeat.get("msg", payload.get("msg", "No message"))
-        timestamp = heartbeat.get("time", int(time.time()))
-
-        # Status mapping for readability
-        status_text = {
-            0: "DOWN",
-            1: "UP",
-            2: "PENDING",
-            3: "MAINTENANCE"
-        }.get(status, "UNKNOWN")
-
-        # Only trigger for DOWN (0) and PENDING (2) events
-        if status not in [0, 2]:
-            logging.info(f"Skipping ticket creation for {monitor_name} (status={status_text}).")
-            return jsonify({"status": "ignored", "reason": f"status {status_text} not tracked"}), 200
-
-        # Determine ticket properties based on status
-        if status == 0:
-            # DOWN event - High impact/urgency
-            ticket_subject = f"Uptime Kuma Alert - {monitor_name} is DOWN"
-            ticket_impact = "High"
-            ticket_urgency = "High"
-            request_type = "Incident"
-        elif status == 2:
-            # PENDING event - Medium impact/urgency
-            ticket_subject = f"Uptime Kuma Alert - {monitor_name} is PENDING"
-            ticket_impact = "Medium"
-            ticket_urgency = "Medium"
-            request_type = "Incident"
-
-        # Build ticket content
-        ticket_message = json.dumps(payload, indent=4)
-        ticket_number = generate_ticket_number()
-
-        new_ticket = {
-            "ticket_number": ticket_number,
-            "requestor_name": "Uptime Kuma",
-            "requestor_email": "noreply@uptimekuma.local",
-            "ticket_subject": ticket_subject,
-            "ticket_message": ticket_message,
-            "request_type": request_type,
-            "ticket_impact": ticket_impact,
-            "ticket_urgency": ticket_urgency,
-            "ticket_status": "Open",
-            "submission_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            "ticket_notes": []
-        }
-
-        tickets = lcfh.load_tickets()
-        tickets.append(new_ticket)
-        lcfh.save_tickets(tickets)
-
-        logging.info(f"Uptime-Kuma Notification — {ticket_number} created successfully (Status: {status_text}).")
-
-        try:
-            local_webhook_handler.notify_ticket_event(
-                ticket_number=ticket_number,
-                ticket_status="Open",
-                ticket_subject=ticket_subject
-            )
-            logging.info(f"Ticket {ticket_number} status update notifications sent successfully.")
-        except Exception as e:
-            logging.error(f"Failed to send ticket status update notifications for {ticket_number}: {str(e)}")
-
-        return jsonify({"status": "success", "ticket": ticket_number}), 200
-
-    except Exception as e:
-        logging.critical(f"Uptime Kuma webhook error: {str(e)}")
-        return jsonify({"error": "Internal server error"}), 500
-"""
-
-"""
-@app.route("/api/tailscale", methods=["POST"])
-def tailscale_webhook():
-    try:
-        payload = request.json
-
-        if not payload:
-            logging.warning("WARNING: Tailscale webhook sent an empty payload.")
-            return jsonify({"error": "Empty payload"}), 400
-
-        # Pretty-print JSON for ticket body
-        formatted_ts_webhook_body = json.dumps(payload, indent=4)
-
-        # Build ticket content
-        requestor_name = "Tailscale"
-        requestor_email = TAILSCALE_NOTIFY_EMAIL
-        ticket_subject = "Tailscale Notification"
-        ticket_message = formatted_ts_webhook_body
-        ticket_impact = "Medium"
-        ticket_urgency = "Medium"
-        request_type = "Change"
-        ticket_number = generate_ticket_number()
-
-        new_ticket = {
-            "ticket_number": ticket_number,
-            "requestor_name": requestor_name,
-            "requestor_email": requestor_email,
-            "ticket_subject": ticket_subject,
-            "ticket_message": ticket_message,
-            "request_type": request_type,
-            "ticket_impact": ticket_impact,
-            "ticket_urgency": ticket_urgency,
-            "ticket_status": "Open",
-            "submission_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            "ticket_notes": []
-        }
-
-        tickets = load_tickets()
-        tickets.append(new_ticket)
-        save_tickets(tickets)
-        logging.info(f"Tailscale Notification — {ticket_number} created successfully.")
-
-        try:
-            local_webhook_handler.notify_ticket_event(ticket_number=ticket_number,ticket_status="Open",ticket_subject=ticket_subject) # Considering a refactor later.
-            logging.info(f"Ticket {ticket_number} status notifications sent successfully.")
-        except Exception as e:
-            logging.error(f"Failed to send ticket status update notifications for {ticket_number}: {str(e)}")
-
-        return jsonify({"status": "success", "ticket": ticket_number}), 200
-
-    except Exception as e:
-        logging.critical(f"Tailscale webhook error: {str(e)}")
-        return jsonify({"error": "Internal server error"}), 500
-"""
 # BELOW THIS LINE IS RESERVED FOR FLASK ERROR ROUTES. PUT ALL CORE APP FUNCTIONS ABOVE THIS LINE!
 # Handle 400 errors.
 @app.errorhandler(400)
