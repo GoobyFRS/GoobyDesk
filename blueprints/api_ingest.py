@@ -38,7 +38,7 @@ def api_status():
     return jsonify({
         "installed": True,
         "edition": "COMMUNITY",
-        "license_key": none
+        "license_key": None
     }), 200
 
 @api_ingest_bp.route("/tailscale", methods=["POST"])
