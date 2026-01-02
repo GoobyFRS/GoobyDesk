@@ -1,8 +1,13 @@
 from flask import Blueprint, request, jsonify
 import json, logging
 from datetime import datetime
+from dotenv import load_dotenv
 import local_webhook_handler
 from local_config_loader import load_core_config
+
+
+load_dotenv(dotenv_path=".env")
+TAILSCALE_NOTIFY_EMAIL = os.getenv("TAILSCALE_NOTIFY_EMAIL")
 
 core_yaml_config = load_core_config()
 LOG_LEVEL = core_yaml_config["logging"]["level"]
@@ -39,8 +44,6 @@ def api_status():
 @api_ingest_bp.route("/tailscale", methods=["POST"])
 def tailscale_webhook():
     load_tickets, save_tickets, generate_ticket_number = get_tickets_functions()
-    TAILSCALE_NOTIFY_EMAIL = api_ingest_bp.config.get('TAILSCALE_NOTIFY_EMAIL', 'noreply@tailscale.example.org')
-    
     try:
         payload = request.json
 
