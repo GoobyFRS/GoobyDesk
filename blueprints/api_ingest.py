@@ -31,9 +31,9 @@ def get_tickets_functions():
 @api_ingest_bp.route("/status", methods=["GET"])
 def api_status():
     return jsonify({
-        "GoobyDesk": True,
-        "Edition": "COMMUNITY",
-        "license_key": None
+        "installed": true,
+        "edition": "COMMUNITY",
+        "license_key": none
     }), 200
 
 @api_ingest_bp.route("/tailscale", methods=["POST"])
