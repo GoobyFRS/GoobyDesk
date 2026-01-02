@@ -141,7 +141,7 @@ def uptime_kuma_webhook():
         new_ticket = {
             "ticket_number": ticket_number,
             "requestor_name": "Uptime Kuma",
-            "requestor_email": "noreply@uptimekuma.local",
+            "requestor_email": "noreply@uptimekuma.example.org",
             "ticket_subject": ticket_subject,
             "ticket_message": ticket_message,
             "request_type": request_type,
