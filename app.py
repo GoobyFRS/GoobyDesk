@@ -69,7 +69,7 @@ def set_security_headers(response):
         "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com; "
         "style-src 'self' 'unsafe-inline' https://fonts.bunny.net; "
         "img-src 'self' data: https:; "
-        "font-src 'self'; data: https://fonts.bunny.net; "
+        "font-src 'self' data: https://fonts.bunny.net; "
         "connect-src 'self'; "
         "frame-src https://challenges.cloudflare.com; "
         "frame-ancestors 'none'"
@@ -114,7 +114,7 @@ def load_tickets():
         with open(TICKETS_FILE, "r") as tkt_file:
             return json.load(tkt_file)
     except FileNotFoundError:
-        logging.critical("Ticket Database file could not be located.")
+        logging.critical("Ticket JSON Database file could not be located.")
         exit(1)
         return [] # represents an empty list.
 
@@ -122,7 +122,7 @@ def load_tickets():
 def save_tickets(tickets):
     with open(TICKETS_FILE, "w") as tkt_file_write_op:
         json.dump(tickets, tkt_file_write_op, indent=4)
-        logging.debug("The ticket database file was modified.")
+        logging.debug("The Ticket JSON Database file was modified.")
 
 # Read/Loads the employee file into memory.
 def load_employees():
@@ -130,7 +130,7 @@ def load_employees():
         with open(EMPLOYEE_FILE, "r") as tech_file_read_op:
             return json.load(tech_file_read_op)
     except FileNotFoundError:
-        logging.debug("Employee Database file could not be located.")
+        logging.debug("Employee JSON Database file could not be located.")
         exit(1)
         return {} # represents an empty dictionary
     
@@ -138,7 +138,7 @@ def load_employees():
 def save_employees(employees):
     with open(EMPLOYEE_FILE, "w") as emp_file_write_op:
         json.dump(employees, emp_file_write_op, indent=4)
-    logging.debug("The employee database file was modified.")
+    logging.debug("The Employee JSON Database file was modified.")
 
 # Generate a new ticket number.
 def generate_ticket_number():
