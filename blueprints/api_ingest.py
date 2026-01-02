@@ -36,7 +36,7 @@ def get_tickets_functions():
 @api_ingest_bp.route("/status", methods=["GET"])
 def api_status():
     return jsonify({
-        "installed": true,
+        "installed": True,
         "edition": "COMMUNITY",
         "license_key": none
     }), 200
