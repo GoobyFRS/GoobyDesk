@@ -39,7 +39,7 @@ def api_status():
 @api_ingest_bp.route("/tailscale", methods=["POST"])
 def tailscale_webhook():
     load_tickets, save_tickets, generate_ticket_number = get_tickets_functions()
-    TAILSCALE_NOTIFY_EMAIL = api_ingest_bp.config.get('TAILSCALE_NOTIFY_EMAIL', 'noreply@tailscale.local')
+    TAILSCALE_NOTIFY_EMAIL = api_ingest_bp.config.get('TAILSCALE_NOTIFY_EMAIL', 'noreply@tailscale.example.org')
     
     try:
         payload = request.json
