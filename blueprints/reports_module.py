@@ -22,7 +22,7 @@ Critical - Serious application failures
 
 reports_module_bp = Blueprint('reports', __name__, url_prefix='/reports')
 
-# Import decorator and functions from main app
+# Importing from APP to avoid circular imports. There might be a better way for this.
 def get_app_functions():
     from app import load_tickets, technician_required
     return load_tickets, technician_required
@@ -86,7 +86,6 @@ def reports_home():
         loggedInTech=session["technician"], 
         BUILDID=BUILDID)
 
-# CHANGED: Remove /reports from path since url_prefix already adds it
 @reports_module_bp.route("/export/csv", endpoint='export_tickets_csv')
 def export_tickets_csv():
     from app import load_tickets
