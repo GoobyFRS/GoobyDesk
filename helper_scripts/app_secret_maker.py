@@ -8,8 +8,11 @@ def generate_flask_secret_key(length=30):
     secret_key = ''.join(secrets.choice(alphabet) for _ in range(length))
     return secret_key
 
-if __name__ == "__main__":
+def main():
     key = generate_flask_secret_key()
     print(f"GENERATED NEW {key}")
     print(f"\nAdd this to your .env file or configuration:")
     print(f"FLASKAPP_SECRET_KEY={key}")
+
+if __name__ == "__main__":
+    main()

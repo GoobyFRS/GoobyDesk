@@ -9,7 +9,7 @@ from functools import wraps
 from blueprints.api_ingest import api_ingest_bp
 from blueprints.reports_module import reports_module_bp
 
-BUILDID=str("0.9.0-beta-g")
+BUILDID=str("0.9.0-beta-h")
 
 """
 Rest in Peace Alex, July 2nd 2005 - December 14th 2024
@@ -45,7 +45,7 @@ app.config.update(
     SESSION_COOKIE_SECURE=not app.debug, 
     SESSION_COOKIE_SAMESITE="Lax", # Strict, Lax, None
     SESSION_REFRESH_EACH_REQUEST=True,
-    PERMANENT_SESSION_LIFETIME=timedelta(hours=6),
+    PERMANENT_SESSION_LIFETIME=timedelta(hours=12),
     MAX_CONTENT_LENGTH=16 * 1024 * 1024,)
 
 api_ingest_bp.config = {'TAILSCALE_NOTIFY_EMAIL': TAILSCALE_NOTIFY_EMAIL}
@@ -95,22 +95,14 @@ Warning - Unexpected events
 Error - Function failures
 Critical - Serious application failures
 """
-
 # INITIAL ERROR CODES
-
-if not CF_TURNSTILE_SITE_KEY:
-    logging.critical("CF_TURNSTILE_SITE_KEY must be configured in .env file. Its required for CAPTCHA functionality.")
-    print("CRITICAL: CF_TURNSTILE_SITE_KEY must be configured in .env file. Its required for CAPTCHA functionality.")
+if not CF_TURNSTILE_SITE_KEY or not CF_TURNSTILE_SECRET_KEY:
+    logging.critical("CF_TURNSTILE_SITE_KEY and CF_TURNSTILE_SECRET_KEY must be configured in the .env file. It is required for CAPTCHA functionality.")
     exit(1) 
-
-if not CF_TURNSTILE_SECRET_KEY:
-    logging.critical("CF_TURNSTILE_SITE_KEY must be configured in .env file. Its required for CAPTCHA functionality.")
-    print("CRITICAL: CF_TURNSTILE_SITE_KEY must be configured in .env file. Its required for CAPTCHA functionality.")
-    exit(1)
 
 email_thread_enabler_check = os.getenv("EMAIL_ENABLED")
 if email_thread_enabler_check is None:
-    logging.critical("EMAIL_ENABLED is not defined. Defaulting to False.")
+    logging.info("EMAIL_ENABLED is not defined. Defaulting to False.")
     EMAIL_ENABLED = False
 else:
     EMAIL_ENABLED = email_thread_enabler_check.lower() == "true"
@@ -426,6 +418,7 @@ def page_not_found(e):
 # Handles 500 errors.
 @app.errorhandler(500)
 def internal_server_error(e):
+    logging.critical(f"Internal Server Error: {str(e)}")
     return render_template("500.html"), 500
 
 if __name__ == "__main__":

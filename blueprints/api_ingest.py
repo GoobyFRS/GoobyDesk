@@ -5,7 +5,6 @@ from dotenv import load_dotenv
 import local_webhook_handler
 from local_config_loader import load_core_config
 
-
 #load_dotenv(dotenv_path="../.env")
 #TAILSCALE_NOTIFY_EMAIL = os.getenv("TAILSCALE_NOTIFY_EMAIL")
 
@@ -13,11 +12,7 @@ core_yaml_config = load_core_config()
 LOG_LEVEL = core_yaml_config["logging"]["level"]
 LOG_FILE = core_yaml_config["logging"]["file"]
 
-logging.basicConfig(
-    filename=LOG_FILE,
-    level=getattr(logging, LOG_LEVEL.upper(), logging.INFO),
-    format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(filename=LOG_FILE,level=getattr(logging, LOG_LEVEL.upper(), logging.INFO),format="%(asctime)s - %(levelname)s - %(message)s")
 """ Above is the default logging configuration.
 Debug - Detailed information
 Info - Successes
@@ -48,7 +43,6 @@ def tailscale_webhook():
     
     try:
         payload = request.json
-
         if not payload:
             logging.warning("WARNING: Tailscale webhook sent an empty payload.")
             return jsonify({"error": "Empty payload"}), 400
@@ -88,7 +82,7 @@ def tailscale_webhook():
                 ticket_number=ticket_number,
                 ticket_status="Open",
                 ticket_subject=ticket_subject
-            )
+                )
             logging.info(f"Ticket {ticket_number} status notifications sent successfully.")
         except Exception as e:
             logging.error(f"Failed to send ticket status update notifications for {ticket_number}: {str(e)}")
