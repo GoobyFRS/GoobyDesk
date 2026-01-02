@@ -9,7 +9,7 @@ from functools import wraps
 from blueprints.api_ingest import api_ingest_bp
 from blueprints.reports_module import reports_module_bp
 
-BUILDID=str("0.9.0-beta-f")
+BUILDID=str("0.9.0-beta-g")
 
 """
 Rest in Peace Alex, July 2nd 2005 - December 14th 2024
@@ -37,7 +37,7 @@ SMTP_PORT = core_yaml_config["email"]["smtp_port"]
 # Flask App core setup and configuration.
 app = Flask(__name__)
 app.secret_key = os.getenv("FLASKAPP_SECRET_KEY")
-app.permanent_session_lifetime = timedelta(hours=6)
+app.permanent_session_lifetime = timedelta(hours=12)
 
 app.config.update(
     SESSION_COOKIE_NAME="goobydesk_session_cookie",
@@ -101,12 +101,12 @@ Critical - Serious application failures
 if not CF_TURNSTILE_SITE_KEY:
     logging.critical("CF_TURNSTILE_SITE_KEY must be configured in .env file. Its required for CAPTCHA functionality.")
     print("CRITICAL: CF_TURNSTILE_SITE_KEY must be configured in .env file. Its required for CAPTCHA functionality.")
-    exit(108) 
+    exit(1) 
 
 if not CF_TURNSTILE_SECRET_KEY:
     logging.critical("CF_TURNSTILE_SITE_KEY must be configured in .env file. Its required for CAPTCHA functionality.")
     print("CRITICAL: CF_TURNSTILE_SITE_KEY must be configured in .env file. Its required for CAPTCHA functionality.")
-    exit(109)
+    exit(1)
 
 email_thread_enabler_check = os.getenv("EMAIL_ENABLED")
 if email_thread_enabler_check is None:
@@ -123,7 +123,7 @@ def load_tickets():
             return json.load(tkt_file)
     except FileNotFoundError:
         logging.critical("Ticket Database file could not be located.")
-        exit(106)
+        exit(1)
         return [] # represents an empty list.
 
 # Writes to the ticket file database. Eventually needs file locking for Linux.
@@ -139,7 +139,7 @@ def load_employees():
             return json.load(tech_file_read_op)
     except FileNotFoundError:
         logging.debug("Employee Database file could not be located.")
-        exit(107)
+        exit(1)
         return {} # represents an empty dictionary
     
 # Helper script for secure password hasing auto-migration.
