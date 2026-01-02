@@ -22,18 +22,12 @@
     <!-- Performance Enhancements -->
     <link rel="preconnect" href="https://fonts.bunny.net/css">
     <link rel="preconnect" href="https://fonts.bunny.net/css" crossorigin>
-
-    <title>GoobyDesk - Submit a Ticket</title>
+    <!-- CSS and JS loads.-->
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-    <!-- Style/CSS goes in the HTML5 head -->
-<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
-<!-- Ticket Submission Confirmation Flash fade out.-->
-<script>
-    setTimeout(function() {
-      let alerts = document.querySelectorAll(".alert");
-      alerts.forEach(alert => alert.style.display = "none");
-    }, 5000);  // Hides after 5 seconds
-  </script>
+    <script src="{{ url_for('static', filename='helpdesk.js') }}"></script>
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+    <script src="{{ url_for('static', filename='alerts.js') }}" defer></script>
+    <title>GoobyDesk - Submit a Ticket</title>
 </head>
 <!-- Start of the displayed HTML -->
 <body>

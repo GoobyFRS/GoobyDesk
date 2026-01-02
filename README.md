@@ -2,54 +2,34 @@
 
 The Ultimate Simple, Lightweight, Databaseless Service Desk for Home Labbers, Families, and One Man MSPs.
 
-**Current Version:**  v0.8.0
+**Current Version:**  v0.9.0
 
-**Revision Date:** 2025.12.30
+**Revision Date:** 2026.01.02
 
 [GoobyDesk Repo Wiki](https://github.com/GoobyFRS/GoobyDesk/wiki) & [Production Deployment Guide](https://github.com/GoobyFRS/GoobyDesk/wiki/Production-Deployment-Guide).
 
 ## What is GoobyDesk
 
-GoobyDesk is a Python3, Flask-based web application. Leverages Cloudflare Turnstile for Anti-Spam/Brute force protection. It has support for multiple technicians. It can send and receive email replies as well as send notifications to Slack and Discord! Accepts incoming webhooks from Tailscale and Uptime-Kuma!
+GoobyDesk is a Python3, Flask-based web application with simple YAML configuration! Mobile-friendly landing page with lightweight ticket submission. It has support for multiple technicians. It can send and receive email replies and it can send notifications to Slack and Discord! Accepts incoming webhooks from Tailscale and Uptime-Kuma!
 
 > Lightweight, Readable, Ops-Friendly
 
-Mobile-friendly landing page with lightweight ticket submission.
-
-- Requestor Name
-- Requestor Contact Email
-- Ticket Subject/Title
-- Ticket Impact
-  - Low, Medium, High
-- Ticket Urgency
-  - Planning, Low, Medium, High
-- Ticket Message
-- Ticket Category
-  - Request, Incident, Maintenance, Change, Access
-
-Simple YAML configuration!
-
-New Ticket Created confirmation emails are based on a clean HTML5 Jinja template that can be easily customized. User email replies are appended to the ticket notes.
-
-Technician Dashboard where logged in users can view Open Tickets and manage them. Closed Tickets are hidden from the Dashboard by default.
-
 ## Goals and Roadmap to Production v1.0
 
-- /status Page
 - High Quality User Input Sanitation.
 - Password Reset functionality.
 
 ### Mobile Landing Page
 
-![Mobile_Landing_Page](https://github.com/user-attachments/assets/f83a13c1-e180-40e7-b911-67c866099bce)
+![Mobile_Landing_Page_1](https://github.com/user-attachments/assets/55264760-3e9d-4d41-ad3a-d81eeece08fd)
 
 ### Login Page
 
-![LoginPage](https://github.com/user-attachments/assets/9f31bdca-6711-49c4-90a3-829544b02194)
+![Login_Page_1](https://github.com/user-attachments/assets/88ecc7e4-70d5-4e4d-b57f-0acb939f6477)
 
 ### Ticket Commander View
 
-![Ticket_Commander_View](https://github.com/user-attachments/assets/bd0a8798-7cff-455b-8563-1dd0b77a9e2b)
+![Ticket_Commander_View_1](https://github.com/user-attachments/assets/a232b13a-c63c-4dc5-9967-2a623335d3fc)
 
 ### Email Template
 
@@ -57,7 +37,7 @@ Technician Dashboard where logged in users can view Open Tickets and manage them
 
 ### Slack Alert
 
-Image coming soon.
+![Slack_Alert](https://github.com/user-attachments/assets/7145d95c-7db6-47f9-9eb5-bc11fb499162)
 
 ### Discord Alert
 
