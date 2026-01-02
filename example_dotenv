@@ -2,5 +2,5 @@ EMAIL_PASSWORD=NewAPPpassword_placeholder123
 CF_TURNSTILE_SITE_KEY=01234567890
 CF_TURNSTILE_SECRET_KEY=abcdefghijklmnopqrstuvwxyz
 FLASKAPP_SECRET_KEY=SECURE_YOUR_COOKIES
-TAILSCALE_NOTIFY_EMAIL=where_should_this_go@example.com
+TAILSCALE_NOTIFY_EMAIL=noreply@tailscale.example.org
 TAILSCALE_WEBHOOK_KEY=tskey-webhook-abc123
