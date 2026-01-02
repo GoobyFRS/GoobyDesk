@@ -6,7 +6,7 @@ import local_webhook_handler
 from local_config_loader import load_core_config
 
 
-load_dotenv(dotenv_path=".env")
+load_dotenv(dotenv_path="../.env")
 TAILSCALE_NOTIFY_EMAIL = os.getenv("TAILSCALE_NOTIFY_EMAIL")
 
 core_yaml_config = load_core_config()
