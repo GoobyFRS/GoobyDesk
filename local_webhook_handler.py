@@ -20,9 +20,9 @@ def get_webhook_urls():
     webhook_url_check = load_webhook_config()
     discord_url = webhook_url_check.get("discord", {}).get("webhook_url")
     slack_url = webhook_url_check.get("slack", {}).get("webhook_url")
-    teams_url   = webhook_url_check.get("teams365", {}).get("webhook_url")
+    #teams_url   = webhook_url_check.get("teams365", {}).get("webhook_url")
 
-    return discord_url, slack_url, teams_url
+    return discord_url, slack_url, #teams_url
 
 # MAIN ENTRY POINT: SEND TICKET EVENTS
 def notify_ticket_event(ticket_number: str, ticket_subject: str, ticket_status: str):
@@ -39,10 +39,10 @@ def notify_ticket_event(ticket_number: str, ticket_subject: str, ticket_status: 
     else:
         logging.debug("WEBHOOK HANDLER - Slack disabled; skipping.")
 
-    if is_enabled("teams365"):
+    """if is_enabled("teams365"):
         results["teams365"] = send_teams365_notification(ticket_number, ticket_subject, ticket_status)
     else:
-        logging.debug("WEBHOOK HANDLER - Teams365 disabled; skipping.")
+        logging.debug("WEBHOOK HANDLER - Teams365 disabled; skipping.")"""
 
     return results
 
@@ -121,6 +121,7 @@ def send_slack_notification(ticket_number, ticket_subject, ticket_status):
 
 # -----------------------------------------------------
 # Microsoft Office 365 Teams PAYLOAD
+"""
 def send_teams365_notification(ticket_number, ticket_subject, ticket_status):
     _, _, teams_url = get_webhook_urls()
 
@@ -151,4 +152,4 @@ def send_teams365_notification(ticket_number, ticket_subject, ticket_status):
     }
 
     return send_webhook(teams_url, payload, "Teams365")
-
+"""
