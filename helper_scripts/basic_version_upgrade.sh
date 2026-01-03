@@ -21,7 +21,9 @@ TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 BACKUP_NAME="my_data_backup_${TIMESTAMP}.tgz"
 BACKUP_PATH="${BACKUP_DIR}/${BACKUP_NAME}"
 
-echo -e "${GREEN}=== GoobyDesk Upgrade Script ===${NC}"
+echo -e "${GREEN}=============================================${NC}"
+echo -e "${GREEN}========= GoobyDesk Upgrade Script ==========${NC}"
+echo -e "${GREEN}=============================================${NC}"
 echo "Timestamp: ${TIMESTAMP}"
 echo ""
 
@@ -37,8 +39,14 @@ if [ ! -d "$APP_DIR" ]; then
     exit 1
 fi
 
-# Step 1: Create backup
-echo -e "${YELLOW}Step 1: Creating backup...${NC}"
+# Step 1: Stop service
+echo -e "${YELLOW}Step 1/6: Stopping service...${NC}"
+systemctl stop "$SERVICE_NAME"
+echo -e "${GREEN}  ✓ Service stopped${NC}"
+echo ""
+
+# Step 2: Create backup
+echo -e "${YELLOW}Step 2/6: Creating backup...${NC}"
 BACKUP_TEMP_DIR=$(mktemp -d)
 mkdir -p "${BACKUP_TEMP_DIR}/my_data"
 
@@ -61,21 +69,15 @@ rm -rf "$BACKUP_TEMP_DIR"
 echo -e "${GREEN}  ✓ Backup created: ${BACKUP_PATH}${NC}"
 echo ""
 
-# Step 2: Stop service
-echo -e "${YELLOW}Step 2: Stopping service...${NC}"
-systemctl stop "$SERVICE_NAME"
-echo -e "${GREEN}  ✓ Service stopped${NC}"
-echo ""
-
 # Step 3: Pull latest code
-echo -e "${YELLOW}Step 3: Pulling latest code from git...${NC}"
+echo -e "${YELLOW}Step 3/6: Pulling latest code from git...${NC}"
 cd "$APP_DIR"
-git pull origin main
+sudo git pull origin main
 echo -e "${GREEN}  ✓ Code updated${NC}"
 echo ""
 
 # Step 4: Update dependencies
-echo -e "${YELLOW}Step 4: Updating dependencies...${NC}"
+echo -e "${YELLOW}Step 4/6: Updating dependencies...${NC}"
 source venv/bin/activate
 pip install -r requirements.txt
 deactivate
@@ -83,13 +85,13 @@ echo -e "${GREEN}  ✓ Dependencies updated${NC}"
 echo ""
 
 # Step 5: Start service
-echo -e "${YELLOW}Step 5: Starting service...${NC}"
+echo -e "${YELLOW}Step 5/6: Starting service...${NC}"
 systemctl start "$SERVICE_NAME"
 echo -e "${GREEN}  ✓ Service started${NC}"
 echo ""
 
 # Step 6: Wait and check status
-echo -e "${YELLOW}Step 6: Waiting 10 seconds for service to initialize...${NC}"
+echo -e "${YELLOW}Step 6: Waiting 10 seconds for service to fully initialize...${NC}"
 sleep 10
 echo ""
 
@@ -100,6 +102,7 @@ echo ""
 echo -e "${YELLOW}Recent Log Entries (last 25 lines):${NC}"
 tail -n 25 "$LOG_FILE"
 echo ""
-
-echo -e "${GREEN}=== Upgrade Complete ===${NC}"
+echo -e "${GREEN}=============================================${NC}"
+echo -e "${GREEN}============== Upgrade Complete =============${NC}"
 echo -e "Backup location: ${GREEN}${BACKUP_PATH}${NC}"
+echo -e "${GREEN}=============================================${NC}"
