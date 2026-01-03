@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 from flask import Blueprint, request, jsonify
 import json, logging
 from datetime import datetime

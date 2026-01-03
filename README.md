@@ -17,7 +17,6 @@ GoobyDesk is a Python3, Flask-based web application with simple YAML configurati
 ## Goals and Roadmap to Production v1.0
 
 - High Quality User Input Sanitation.
-- Password Reset functionality.
 
 ### Mobile Landing Page
 
