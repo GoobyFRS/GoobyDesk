@@ -13,7 +13,7 @@ logging:
 # Email System
 email:
   enabled: false  # true / false - false by default.
-  account: ""   # Username/Email Address - Password should be stored in .env
+  account: ""   # Username/Email Address - Password should be stored in the .env file.
   imap_server: ""
   imap_port: 993
   smtp_server: ""
@@ -26,5 +26,10 @@ discord:
 
 # Slack Support
 slack:
+  enabled: false  # true / false - false by default.
+  webhook_url: ""
+
+# Microsoft Teams Support
+teams365:
   enabled: false  # true / false - false by default.
   webhook_url: ""

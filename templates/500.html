@@ -5,11 +5,19 @@
     <link rel="icon" type="image/x-icon" href="static/favicon.ico"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="author" content="Matt Faulkner">
+    <meta name="description" content="GoobyDesk HTTP 500">
     <meta name="robots" content="noindex, nofollow"> <!--Discourage Search Engine Indexing of this page-->
-    <meta name="theme-color" content="#cf222e"> <!-- Mobile Browser stylized address bar.-->
+    <meta name="theme-color" content="#284389"> <!-- Mobile Browser stylized address bar.-->
     <meta http-equiv="X-UA-Compatible" content="IE=edge"> <!-- Force IE to use latest rendering engine available.-->
-    <title>HTTP 500 - GoobyDesk</title>
+    <!-- Performance Enhancements -->
+    <link rel="preconnect" href="https://fonts.bunny.net/css">
+    <link rel="preconnect" href="https://fonts.bunny.net/css" crossorigin>
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+    <!-- Local CSS and JavaScript Imports-->
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <script src="{{ url_for('static', filename='helpdesk.js') }}"></script>
+    <script src="{{ url_for('static', filename='alerts.js') }}" defer></script>
+    <title>HTTP 500 - GoobyDesk</title>
     <style>
         body {
             background-color: #ffffff;

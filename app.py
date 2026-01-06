@@ -9,7 +9,7 @@ from functools import wraps
 from blueprints.api_ingest import api_ingest_bp
 from blueprints.reports_module import reports_module_bp
 
-BUILDID=str("0.9.0-beta-j")
+BUILDID=str("0.9.1-beta-a")
 
 """
 Rest in Peace Alex, July 2nd 2005 - December 14th 2024
@@ -265,9 +265,7 @@ def login():
     if request.method == "POST":
         username = request.form.get("tech_username_box", "").strip()
         password = request.form.get("tech_password_box", "")
-
         employees = load_employees()
-
         for employee in employees:
             if employee.get("tech_username") != username:
                 session.permanent = True # Make session permanent for 'x' time defined above in app.config.
@@ -287,14 +285,12 @@ def login():
                     return redirect(url_for("dashboard"))
                 # Username matched, legacy password wrong -> stop checking
                 break
-
             # MODERN HASHED PASSWORD CHECK
             stored_hash = employee.get("password_hash")
             if stored_hash and local_authentication_handler.verify_password(password, stored_hash):
                 session["technician"] = username
                 logging.info(f"{username} logged in successfully.")
                 return redirect(url_for("dashboard"))
-
             # Username matched but password incorrect
             break
 

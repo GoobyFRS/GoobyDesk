@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 from flask import Blueprint, render_template, session, Response
 import io, csv, logging
 from datetime import datetime, timedelta

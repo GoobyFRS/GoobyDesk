@@ -5,13 +5,22 @@
 
 set -e  # Exit on error
 
-echo "=== GoobyDesk First Time Setup ==="
-echo
+# Color codes for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
 
-# Check if running as root
-if [ "$EUID" -eq 0 ]; then
-    echo "ERROR: Please do not run this script as root"
-    echo "The script will prompt for sudo when needed"
+echo -e "${GREEN}=============================================${NC}"
+echo -e "${GREEN}===== GoobyDesk First-Time Setup Script =====${NC}"
+echo -e "${GREEN}=============================================${NC}"
+
+echo "Timestamp: ${TIMESTAMP}"
+echo ""
+
+# Check if running as root or with sudo
+if [ "$EUID" -ne 0 ]; then 
+    echo -e "${RED}Error: This script must be run with sudo${NC}"
     exit 1
 fi
 
@@ -96,13 +105,18 @@ sudo systemctl daemon-reload || { echo "ERROR: Failed to reload systemd daemon";
 sudo systemctl enable goobydesk.service || { echo "ERROR: Failed to enable service"; exit 1; }
 
 echo
-echo "=== Setup Complete ==="
-echo
+echo -e "${GREEN}=============================================${NC}"
+echo -e "${GREEN}=== GoobyDesk First-Time Install Complete ===${NC}"
+echo -e "${GREEN}=============================================${NC}"
+echo ""
+echo "GoobyDesk will be accessible on http://127.0.0.1:8000"
+echo ""
 echo "Next steps:"
 echo "1. Review and edit configuration files in /var/www/GoobyDesk/my_data/"
-echo "2. Edit .env file if needed"
+echo "2. Edit .env file if needed. I like to use nano."
 echo "3. Start the service: sudo systemctl start goobydesk.service"
 echo "4. Check status: sudo systemctl status goobydesk.service"
 echo "5. View logs: sudo journalctl -u goobydesk.service -f"
-echo
-echo "GoobyDesk will be accessible on http://127.0.0.1:8000"
+echo "6. View logs: tail -n 25 /var/log/goobyDesk.log"
+echo ""
+echo -e "${GREEN}=============================================${NC}"
