@@ -15,14 +15,10 @@ TICKETS_FILE = core_yaml_config["paths"]["tickets_file"]
 logging.basicConfig(
     filename=LOG_FILE,
     level=getattr(logging, LOG_LEVEL.upper(), logging.INFO),
-    format="%(asctime)s - %(levelname)s - %(message)s",
-)
+    format="%(asctime)s - %(levelname)s - %(message)s",)
 
 # BLUEPRINT
-changes_module_bp = Blueprint(
-    "changes",
-    __name__,
-    url_prefix="/changes")
+changes_module_bp = Blueprint("changes", __name__, url_prefix="/changes")
 
 # HELPERS
 
@@ -35,9 +31,7 @@ def load_tickets():
         logging.error(f"CHANGES MODULE - Failed to load tickets: {e}")
         return []
 
-# --------------------------------------------------
 # ROUTES
-
 @changes_module_bp.route("/", methods=["GET"])
 @technician_required
 def changes_home():
