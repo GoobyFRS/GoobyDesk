@@ -4,7 +4,6 @@ import io, csv, json, logging
 from datetime import datetime
 from pathlib import Path
 from local_config_loader import load_core_config
-from decorators import technician_required
 
 # CONFIG & LOGGING
 core_yaml_config = load_core_config()
@@ -20,16 +19,10 @@ logging.basicConfig(
 # BLUEPRINT
 changes_module_bp = Blueprint("changes", __name__, url_prefix="/changes")
 
-# HELPERS
-
-def load_tickets():
-    """Safely load tickets from disk."""
-    try:
-        with open(TICKETS_FILE, "r") as f:
-            return json.load(f)
-    except Exception as e:
-        logging.error(f"CHANGES MODULE - Failed to load tickets: {e}")
-        return []
+# Importing from APP to avoid circular imports. There might be a better way for this.
+def get_app_functions():
+    from app import load_tickets, technician_required
+    return load_tickets, technician_required
 
 # ROUTES
 @changes_module_bp.route("/", methods=["GET"])
