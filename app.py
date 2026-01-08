@@ -51,6 +51,7 @@ app.config.update(
 api_ingest_bp.config = {'TAILSCALE_NOTIFY_EMAIL': TAILSCALE_NOTIFY_EMAIL}
 app.register_blueprint(api_ingest_bp)
 app.register_blueprint(reports_module_bp)
+app.register_blueprint(changes_module_bp)
 
 # Security Headers for all responses.
 @app.after_request
