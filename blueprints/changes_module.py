@@ -1,24 +1,16 @@
 #!/usr/bin/env python3
 from flask import Blueprint, render_template, session, Response
-import io
-import csv
-import json
-import logging
+import io, csv, json, logging
 from datetime import datetime
 from pathlib import Path
-
 from local_config_loader import load_core_config
-from decorators import technician_required   # your @technician_required decorator
+from decorators import technician_required
 
-# --------------------------------------------------
 # CONFIG & LOGGING
-# --------------------------------------------------
 core_yaml_config = load_core_config()
-
 LOG_LEVEL = core_yaml_config["logging"]["level"]
 LOG_FILE = core_yaml_config["logging"]["file"]
-
-TICKETS_FILE = core_yaml_config["paths"]["tickets_file"]  # recommended
+TICKETS_FILE = core_yaml_config["paths"]["tickets_file"]
 
 logging.basicConfig(
     filename=LOG_FILE,
@@ -26,18 +18,14 @@ logging.basicConfig(
     format="%(asctime)s - %(levelname)s - %(message)s",
 )
 
-# --------------------------------------------------
 # BLUEPRINT
-# --------------------------------------------------
 changes_module_bp = Blueprint(
     "changes",
     __name__,
-    url_prefix="/changes"
-)
+    url_prefix="/changes")
 
-# --------------------------------------------------
 # HELPERS
-# --------------------------------------------------
+
 def load_tickets():
     """Safely load tickets from disk."""
     try:
@@ -49,7 +37,6 @@ def load_tickets():
 
 # --------------------------------------------------
 # ROUTES
-# --------------------------------------------------
 
 @changes_module_bp.route("/", methods=["GET"])
 @technician_required
