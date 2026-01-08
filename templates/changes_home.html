@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="Matt Faulkner">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="theme-color" content="#284389">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Open Changes - GoobyDesk</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+
+<body>
+<div class="container">
+
+    <!-- Logo -->
+    <div class="logo">
+        <img src="https://raw.githubusercontent.com/GoobyFRS/GoobyDesk/refs/heads/main/static/GoobyDesk-color.webp"
+             alt="GoobyDesk Logo">
+    </div>
+
+    <h2>GoobyDesk – Open Changes</h2>
+
+    <!-- KPI Summary -->
+    <p>
+        <strong>Total Open Changes:</strong> {{ changes|length }}
+    </p>
+
+    <!-- Change List -->
+    {% if changes %}
+        <ul class="ticket-list">
+            {% for change in changes %}
+                <li>
+                    <a href="{{ url_for('ticket_detail', ticket_number=change.ticket_number) }}">
+                        {{ change.ticket_number }} – {{ change.ticket_subject }}
+                        ({{ change.ticket_status }})
+                    </a>
+                    <br>
+                    <small>
+                        Submitted: {{ change.submission_date }}
+                        {% if change.assigned_technician %}
+                            | Assigned: {{ change.assigned_technician }}
+                        {% endif %}
+                    </small>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No open change tickets 🎉</p>
+    {% endif %}
+
+    <!-- Actions -->
+    <div style="margin-top: 20px;">
+        <a href="{{ url_for('changes.export_changes_csv') }}" class="submit-btn">
+            Export Open Changes (CSV)
+        </a>
+    </div>
+
+    <br>
+
+    <!-- Navigation -->
+    <form action="{{ url_for('dashboard') }}" method="GET">
+        <button type="submit" class="submit-btn">Back to Dashboard</button>
+    </form>
+
+    <!-- Footer -->
+    <p class="footer-text">
+        ©2025 GoobyDesk |
+        Logged in as: {{ loggedInTech }}
+    </p>
+
+</div>
+</body>
+</html>
