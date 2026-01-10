@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 from flask import Blueprint, render_template, session, Response
 import io, csv, json, logging
-from datetime import datetime
-from pathlib import Path
-from app import load_tickets
+from functools import wraps
 from local_config_loader import load_core_config
 
 
@@ -21,10 +19,26 @@ logging.basicConfig(
 # BLUEPRINT
 changes_module_bp = Blueprint("changes", __name__, url_prefix="/changes")
 
-# Importing from APP to avoid circular imports. There might be a better way for this.
-def get_app_functions():
-    from app import load_tickets, technician_required
-    return load_tickets, technician_required
+# Helpers
+def technician_required(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        # Session-based auth check
+        if not session.get("technician"):
+            # Unauthorized access attempt
+            return render_template("403.html"), 403
+        # Authorized technician → proceed to the route
+        return func(*args, **kwargs)
+    return wrapper
+
+def load_tickets():
+    try:
+        with open(TICKETS_FILE, "r") as tkt_file:
+            return json.load(tkt_file)
+    except FileNotFoundError:
+        logging.critical("Ticket JSON Database file could not be located.")
+        exit(1)
+        return [] # represents an empty list.
 
 # ROUTES
 @changes_module_bp.route("/", methods=["GET"])
@@ -38,12 +52,10 @@ def changes_home():
         changes=open_changes,
         loggedInTech=session.get("technician"),)
 
+# Export open change tickets as CSV.
 @changes_module_bp.route("/export/csv", methods=["GET"])
 @technician_required
 def export_changes_csv():
-    """
-    Export open change tickets as CSV.
-    """
     tickets = load_tickets()
 
     open_changes = [
