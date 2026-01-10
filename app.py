@@ -8,8 +8,9 @@ from functools import wraps
 
 from blueprints.api_ingest import api_ingest_bp
 from blueprints.reports_module import reports_module_bp
+from blueprints.changes_module import changes_module_bp
 
-BUILDID=str("0.9.1-beta-a")
+BUILDID=str("0.9.2-beta-d")
 
 """
 Rest in Peace Alex, July 2nd 2005 - December 14th 2024
@@ -51,6 +52,7 @@ app.config.update(
 api_ingest_bp.config = {'TAILSCALE_NOTIFY_EMAIL': TAILSCALE_NOTIFY_EMAIL}
 app.register_blueprint(api_ingest_bp)
 app.register_blueprint(reports_module_bp)
+app.register_blueprint(changes_module_bp)
 
 # Security Headers for all responses.
 @app.after_request
@@ -100,13 +102,13 @@ if not CF_TURNSTILE_SITE_KEY or not CF_TURNSTILE_SECRET_KEY:
     logging.critical("CF_TURNSTILE_SITE_KEY and CF_TURNSTILE_SECRET_KEY must be configured in the .env file. It is required for CAPTCHA functionality.")
     exit(1) 
 
-email_thread_enabler_check = os.getenv("EMAIL_ENABLED")
-if email_thread_enabler_check is None:
-    logging.info("EMAIL_ENABLED is not defined. Defaulting to False.")
-    EMAIL_ENABLED = False
-else:
-    EMAIL_ENABLED = email_thread_enabler_check.lower() == "true"
-    logging.info(f"EMAIL_ENABLED is set to {EMAIL_ENABLED}.")
+#email_thread_enabler_check = os.getenv("EMAIL_ENABLED")
+#if email_thread_enabler_check is None:
+#    logging.info("EMAIL_ENABLED is not defined. Defaulting to False.")
+#    EMAIL_ENABLED = False
+#else:
+#    EMAIL_ENABLED = email_thread_enabler_check.lower() == "true"
+#    logging.info(f"EMAIL_ENABLED is set to {EMAIL_ENABLED}.")
 
 # Read/Loads the ticket file into memory. This is the original load_tickets function that works on Windows and Unix.
 def load_tickets():
@@ -116,7 +118,6 @@ def load_tickets():
     except FileNotFoundError:
         logging.critical("Ticket JSON Database file could not be located.")
         exit(1)
-        return [] # represents an empty list.
 
 # Writes to the ticket file database. Eventually needs file locking for Linux.
 def save_tickets(tickets):
@@ -147,6 +148,12 @@ def generate_ticket_number():
     ticket_count = str(len(tickets) + 1).zfill(4)  # Zero-padded ticket count
     return f"TKT-{current_year}-{ticket_count}"  # Format: TKT-YYYY-XXXX
 
+def generate_change_request_number():
+    tickets = load_tickets() # Read/Load the tickets-db into memory.
+    current_year = datetime.now().year  # Get the current year dynamically
+    ticket_count = str(len(tickets) + 1).zfill(4)  # Zero-padded ticket count
+    return f"CHG-{current_year}-{ticket_count}"  # Format: CHG-YYYY-XXXX
+
 # Background email inbox monitoring process.
 def background_email_monitor():
     while True:
@@ -154,7 +161,7 @@ def background_email_monitor():
         time.sleep(600)  # Wait for emails every 10 minutes.
 #threading.Thread(target=background_email_monitor, daemon=True).start()
 
-if EMAIL_ENABLED:
+if EMAIL_ENABLED is True:
     logging.info("Starting background email monitoring thread...")
     threading.Thread(target=background_email_monitor, daemon=True).start()
 else:
@@ -202,24 +209,17 @@ def home():
                 return redirect(url_for("home"))
 
             # Process ticket submission
-            requestor_name = request.form["requestor_name"]
-            requestor_email = request.form["requestor_email"]
-            ticket_subject = request.form["ticket_subject"]
-            ticket_message = request.form["ticket_message"]
-            ticket_impact = request.form["ticket_impact"]
-            ticket_urgency = request.form["ticket_urgency"]
-            request_type = request.form["request_type"]
             ticket_number = generate_ticket_number()
-
+            
             new_ticket = {
                 "ticket_number": ticket_number,
-                "requestor_name": requestor_name,
-                "requestor_email": requestor_email,
-                "ticket_subject": ticket_subject,
-                "ticket_message": ticket_message,
-                "request_type": request_type,
-                "ticket_impact": ticket_impact,
-                "ticket_urgency": ticket_urgency,
+                "requestor_name": request.form["requestor_name"],
+                "requestor_email": request.form["requestor_email"],
+                "ticket_subject": request.form["ticket_subject"],
+                "ticket_message": request.form["ticket_message"],
+                "request_type": request.form["request_type"],
+                "ticket_impact": request.form["ticket_impact"],
+                "ticket_urgency": request.form["ticket_urgency"],
                 "ticket_status": "Open",
                 "submission_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                 "ticket_notes": []
@@ -230,34 +230,47 @@ def home():
             save_tickets(tickets)
             logging.info(f"{ticket_number} has been created.")
 
-            # Sends confirmation email to the requestor using the local_email_handler module.
+            # Send confirmation email to the requestor
             if EMAIL_ENABLED:
                 try:
-                    logging.debug(f"EMAIL HANDLER - EMAIL_ENABLED is set to true. Attempting to send email for {ticket_number}.")
                     email_body = render_template("new-ticket-email.html", ticket=new_ticket)
-                    local_email_handler.send_email(requestor_email, f"{ticket_number} - {ticket_subject}", email_body, html=True)
-                    logging.info(f"Confirmation Email for {ticket_number} sent successfully.")
+                    local_email_handler.send_email(
+                        new_ticket["requestor_email"],
+                        f"{ticket_number} - {new_ticket['ticket_subject']}",
+                        email_body,
+                        html=True
+                    )
+                    logging.info(f"Confirmation email for {ticket_number} sent successfully.")
                 except Exception as e:
                     logging.error(f"Failed to send email for {ticket_number}: {str(e)}")
-                else:
-                    logging.info(f"EMAIL_ENABLED is set to false. Skipping email sending for {ticket_number}.")
-                    
-            # Sends webhook notifications using the local_webhook_handler module.    
+            else:
+                logging.debug(f"EMAIL_ENABLED is false. Skipping email for {ticket_number}.")
+
+            # Send webhook notifications
             try:
-                local_webhook_handler.notify_ticket_event(ticket_number, ticket_subject, "Open")
+                local_webhook_handler.notify_ticket_event(
+                    ticket_number,
+                    new_ticket["ticket_subject"],
+                    "Open"
+                )
                 logging.info(f"Webhook notifications for {ticket_number} sent successfully.")
             except Exception as e:
                 logging.error(f"Failed to send webhook notifications for {ticket_number}: {str(e)}")
 
-            # Prompt the users web interface of a successful ticket submission.
+            # Prompt the user's web interface of a successful ticket submission
             flash(f"Ticket {ticket_number} has been submitted successfully!", "success")
             return redirect(url_for("home"))
 
+        except KeyError as e:
+            logging.error(f"Missing required form field: {str(e)}")
+            flash("Please fill out all required fields.", "danger")
+            return redirect(url_for("home"))
         except Exception as e:
             logging.critical(f"Failed to process ticket submission: {str(e)}")
-            return "An error occurred while submitting your ticket. Please try again later.", 500
-        
-    # Refresh and Reload the Home/Index
+            flash("An error occurred while submitting your ticket. Please try again later.", "danger")
+            return redirect(url_for("home"))
+
+    # Refresh and reload the Home/Index
     return render_template("index.html", sitekey=CF_TURNSTILE_SITE_KEY)
 
 @app.route("/login", methods=["GET", "POST"])
