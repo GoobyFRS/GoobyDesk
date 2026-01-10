@@ -9,7 +9,7 @@ from local_config_loader import load_core_config
 core_yaml_config = load_core_config()
 LOG_LEVEL = core_yaml_config["logging"]["level"]
 LOG_FILE = core_yaml_config["logging"]["file"]
-TICKETS_FILE = core_yaml_config["paths"]["tickets_file"]
+TICKETS_FILE = core_yaml_config["tickets_file"]
 
 logging.basicConfig(
     filename=LOG_FILE,
@@ -47,10 +47,7 @@ def changes_home():
     tickets = load_tickets()
     # Filtering out tickets with the Closed Status on the main Dashboard.
     open_changes = [ticket for ticket in tickets if ticket["ticket_type"] == "Change" and ticket["ticket_status"].lower() != "closed"]
-    return render_template(
-        "changes_home.html",
-        changes=open_changes,
-        loggedInTech=session.get("technician"),)
+    return render_template("under_construction.html")
 
 # Export open change tickets as CSV.
 @changes_module_bp.route("/export/csv", methods=["GET"])
