@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 # Local module for Chat Platform webhook notifications.
+__all__ = ["notify_ticket_event", "send_webhook"]
 import logging
 import requests
 import local_config_loader
-
-__all__ = ["notify_ticket_event", "send_webhook"]
 
 # CONFIG HELPERS
 def load_webhook_config():
