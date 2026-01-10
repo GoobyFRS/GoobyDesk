@@ -10,7 +10,7 @@ from blueprints.api_ingest import api_ingest_bp
 from blueprints.reports_module import reports_module_bp
 from blueprints.changes_module import changes_module_bp
 
-BUILDID=str("0.9.2-beta-c")
+BUILDID=str("0.9.2-beta-d")
 
 """
 Rest in Peace Alex, July 2nd 2005 - December 14th 2024
