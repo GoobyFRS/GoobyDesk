@@ -149,6 +149,12 @@ def generate_ticket_number():
     ticket_count = str(len(tickets) + 1).zfill(4)  # Zero-padded ticket count
     return f"TKT-{current_year}-{ticket_count}"  # Format: TKT-YYYY-XXXX
 
+def generate_change_request_number():
+    tickets = load_tickets() # Read/Load the tickets-db into memory.
+    current_year = datetime.now().year  # Get the current year dynamically
+    ticket_count = str(len(tickets) + 1).zfill(4)  # Zero-padded ticket count
+    return f"CHG-{current_year}-{ticket_count}"  # Format: CHG-YYYY-XXXX
+
 # Background email inbox monitoring process.
 def background_email_monitor():
     while True:

@@ -35,7 +35,7 @@
             {% for change in changes %}
                 <li>
                     <a href="{{ url_for('ticket_detail', ticket_number=change.ticket_number) }}">
-                        {{ change.ticket_number }} – {{ change.ticket_subject }}
+                        {{ change.ticket_number }} {{ change.ticket_subject }}
                         ({{ change.ticket_status }})
                     </a>
                     <br>

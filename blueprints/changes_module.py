@@ -3,7 +3,9 @@ from flask import Blueprint, render_template, session, Response
 import io, csv, json, logging
 from datetime import datetime
 from pathlib import Path
+from app import BUILDID, load_tickets
 from local_config_loader import load_core_config
+from app import load_tickets, technician_required, generate_change_request_number
 
 # CONFIG & LOGGING
 core_yaml_config = load_core_config()
@@ -19,43 +21,23 @@ logging.basicConfig(
 # BLUEPRINT
 changes_module_bp = Blueprint("changes", __name__, url_prefix="/changes")
 
-# Importing from APP to avoid circular imports. There might be a better way for this.
-def get_app_functions():
-    from app import load_tickets, technician_required
-    return load_tickets, technician_required
-
 # ROUTES
 @changes_module_bp.route("/", methods=["GET"])
 @technician_required
 def changes_home():
-    """
-    List all OPEN change tickets.
-    """
     tickets = load_tickets()
-
-    open_changes = [
-        t for t in tickets
-        if t.get("ticket_type") == "Change"
-        and t.get("ticket_status", "").lower() != "closed"
-    ]
-
-    logging.info(
-        f"CHANGES MODULE - Loaded {len(open_changes)} open change tickets"
-    )
-
+    # Filtering out tickets with the Closed Status on the main Dashboard.
+    open_changes = [ticket for ticket in tickets if ticket["ticket_type"] == "Change" and ticket["ticket_status"].lower() != "closed"]
     return render_template(
         "changes_home.html",
         changes=open_changes,
-        loggedInTech=session.get("technician"),
-    )
+        loggedInTech=session.get("technician"),)
 
 
 @changes_module_bp.route("/export/csv", methods=["GET"])
 @technician_required
 def export_changes_csv():
-    """
-    Export open change tickets as CSV.
-    """
+    #Export open change tickets as CSV.
     tickets = load_tickets()
 
     open_changes = [
