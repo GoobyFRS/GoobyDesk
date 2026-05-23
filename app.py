@@ -36,7 +36,7 @@ from blueprints.reports_module import reports_module_bp
 TicketDict = dict[str, Any]
 EmployeeDict = dict[str, Any]
 
-BUILD_ID = "0.9.3-beta"
+BUILD_ID = "0.9.4-beta"
 
 # Rest in Peace Alex, July 2nd 2005 - December 14th 2024
 # Rest in Peace Dave, August 16th 1967 - December 19th 2025
