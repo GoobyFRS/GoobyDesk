@@ -57,7 +57,7 @@ def is_valid_email(value: str) -> bool:
         domain part containing at least one ``.`` with a non-blank label
         after the final dot.
     """
-    if not value or len(value) > MAX_EMAIL_LENGTH or any(char.isspace() for char in value):
+    if not value or len(value) > MAX_EMAIL_LENGTH or " " in value or "\t" in value or "\n" in value or "\r" in value:
         return False
 
     local_part, _, domain_part = value.partition("@")

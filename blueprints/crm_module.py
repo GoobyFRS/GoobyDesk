@@ -80,10 +80,6 @@ def new_customer():
     if request.method == "GET":
         return render_template("crm/submit_new.html")
 
-    first_name = validation_helpers.clean_str(request.form.get("first_name"))
-    last_name = validation_helpers.clean_str(request.form.get("last_name"))
-    email = validation_helpers.clean_str(request.form.get("email"))
-
     missing_fields = validation_helpers.require_fields(request.form, ["first_name", "last_name", "email"])
     if missing_fields:
         return render_template(
@@ -91,6 +87,7 @@ def new_customer():
             error="First Name, Last Name, and Email are required."
         ), 400
 
+    email = validation_helpers.clean_str(request.form.get("email"))
     if not validation_helpers.is_valid_email(email):
         return render_template(
             "crm/submit_new.html",
