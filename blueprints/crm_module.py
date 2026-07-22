@@ -10,6 +10,7 @@ from functools import wraps
 from flask import Blueprint, render_template, request, redirect, url_for, session, Response
 from local_handlers.local_config_loader import load_core_config
 import local_handlers.crm_helpers as crm_helpers
+import local_handlers.validation_helpers as validation_helpers
 
 core_yaml_config = load_core_config()
 CUSTOMERS_FILE = core_yaml_config["core"]["customers_file"]
@@ -79,14 +80,24 @@ def new_customer():
     if request.method == "GET":
         return render_template("crm/submit_new.html")
 
-    first_name = request.form.get("first_name", "").strip()
-    last_name = request.form.get("last_name", "").strip()
-    email = request.form.get("email", "").strip()
+    first_name = validation_helpers.clean_str(request.form.get("first_name"))
+    last_name = validation_helpers.clean_str(request.form.get("last_name"))
+    email = validation_helpers.clean_str(request.form.get("email"))
 
-    if not first_name or not last_name or not email:
+    missing_fields = validation_helpers.require_fields(
+        {"first_name": first_name, "last_name": last_name, "email": email},
+        ["first_name", "last_name", "email"],
+    )
+    if missing_fields:
         return render_template(
             "crm/submit_new.html",
             error="First Name, Last Name, and Email are required."
+        ), 400
+
+    if not validation_helpers.is_valid_email(email):
+        return render_template(
+            "crm/submit_new.html",
+            error="Please provide a valid email address."
         ), 400
 
     customers = load_customers_file()

@@ -8,6 +8,7 @@ from functools import wraps
 from flask import Blueprint, render_template, request, jsonify, session
 
 import local_handlers.local_webhook_handler as local_webhook_handler
+import local_handlers.validation_helpers as validation_helpers
 from local_handlers.local_config_loader import load_core_config
 
 core_yaml_config = load_core_config()
@@ -127,7 +128,7 @@ def add_ticket_note(ticket_number):
     Returns:
         JSON confirmation on success, or an error message on failure.
     """
-    new_tkt_note = request.form.get("note_content")
+    new_tkt_note = validation_helpers.clean_str(request.form.get("note_content"))
 
     if not new_tkt_note:
         return jsonify({"message": "Note Contents cannot be empty!"}), 400
