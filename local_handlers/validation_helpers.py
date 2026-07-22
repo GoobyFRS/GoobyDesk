@@ -41,6 +41,9 @@ def is_within_length(value: str, min_length: int = 0, max_length: int = 255) -> 
     return min_length <= len(value) <= max_length
 
 
+_DISALLOWED_EMAIL_CHARS = set(" \t\n\r")
+
+
 def is_valid_email(value: str) -> bool:
     """Check whether a string looks like a well-formed email address.
 
@@ -57,7 +60,7 @@ def is_valid_email(value: str) -> bool:
         domain part containing at least one ``.`` with a non-blank label
         after the final dot.
     """
-    if not value or len(value) > MAX_EMAIL_LENGTH or " " in value or "\t" in value or "\n" in value or "\r" in value:
+    if not value or len(value) > MAX_EMAIL_LENGTH or not _DISALLOWED_EMAIL_CHARS.isdisjoint(value):
         return False
 
     local_part, _, domain_part = value.partition("@")
