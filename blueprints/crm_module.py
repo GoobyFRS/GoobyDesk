@@ -84,10 +84,7 @@ def new_customer():
     last_name = validation_helpers.clean_str(request.form.get("last_name"))
     email = validation_helpers.clean_str(request.form.get("email"))
 
-    missing_fields = validation_helpers.require_fields(
-        {"first_name": first_name, "last_name": last_name, "email": email},
-        ["first_name", "last_name", "email"],
-    )
+    missing_fields = validation_helpers.require_fields(request.form, ["first_name", "last_name", "email"])
     if missing_fields:
         return render_template(
             "crm/submit_new.html",

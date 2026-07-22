@@ -5,9 +5,8 @@ These helpers are pure functions with no Flask, session, or file I/O
 dependencies, so they can be unit tested in isolation and reused wherever
 form or JSON input needs to be validated.
 """
-import re
 
-_EMAIL_PATTERN = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+MAX_EMAIL_LENGTH = 254
 
 
 def clean_str(value: str | None, max_length: int | None = None) -> str:
@@ -46,15 +45,27 @@ def is_valid_email(value: str) -> bool:
     """Check whether a string looks like a well-formed email address.
 
     This is a conservative presence/format check only. It does not verify
-    deliverability or perform DNS/MX lookups.
+    deliverability or perform DNS/MX lookups. Implemented without regular
+    expressions to avoid any risk of catastrophic-backtracking on
+    user-supplied input.
 
     Args:
         value: The email address to validate.
 
     Returns:
-        True if the value matches a basic ``local@domain.tld`` shape.
+        True if the value has a single ``@``, a non-blank local part, and a
+        domain part containing at least one ``.`` with a non-blank label
+        after the final dot.
     """
-    return bool(value) and bool(_EMAIL_PATTERN.match(value))
+    if not value or len(value) > MAX_EMAIL_LENGTH or any(char.isspace() for char in value):
+        return False
+
+    local_part, _, domain_part = value.partition("@")
+    if not local_part or "@" in domain_part or not domain_part:
+        return False
+
+    domain_label, dot, tld = domain_part.rpartition(".")
+    return bool(dot) and bool(domain_label) and bool(tld)
 
 
 def require_fields(data: dict, fields: list[str]) -> list[str]:

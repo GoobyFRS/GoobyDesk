@@ -19,7 +19,11 @@ def generate_customer_id(customers: list[dict]) -> str:
     """
     current_year = datetime.now(timezone.utc).year
     year_prefix = f"CID-{current_year}-"
-    existing_ids = [c.get("customer_id", "") for c in customers if c.get("customer_id", "").startswith(year_prefix)]
+    existing_ids = [
+        customer_id
+        for c in customers
+        if (customer_id := c.get("customer_id", "")).startswith(year_prefix)
+    ]
     next_sequence = len(existing_ids) + 1
     return f"{year_prefix}{next_sequence:04d}"
 
