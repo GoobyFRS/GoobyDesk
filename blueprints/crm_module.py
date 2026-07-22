@@ -3,21 +3,17 @@ import io
 import csv
 import json
 import logging
-import uuid
 
 from datetime import datetime, timezone
 from functools import wraps
 
 from flask import Blueprint, render_template, request, redirect, url_for, session, Response
 from local_handlers.local_config_loader import load_core_config
+import local_handlers.crm_helpers as crm_helpers
 
 core_yaml_config = load_core_config()
-LOG_LEVEL = core_yaml_config["logging"]["level"]
-LOG_FILE = core_yaml_config["logging"]["file"]
 CUSTOMERS_FILE = core_yaml_config["core"]["customers_file"]
 SERVICE_APPID_FILE = core_yaml_config["core"]["serviceid_appid_file"]
-
-logging.basicConfig(filename=LOG_FILE, level=getattr(logging, LOG_LEVEL.upper(), logging.INFO), format="%(asctime)s - %(levelname)s - %(message)s",)
 
 crm_module_bp = Blueprint('crm_module', __name__, url_prefix='/crm')
 
@@ -50,19 +46,6 @@ def save_customers_file(customers):
     with open(CUSTOMERS_FILE, "w") as customer_file_write_op:
         json.dump(customers, customer_file_write_op, indent=4)
     logging.debug("The Customer JSON Database file was modified.")
-
-def generate_customer_id(customers):
-    """Generate the next sequential CID for the current year.
-    Args:
-        customers (list[dict]): Existing customer records to scan.
-    Returns:
-        str: A new customer ID in the form CID-YYYY-NNNN.
-    """
-    current_year = datetime.now(timezone.utc).year
-    year_prefix = f"CID-{current_year}-"
-    existing_ids = [c.get("customer_id", "") for c in customers if c.get("customer_id", "").startswith(year_prefix)]
-    next_sequence = len(existing_ids) + 1
-    return f"{year_prefix}{next_sequence:04d}"
 
 # Dashboard Route
 @crm_module_bp.route("/", methods=["GET"])
@@ -109,60 +92,12 @@ def new_customer():
     customers = load_customers_file()
     submission_timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
-    new_customer_record = {
-        "uuid": str(uuid.uuid4()),
-        "customer_id": generate_customer_id(customers),
-        "first_name": first_name,
-        "last_name": last_name,
-        "preferred_name": request.form.get("preferred_name", "").strip() or first_name,
-
-        "company": request.form.get("company", "").strip() or None,
-        "email": email,
-        "phone": request.form.get("phone", "").strip() or None,
-
-        "discord_username": request.form.get("discord_username", "").strip() or None,
-        "discord_user_id": None,
-        "minecraft_username": request.form.get("minecraft_username", "").strip() or None,
-
-        "country": request.form.get("country", "").strip() or None,
-        "timezone": request.form.get("timezone", "").strip() or None,
-        "created": submission_timestamp,
-        "last_seen": None,
-        "last_login": None,
-
-        "status": request.form.get("status", "active"),
-        "status_reason": None,
-        "account_locked": False,
-        "email_verified": False,
-        "mfa_enabled": False,
-
-        "vip": request.form.get("vip") == "on",
-        "content_creator": request.form.get("content_creator") == "on",
-
-        "risk_level": "low",
-        "lifetime_value": 0.00,
-        "billing_currency": "USD",
-        "last_order": None,
-        "last_payment": None,
-
-        "preferred_contact": request.form.get("preferred_contact", "email"),
-        "marketing_opt_in": request.form.get("marketing_opt_in") == "on",
-        "maintenance_notifications": request.form.get("maintenance_notifications") == "on",
-        "assigned_account_manager": None,
-        "services": [],
-
-        "account_tags": [],
-
-        "notes": [],
-    }
-
-    initial_note = request.form.get("notes", "").strip()
-    if initial_note:
-        new_customer_record["notes"].append({
-            "date": submission_timestamp,
-            "author": session["technician"],
-            "note": initial_note,
-        })
+    new_customer_record = crm_helpers.build_customer_record(
+        form=request.form,
+        customers=customers,
+        technician=session["technician"],
+        submission_timestamp=submission_timestamp,
+    )
 
     customers.append(new_customer_record)
     save_customers_file(customers)

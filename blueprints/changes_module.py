@@ -7,13 +7,9 @@ from functools import wraps
 from flask import Blueprint, render_template, session, Response
 from local_handlers.local_config_loader import load_core_config
 
-# CONFIG & LOGGING
+# CONFIG
 core_yaml_config = load_core_config()
-LOG_LEVEL = core_yaml_config["logging"]["level"]
-LOG_FILE = core_yaml_config["logging"]["file"]
 TICKETS_FILE = core_yaml_config["core"]["tickets_file"]
-
-logging.basicConfig(filename=LOG_FILE, level=getattr(logging, LOG_LEVEL.upper(), logging.INFO), format="%(asctime)s - %(levelname)s - %(message)s",)
 
 # BLUEPRINT
 changes_module_bp = Blueprint("changes", __name__, url_prefix="/changes")

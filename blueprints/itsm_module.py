@@ -12,23 +12,9 @@ from local_handlers.local_config_loader import load_core_config
 
 core_yaml_config = load_core_config()
 TICKETS_FILE = core_yaml_config["core"]["tickets_file"]
-LOG_LEVEL = core_yaml_config["logging"]["level"]
-LOG_FILE = core_yaml_config["logging"]["file"]
 
 itsm_module_bp = Blueprint('itsm', __name__, url_prefix='/itsm')
 
-logging.basicConfig(
-    filename=LOG_FILE,
-    level=getattr(logging, LOG_LEVEL.upper(), logging.INFO),
-    format="%(asctime)s - %(levelname)s - %(message)s"
-)
-""" Above is the default logging configuration.
-Debug - Detailed information
-Info - Successes
-Warning - Unexpected events
-Error - Function failures
-Critical - Serious application failures
-"""
 def load_tickets():
     """Read/load the ticket JSON database into memory.
     Returns:

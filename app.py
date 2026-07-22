@@ -5,17 +5,7 @@ from dotenv import load_dotenv
 from datetime import datetime, timedelta
 from functools import wraps
 
-import local_handlers.local_authentication_handler as local_authentication_handler
 import local_handlers.local_config_loader as local_config_loader
-import local_handlers.local_email_handler as local_email_handler
-import local_handlers.local_webhook_handler as local_webhook_handler
-
-from blueprints.api_module import api_module_bp
-from blueprints.reports_module import reports_module_bp
-from blueprints.changes_module import changes_module_bp
-from blueprints.itsm_module import itsm_module_bp
-from blueprints.hr_module import hr_module_bp
-from blueprints.crm_module import crm_module_bp
 
 BUILDID=str("0.9.9-RC1")
 
@@ -45,6 +35,31 @@ IMAP_SERVER = core_yaml_config["email"]["imap_server"]
 SMTP_SERVER = core_yaml_config["email"]["smtp_server"]
 SMTP_PORT = core_yaml_config["email"]["smtp_port"]
 TAILSCALE_NOTIFY_EMAIL = core_yaml_config["email"]["tailscale_notify_email"]
+
+# Centralized logging configuration. This must be configured before any
+# blueprint or local_handlers module is imported, since those modules log
+# at import time and logging.basicConfig() only has an effect on its first
+# call per process.
+logging.basicConfig(filename=LOG_FILE, level=getattr(logging, LOG_LEVEL.upper(), logging.INFO), format="%(asctime)s - %(levelname)s - %(message)s")
+""" Above is the default logging configuration.
+Debug - Detailed information
+Info - Successes
+Warning - Unexpected events
+Error - Function failures
+Critical - Serious application failures
+"""
+
+import local_handlers.local_authentication_handler as local_authentication_handler
+import local_handlers.local_email_handler as local_email_handler
+import local_handlers.local_webhook_handler as local_webhook_handler
+
+from blueprints.api_module import api_module_bp
+from blueprints.reports_module import reports_module_bp
+from blueprints.changes_module import changes_module_bp
+from blueprints.itsm_module import itsm_module_bp
+from blueprints.hr_module import hr_module_bp
+from blueprints.crm_module import crm_module_bp
+
 # Flask App core setup and configuration.
 app = Flask(__name__)
 app.secret_key = os.getenv("FLASKAPP_SECRET_KEY")
@@ -98,14 +113,6 @@ def set_security_headers(response):
     
     return response
 
-logging.basicConfig(filename=LOG_FILE, level=getattr(logging, LOG_LEVEL.upper(), logging.INFO), format="%(asctime)s - %(levelname)s - %(message)s")
-""" Above is the default logging configuration.
-Debug - Detailed information
-Info - Successes
-Warning - Unexpected events
-Error - Function failures
-Critical - Serious application failures
-"""
 # INITIAL ERROR CODES
 if not CF_TURNSTILE_SITE_KEY or not CF_TURNSTILE_SECRET_KEY:
     logging.critical("CF_TURNSTILE_SITE_KEY and CF_TURNSTILE_SECRET_KEY must be configured in the .env file. It is required for CAPTCHA functionality.")

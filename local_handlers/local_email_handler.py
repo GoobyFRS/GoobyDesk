@@ -29,14 +29,6 @@ EMAIL_ACCOUNT = core_yaml_config["email"]["account"]
 IMAP_SERVER = core_yaml_config["email"]["imap_server"]
 SMTP_SERVER = core_yaml_config["email"]["smtp_server"]
 SMTP_PORT = core_yaml_config["email"]["smtp_port"]
-LOG_LEVEL = core_yaml_config["logging"]["level"]
-LOG_FILE = core_yaml_config["logging"]["file"]
-
-logging.basicConfig(
-    filename=LOG_FILE,
-    level=getattr(logging, LOG_LEVEL.upper(), logging.INFO),
-    format="%(asctime)s - %(levelname)s - %(message)s"
-)
 
 """
 Logging expectations:
