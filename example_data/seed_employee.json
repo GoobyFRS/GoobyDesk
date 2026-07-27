@@ -1,0 +1,15 @@
+[
+    {
+        "uuid": "10cbe068-11da-4c77-ac13-b37aff9a9f55",
+        "tech_username": "admin0",
+        "password_hash": "$2a$12$GDuFBPUDIMCAav1KCM9vzOJQwHKnfQj15mIhoMM6zk/PGiM0Ule8e",
+        "roles": [
+            "admin"
+        ],
+        "role": "admin",
+        "account_locked": false,
+        "must_change_password": false,
+        "created": "2026-07-26T12:41:47Z",
+        "updated": "2026-07-26T12:41:47Z"
+    }
+]

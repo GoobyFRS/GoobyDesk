@@ -71,13 +71,15 @@ echo "Copying configuration files from examples (no overwrite)..."
 # Prefer files under example_data when present
 if [ -d example_data ]; then
     cp -n example_data/example_dotenv .env || true
-    cp -n example_data/example_employee.json prod_data/employee.json || true
+    cp -n example_data/seed_employee.json prod_data/employee_auth.json || true
+    cp -n example_data/example_hr_file.json prod_data/hr_file.json || true
     cp -n example_data/example_tickets.json prod_data/tickets.json || true
     cp -n example_data/template_configuration.yml prod_data/configuration.yml || true
 else
     # fallback to root examples (older layout)
     cp -n example_dotenv .env || true
-    cp -n example_employee.json prod_data/employee.json || true
+    cp -n seed_employee.json prod_data/employee_auth.json || true
+    cp -n example_hr_file.json prod_data/hr_file.json || true
     cp -n example_tickets.json prod_data/tickets.json || true
     cp -n template_configuration.yml prod_data/configuration.yml || true
 fi

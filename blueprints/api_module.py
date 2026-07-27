@@ -19,10 +19,11 @@ def _opaque_id(value: str, prefix: str = "id") -> str:
     if not value:
         return f"{prefix}_unknown"
     salt = os.getenv("LOG_SALT", "")
-    h = hashlib.sha256((str(value) + salt).encode()).hexdigest()[:8]
-    return f"{prefix}_{h}"
+    short_hash = hashlib.sha256((str(value) + salt).encode()).hexdigest()[:8]
+    return f"{prefix}_{short_hash}"
 
 def _get_config():
+    """Return loaded app config or fallback loader."""
     cfg = current_app.config.get("LOADED_CONFIG")
     if cfg is None:
         from local_handlers.local_config_loader import load_core_config
@@ -30,12 +31,14 @@ def _get_config():
     return cfg
 
 def _get_ticket_store():
+    """Return a TicketStore instance from loaded config."""
     cfg = _get_config()
     return TicketStore(cfg["core"]["tickets_file"])
 
 # Status Endpoint at /api/status
 @api_module_bp.route("/status", methods=["GET"])
 def api_status():
+    """Return a simple API status payload."""
     return jsonify({
         "is_GoobyDesk": True,
         "installed": True,
@@ -45,6 +48,7 @@ def api_status():
 
 @api_module_bp.route("/tailscale", methods=["POST"])
 def tailscale_webhook():
+    """Ingest Tailscale webhook and create a support ticket."""
     try:
         payload = request.json
         if not payload:
@@ -89,20 +93,21 @@ def tailscale_webhook():
                 ticket_subject=ticket_subject
                 )
             logging.info("API INGEST - Ticket %s created and notifications sent.", ticket_number)
-        except Exception as e:
+        except Exception as exc:
             logging.error("API INGEST - Failed to send ticket status notifications for %s", ticket_number)
-            logging.debug("API INGEST - Notification error details for %s: %s", ticket_number, str(e))
+            logging.debug("API INGEST - Notification error details for %s: %s", ticket_number, str(exc))
 
         return jsonify({"status": "success", "ticket": ticket_number}), 200
 
-    except Exception as e:
+    except Exception as exc:
         cid = uuid.uuid4().hex[:8]
         logging.critical("API INGEST - Tailscale webhook error; correlation_id=%s", cid)
-        logging.debug("API INGEST - Tailscale webhook exception %s: %s", cid, str(e))
+        logging.debug("API INGEST - Tailscale webhook exception %s: %s", cid, str(exc))
         return jsonify({"error": "Internal server error"}), 500
 
 @api_module_bp.route("/uptime-kuma", methods=["POST"])
 def uptime_kuma_webhook():
+    """Ingest Uptime Kuma webhooks and create tickets for DOWN/PENDING."""
     try:
         if not request.is_json:
             logging.warning("API INGEST -Uptime-Kuma webhook sent invalid content type.")
@@ -170,16 +175,16 @@ def uptime_kuma_webhook():
                 ticket_subject=ticket_subject
             )
             logging.info("API INGEST - Ticket %s status notifications sent.", ticket_number)
-        except Exception as e:
+        except Exception as exc:
             logging.error("API INGEST - Failed to send ticket status notifications for %s", ticket_number)
-            logging.debug("API INGEST - Notification error details for %s: %s", ticket_number, str(e))
+            logging.debug("API INGEST - Notification error details for %s: %s", ticket_number, str(exc))
 
         return jsonify({"status": "success", "ticket": ticket_number}), 200
 
-    except Exception as e:
+    except Exception as exc:
         cid = uuid.uuid4().hex[:8]
         logging.critical("API INGEST - Uptime Kuma webhook error; correlation_id=%s", cid)
-        logging.debug("API INGEST - Uptime Kuma exception %s: %s", cid, str(e))
+        logging.debug("API INGEST - Uptime Kuma exception %s: %s", cid, str(exc))
         return jsonify({"error": "Internal server error"}), 500
 """
 @api_module_bp.route("/goobyddns", methods=["POST"])
@@ -264,14 +269,14 @@ def librenms_webhook():
                 ticket_subject=ticket_subject
             )
             logging.info("API INGEST - Ticket %s status notifications sent.", ticket_number)
-        except Exception as e:
+        except Exception as exc:
             logging.error("API INGEST - Failed to send ticket status notifications for %s", ticket_number)
-            logging.debug("API INGEST - Notification error details for %s: %s", ticket_number, str(e))
+            logging.debug("API INGEST - Notification error details for %s: %s", ticket_number, str(exc))
 
         return jsonify({"status": "success", "ticket": ticket_number}), 200
 
-    except Exception as e:
+    except Exception as exc:
         cid = uuid.uuid4().hex[:8]
         logging.critical("API INGEST - LibreNMS webhook error; correlation_id=%s", cid)
-        logging.debug("API INGEST - LibreNMS exception %s: %s", cid, str(e))
+        logging.debug("API INGEST - LibreNMS exception %s: %s", cid, str(exc))
         return jsonify({"error": "Internal server error"}), 500

@@ -9,12 +9,12 @@ def require_fields(data: Dict[str, str], fields: List[str]) -> Tuple[bool, str]:
 
     Returns (True, "") on success or (False, "field_name") on missing field.
     """
-    for f in fields:
-        v = data.get(f)
-        if v is None:
-            return False, f
-        if isinstance(v, str) and v.strip() == "":
-            return False, f
+    for field_name in fields:
+        value = data.get(field_name)
+        if value is None:
+            return False, field_name
+        if isinstance(value, str) and value.strip() == "":
+            return False, field_name
     return True, ""
 
 

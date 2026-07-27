@@ -1,15 +1,24 @@
 {% macro format_label(value) -%}
-    {{ value | replace('_', ' ') | replace('-', ' ') | title }}
+    {%- set s = value | replace('_', ' ') | replace('-', ' ') -%}
+    {%- set parts = s.split() -%}
+    {%- for w in parts -%}
+        {%- if w.lower() in ['mfa', 'vip', 'ip', 'api', 'crm', 'hr', 'id'] -%}
+            {{ w.upper() }}{%- if not loop.last %} {{- "" -}}{% endif %}
+        {%- else -%}
+            {{ w.title() }}{%- if not loop.last %} {{- "" -}}{% endif %}
+        {%- endif -%}
+    {%- endfor -%}
 {%- endmacro %}
 
 {% macro render_value(value) -%}
     {% if value is mapping %}
-        <dl class="ticket-details">
-            {% for key, nested_value in value.items() %}
-                <dt><strong>{{ format_label(key) }}:</strong></dt>
-                <dd>{{ render_value(nested_value) }}</dd>
+        <div class="ticket-details">
+                {% for key, nested_value in value.items() %}
+                {% if key not in ['crm_worknotes', 'job_title'] and nested_value is not none %}
+                    <p><strong>{{ format_label(key) }}:</strong> {{ render_value(nested_value) }}</p>
+                {% endif %}
             {% endfor %}
-        </dl>
+        </div>
     {% elif value is sequence and value is not string %}
         {% if value %}
             <ul class="notes-list">
@@ -53,7 +62,7 @@
     <title>{{ customer.get('preferred_name', customer.first_name) }} {{ customer.last_name }} — GoobyDesk CRM</title>
 </head>
 <body>
-    <div class="container container--wide">
+    <main class="container container--wide">
 
         <div class="page-header">
             <div>
@@ -76,9 +85,20 @@
                 <p class="text-muted">{{ customer.get('customer_id', customer.uuid) }}</p>
             </div>
             <div class="page-header-actions">
-                <a href="{{ url_for('crm_module.crm_dashboard') }}">&larr; Back to Dashboard</a>
+                <a href="{{ url_for('crm_module.edit_customer', uuid=customer.get('uuid')) }}" class="submit-btn warning-btn">Edit Customer</a>
+                <a href="{{ url_for('crm_module.crm_dashboard') }}" class="submit-btn status-btn">&larr; Back to Dashboard</a>
             </div>
         </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                {% for category, msg in messages %}
+                    <div class="flash {{ category }}">{{ msg }}</div>
+                {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
 
         <div class="stats-grid">
             <div class="stat-card">
@@ -114,7 +134,7 @@
             </div>
 
             <div class="card">
-                <div class="card-header"><h3 class="card-title">Accounts & Access</h3></div>
+                <div class="card-header"><h3 class="card-title">Access & Security</h3></div>
                 <div class="card-body ticket-details">
                     <p><strong>Discord:</strong> {{ customer.get('discord', {}).get('username') or '—' }}</p>
                     <p><strong>Minecraft:</strong> {{ customer.get('minecraft', {}).get('username') or '—' }}</p>
@@ -196,6 +216,6 @@
             <br>
             <a href="{{ url_for('itsm.dashboard') }}">Queues</a> | <a href="{{ url_for('changes_module.changes_home') }}">Changes</a> | <a href="{{ url_for('crm_module.crm_dashboard') }}">CRM</a> | <a href="{{ url_for('hr_module.hr_dashboard') }}">HR</a> | <a href="{{ url_for('serviceid_module.serviceid_dashboard') }}">ServiceID</a> | <a href="{{ url_for('reports_module.reports_home') }}">Reports</a>
         </p>
-</div>
+</main>
 </body>
 </html>

@@ -1,95 +1,75 @@
-{
-    "uuid": "uuid4",
-    "customer_id": "CID-2026-0001",
-
-    "first_name": "",
-    "last_name": "",
-    "preferred_name": "",
-
-    "company": null,
-    "job_title": null,
-
-    "email": "",
-    "phone": null,
-
-    "address": {
-        "street": null,
-        "city": null,
-        "state": null,
-        "postal_code": null,
-        "country": "US"
-    },
-
-    "timezone": "UTC",
-    "language": "en-US",
-
-    "discord": {
-        "username": null,
-        "user_id": null
-    },
-
-    "minecraft": {
-        "username": null,
-        "uuid": null
-    },
-
-    "created": "",
-    "created_by": "",
-
-    "last_seen": null,
-    "last_login": null,
-
-    "status": "active",
-    "status_reason": null,
-
-    "account_locked": false,
-    "email_verified": false,
-    "mfa_enabled": false,
-
-    "customer_type": "individual",
-
-    "account_tier": "basic",
-
-    "vip": false,
-
-    "content_creator": false,
-
-    "risk_level": "low",
-
-    "lifetime_value": 0.00,
-
-    "billing_currency": "USD",
-
-    "preferred_contact": "email",
-
-    "marketing_opt_in": false,
-
-    "maintenance_notifications": true,
-
-    "assigned_account_manager": null,
-
-    "services": [],
-
-    "licenses": [],
-
-    "domains": [],
-
-    "servers": [],
-
-    "support_contract": {
-        "enabled": false,
-        "sla": null,
-        "expires": null
-    },
-
-    "custom_fields": {},
-
-    "account_tags": [],
-
-    "crm_worknotes": [],
-
-    "audit": {
-        "last_modified": "",
-        "last_modified_by": ""
+[
+    {
+        "uuid": "fcfb69e6-0613-4cef-97d4-bc11612152dd",
+        "customer_id": "CID-2026-0001",
+        "first_name": "James",
+        "last_name": "May",
+        "preferred_name": "James",
+        "company": "None",
+        "job_title": "None",
+        "email": "james@jamesmay.com",
+        "phone": "None",
+        "address": {
+            "street": "123 Main St",
+            "city": "Seattle",
+            "state": "WA",
+            "postal_code": "98020",
+            "country": "US"
+        },
+        "timezone": "PST",
+        "language": "en-US",
+        "discord": {
+            "username": "None",
+            "user_id": null
+        },
+        "minecraft": {
+            "username": "None",
+            "uuid": null
+        },
+        "last_seen": null,
+        "last_login": null,
+        "status": "active",
+        "status_reason": null,
+        "account_locked": false,
+        "email_verified": false,
+        "mfa_enabled": false,
+        "customer_type": "individual",
+        "account_tier": "basic",
+        "vip": true,
+        "content_creator": false,
+        "risk_level": "low",
+        "lifetime_value": 0.0,
+        "billing_currency": "USD",
+        "preferred_contact": "email",
+        "marketing_opt_in": false,
+        "maintenance_notifications": true,
+        "assigned_account_manager": "None",
+        "services": [],
+        "licenses": [],
+        "domains": [],
+        "servers": [],
+        "support_contract": {
+            "enabled": false,
+            "sla": "None",
+            "expires": null
+        },
+        "custom_fields": {},
+        "account_tags": [],
+        "crm_worknotes": [
+            {
+                "created_by": "matt",
+                "date": "2026-07-25 22:28:59",
+                "note": "This is a customer profile note."
+            }
+        ],
+        "created": "2026-07-25 21:22:08",
+        "created_by": "matt",
+        "audit": {
+            "creation_source": "auth_web",
+            "last_modified": "2026-07-26 10:32:45",
+            "last_modified_by": "matt"
+        },
+        "country": "US",
+        "updated": "2026-07-26 10:32:45"
     }
-}
+]

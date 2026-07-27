@@ -18,9 +18,9 @@ def is_change_like(ticket: dict) -> bool:
         "test_accept_plan",
         "change_number",
     )
-    for k in keys:
-        v = ticket.get(k)
-        if v:
+    for key in keys:
+        value = ticket.get(key)
+        if value:
             return True
 
     subj = ticket.get("ticket_subject") or ticket.get("subject") or ""

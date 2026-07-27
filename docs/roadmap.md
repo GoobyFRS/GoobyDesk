@@ -7,8 +7,12 @@
 
 ### Small Fixes
 
-- ITSM Ticket Notes display long json
-- No option to add a customer note on a customer profile page
-- No option to add an employee note on an employee profile page.
 - ServiceID module has no function.
 - Change Managaement workflow does not exisit.
+- Reorder Customer Profile edit boxes
+- Reorder Customer Profile boxes
+- Implement Support, Escalation, and Billing Queues
+- Implement Assign to Me function
+- Implement required Resolution Notes
+- Implement Password Reset function
+- Implement Billable Hours text box.

@@ -16,12 +16,15 @@
     <title>Create New Change - GoobyDesk</title>
 </head>
 <body>
-    <div class="container container--narrow">
+    <main class="container container--narrow">
+        <div class="logo">
+            <img src="{{ url_for('static', filename='/img/logo_white.webp') }}" alt="GoobyDesk Logo">
+        </div>
         <h2>New Change</h2>
         <p class="text-muted">Fields marked with * are required.</p>
 
         {% if error %}
-        <div class="alert alert--danger">{{ error }}</div>
+        <div class="alert alert--danger" role="alert">{{ error }}</div>
         {% endif %}
 
         {% set values = form_values or {} %}
@@ -87,6 +90,6 @@
             <button type="submit" class="submit-btn">Submit Change</button>
             <a href="{{ url_for('changes_module.changes_home') }}" class="form-link">Cancel</a>
         </form>
-    </div>
+    </main>
 </body>
 </html>

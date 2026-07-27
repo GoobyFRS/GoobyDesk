@@ -8,7 +8,54 @@ import logging
 import bcrypt
 from email import message_from_bytes
 
-__all__ = ["hash_password", "verify_password", "extract_email_body"]
+__all__ = ["hash_password", "verify_password", "extract_email_body", "resolve_preferred_name"]
+
+
+def resolve_preferred_name(technician_username: str) -> str:
+    """Resolve a login username to the HR preferred name when possible.
+
+    Falls back to the original username if no HR mapping exists or on error.
+    """
+    if not technician_username:
+        return technician_username or ""
+    try:
+        # Local import to avoid startup cycles
+        from local_handlers.local_config_loader import load_core_config
+        from storage.employee_store import EmployeeStore
+        from storage.hr_store import HrStore
+
+        cfg = load_core_config()
+        emp_store = EmployeeStore(cfg["core"]["employee_auth_file"])
+        auth_employees = emp_store.load_all()
+        lowered = technician_username.lower()
+        auth = next(
+            (
+                auth_employee
+                for auth_employee in auth_employees
+                if str(auth_employee.get("tech_username", "")).lower() == lowered
+            ),
+            None,
+        )
+        if not auth:
+            return technician_username
+        user_uuid = auth.get("uuid")
+        if not user_uuid:
+            return technician_username
+        hr_store = HrStore(cfg["core"]["hr_file"])
+        hr_employees = hr_store.load_all()
+        hr_employee = next(
+            (
+                hr_record
+                for hr_record in hr_employees
+                if hr_record.get("uuid") == user_uuid
+            ),
+            None,
+        )
+        if not hr_employee:
+            return technician_username
+        return hr_employee.get("preferred_name") or hr_employee.get("first_name") or technician_username
+    except Exception:
+        return technician_username
 
 def hash_password(plain_password: str) -> str:
     """Hash a password using bcrypt and return the UTF-8 decoded hash.

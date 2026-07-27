@@ -17,8 +17,11 @@
     <title>Open Changes - GoobyDesk</title>
 </head>
 <body>
-    <div class="container container--wide">
+    <main class="container container--wide">
         <div class="page-header">
+            <div class="logo">
+                <img src="{{ url_for('static', filename='/img/logo_white.webp') }}" alt="GoobyDesk Logo">
+            </div>
             <div>
                 <h2>Change Dashboard</h2>
                 <p class="text-muted">Welcome back, {{ loggedInTech }}</p>
@@ -36,12 +39,12 @@
                 <table class="table">
                     <thead>
                         <tr>
-                            <th>Number</th>
-                            <th>Short Description</th>
-                            <th>Status</th>
-                            <th>Risk</th>
-                            <th>Planned Window</th>
-                            <th>Requestor</th>
+                            <th scope="col">Number</th>
+                            <th scope="col">Short Description</th>
+                            <th scope="col">Status</th>
+                            <th scope="col">Risk</th>
+                            <th scope="col">Planned Window</th>
+                            <th scope="col">Requestor</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -74,6 +77,6 @@
             <br>
             <a href="{{ url_for('itsm.dashboard') }}">Queues</a> | <a href="{{ url_for('changes_module.changes_home') }}">Changes</a> | <a href="{{ url_for('crm_module.crm_dashboard') }}">CRM</a> | <a href="{{ url_for('hr_module.hr_dashboard') }}">HR</a> | <a href="{{ url_for('serviceid_module.serviceid_dashboard') }}">ServiceID</a> | <a href="{{ url_for('reports_module.reports_home') }}">Reports</a>
         </p>
-    </div>
+    </main>
 </body>
 </html>

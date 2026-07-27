@@ -70,8 +70,8 @@ def _redact_email(addr: str) -> str:
     if not addr:
         return "email_unknown"
     salt = os.getenv("LOG_SALT", "")
-    h = hashlib.sha256((str(addr) + salt).encode()).hexdigest()[:8]
-    return f"email_{h}"
+    email_hash = hashlib.sha256((str(addr) + salt).encode()).hexdigest()[:8]
+    return f"email_{email_hash}"
 
 def save_tickets(tickets):
     """Persist tickets via ticket store helper.
@@ -171,10 +171,10 @@ def fetch_email_replies():
 
                 ticket_id = ticket_match.group(0)
                 body = extract_email_body(msg)
-                for t in tickets:
-                    if t["ticket_number"] == ticket_id:
-                        t.setdefault("ticket_notes", [])
-                        t["ticket_notes"].append({"ticket_message": body})
+                for ticket_record in tickets:
+                    if ticket_record["ticket_number"] == ticket_id:
+                        ticket_record.setdefault("ticket_notes", [])
+                        ticket_record["ticket_notes"].append({"ticket_message": body})
                         save_tickets(tickets)
                         logging.info("EMAIL HANDLER - Email reply added to %s", ticket_id)
                         break

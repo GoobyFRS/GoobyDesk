@@ -2,9 +2,9 @@
 
 The Ultimate Simple, Lightweight, Databaseless Service Desk for Home Labbers, Families, and One Man MSPs.
 
-**Current Version:**  v0.9.9-RC2
+**Current Version:**  v1.0.0
 
-**Revision Date:** 2026.07.25
+**Revision Date:** 2026.07.26
 
 [GoobyDesk Repo Wiki](https://github.com/GoobyFRS/GoobyDesk/wiki) & [Production Deployment Guide](https://github.com/GoobyFRS/GoobyDesk/wiki/Production-Deployment-Guide).
 
@@ -14,7 +14,7 @@ GoobyDesk is a Python3, Flask-based web application with simple YAML configurati
 
 > Lightweight, Readable, Ops-Friendly
 
-## Screenshots!
+## Screenshots
 
 ### Home/Index/Ticket Submission
 

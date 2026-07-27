@@ -18,6 +18,7 @@ Always prefer:
 - maintainability
 - security
 - readability
+- never use single character variables
 
 Never introduce unnecessary frameworks. Never add dependencies unless requested. When unsure, ask instead of inventing behavior.
 

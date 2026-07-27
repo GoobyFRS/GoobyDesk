@@ -58,13 +58,13 @@ def role_required(*required_roles: str, require_all: bool = False, redirect_to_l
                 logger.debug("RBAC bypass: user %s has elevated roles=%s; allowing access to %s", username, roles, getattr(func, '__name__', '<view>'))
                 allowed = True
             # Special-case: wildcard role '*' → allow any authenticated user
-            elif required_roles == ("*",) or any(r == "*" for r in required_roles):
+            elif required_roles == ("*",) or any(required_role == "*" for required_role in required_roles):
                 allowed = True
             else:
                 if require_all:
-                    allowed = all(r in roles for r in required_roles)
+                    allowed = all(required_role in roles for required_role in required_roles)
                 else:
-                    allowed = any(r in roles for r in required_roles)
+                    allowed = any(required_role in roles for required_role in required_roles)
 
             if not allowed:
                 logger.warning("User %s lacks required role(s) %s for %s", username, required_roles, func.__name__)

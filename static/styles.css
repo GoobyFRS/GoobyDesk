@@ -46,6 +46,7 @@
     margin-bottom: 2rem;
     flex-wrap: wrap;
     gap: 1rem;
+    text-align: left;
 }
 
 .page-header-actions {
@@ -111,6 +112,27 @@
     margin-top: 0;
 }
 
+.checkbox-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.checkbox-label input[type="checkbox"] {
+    width: auto;
+    margin: 0;
+}
+
+.header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    flex-wrap: nowrap;
+}
+
 .form-help {
     display: block;
     margin-top: 4px;
@@ -130,13 +152,15 @@
     margin-top: 6px;
 }
 
-.notes-list {
+.notes-list,
+.ticket-list {
     list-style: none;
     padding: 0;
     text-align: left;
 }
 
-.notes-list li {
+.notes-list li,
+.ticket-list li {
     background: var(--panel-alt);
     margin: 8px 0;
     padding: 12px;
@@ -162,6 +186,35 @@
     margin-top: 15px;
 }
 
+.form-actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 15px;
+}
+
+.form-actions .cf-turnstile {
+    margin-top: 0;
+}
+
+.login-btn,
+.index-btn {
+    width: auto;
+    margin-top: 0;
+    padding-left: 18px;
+    padding-right: 18px;
+}
+
+.login-btn {
+    min-width: 120px;
+}
+
+.index-btn {
+    min-width: 140px;
+}
+
 .error-page {
     background-color: #ffffff;
 }
@@ -173,10 +226,14 @@
     margin-bottom: 2rem;
 }
 
-.stat-card {
+.stat-card,
+.card {
     background: var(--color-canvas-subtle);
     border: 1px solid var(--color-border-default);
     border-radius: 10px;
+}
+
+.stat-card {
     padding: 1.5rem;
 }
 
@@ -201,10 +258,9 @@
     grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
 }
 
-.card {
-    background: var(--color-canvas-subtle);
-    border: 1px solid var(--color-border-default);
-    border-radius: 10px;
+.reports-grid {
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
 }
 
 .card-header {
@@ -216,9 +272,15 @@
     padding: 1.5rem;
 }
 
+.card-body.ticket-details {
+    padding-top: 1.5rem;
+    padding-bottom: 1.5rem;
+}
+
 .table {
     width: 100%;
     border-collapse: collapse;
+    margin-bottom: 1rem; /* space below each table */
 }
 
 .table th,
@@ -230,7 +292,6 @@
 
 /* .container below has text-align:center for the centered marketing-page
    look elsewhere on the site. These dashboard pieces read better left-aligned. */
-.page-header,
 .stat-card,
 .card {
     text-align: left;
@@ -272,39 +333,39 @@
 }
 
 .badge-info {
-    background: rgba(88, 166, 255, .15);
-    color: #58a6ff;
-    border-color: rgba(88, 166, 255, .4);
+    background: rgba(88, 166, 255, .30);
+    color: #ffffff;
+    border-color: rgba(88, 166, 255, .6);
 }
 
 .badge-warning {
-    background: rgba(210, 153, 34, .15);
-    color: #d29922;
-    border-color: rgba(210, 153, 34, .4);
+    background: rgba(210, 153, 34, .30);
+    color: #ffffff;
+    border-color: rgba(210, 153, 34, .6);
 }
 
 .badge-success {
-    background: rgba(63, 185, 80, .15);
-    color: #3fb950;
-    border-color: rgba(63, 185, 80, .4);
+    background: rgba(63, 185, 80, .30);
+    color: #ffffff;
+    border-color: rgba(63, 185, 80, .6);
 }
 
 .badge-secondary {
-    background: rgba(139, 148, 158, .15);
-    color: #8b949e;
-    border-color: rgba(139, 148, 158, .4);
+    background: rgba(139, 148, 158, .30);
+    color: #ffffff;
+    border-color: rgba(139, 148, 158, .6);
 }
 
 .badge-danger {
-    background: rgba(248, 81, 73, .15);
-    color: #f85149;
-    border-color: rgba(248, 81, 73, .4);
+    background: rgba(248, 81, 73, .30);
+    color: #ffffff;
+    border-color: rgba(248, 81, 73, .6);
 }
 
 .badge-primary {
-    background: rgba(163, 113, 247, .15);
-    color: #a371f7;
-    border-color: rgba(163, 113, 247, .4);
+    background: rgba(163, 113, 247, .30);
+    color: #ffffff;
+    border-color: rgba(163, 113, 247, .6);
 }
 
 /* ==========================================================
@@ -404,6 +465,16 @@ textarea:focus {
     box-shadow: 0 0 0 3px rgba(137,87,229,.25);
 }
 
+a:focus-visible,
+button:focus-visible,
+.submit-btn:focus-visible,
+.addNote-btn:focus-visible,
+.status-btn:focus-visible,
+.close-tkt-btn:focus-visible {
+    outline: 3px solid var(--link);
+    outline-offset: 2px;
+}
+
 textarea {
     height: 100px;
     resize: both;
@@ -428,21 +499,26 @@ textarea {
     padding: 10px 18px;
 }
 
+.inline-form .close-tkt-btn {
+    width: auto;
+}
+
 /* ==========================================================
    Buttons
    ========================================================== */
 
 .submit-btn,
-.addNote-btn {
+.addNote-btn,
+.status-btn,
+.close-tkt-btn {
     width: 100%;
 
     margin-top: 15px;
     padding: 10px;
 
-    background: var(--primary);
     color: white;
 
-    border: 1px solid var(--primary);
+    border: 1px solid transparent;
     border-radius: 6px;
 
     font-size: 16px;
@@ -451,6 +527,12 @@ textarea {
     cursor: pointer;
 
     transition: .2s;
+}
+
+.submit-btn,
+.addNote-btn {
+    background: var(--primary);
+    border-color: var(--primary);
 }
 
 .submit-btn:hover,
@@ -459,68 +541,72 @@ textarea {
     border-color: var(--primary-hover);
 }
 
-.status-btn {
+.status-btn,
+.close-tkt-btn {
     width: 48%;
+}
 
-    margin-top: 15px;
-    padding: 10px;
-
+.status-btn {
     background: var(--success);
-    color: white;
-
-    border: 1px solid var(--success);
-    border-radius: 6px;
-
-    font-size: 16px;
-    font-weight: 500;
-
-    cursor: pointer;
-
-    transition: .2s;
+    border-color: var(--success);
 }
 
 .status-btn:hover {
     background: var(--success-hover);
 }
 
-.close-tkt-btn {
-    width: 48%;
+    .close-tkt-btn {
+        background: var(--danger);
+        border-color: var(--danger);
+    }
 
-    margin-top: 15px;
-    padding: 10px;
+    .close-tkt-btn:hover {
+        background: var(--danger-hover);
+    }
 
-    background: var(--danger);
-    color: white;
-
-    border: 1px solid var(--danger);
-    border-radius: 6px;
-
-    font-size: 16px;
-    font-weight: 500;
-
-    cursor: pointer;
-
-    transition: .2s;
-}
-
-.close-tkt-btn:hover {
-    background: var(--danger-hover);
-}
+    }
 
 /* ==========================================================
-   Alerts
+   Alerts and Flash Messages
    ========================================================== */
 
-.alert {
-    width: 48%;
+.alert,
+.flash {
+    width: 100%;
 
     margin-top: 15px;
-    padding: 10px;
+    padding: 12px 16px;
 
-    background: var(--alert);
-    color: white;
+    background: var(--panel-alt);
+    color: var(--text);
 
     border-radius: 6px;
+    border: 1px solid var(--border);
+}
+
+.alert--danger,
+.flash.danger {
+    background: var(--danger);
+    border-color: var(--danger);
+    color: white;
+}
+
+.flash.success {
+    background: var(--success);
+    border-color: var(--success);
+    color: white;
+}
+
+.flash.warning {
+    background: rgba(210, 153, 34, .15);
+    border-color: rgba(210, 153, 34, .4);
+    color: var(--text);
+}
+
+.flash.info {
+    background: rgba(56, 139, 252, .15);
+    border-color: rgba(56, 139, 252, .4);
+    color: var(--text);
 }
 
 /* ==========================================================
@@ -594,6 +680,67 @@ a:hover {
     display: flex;
     flex-direction: column;
     gap: 1rem;
+}
+
+.profile-sections {
+    margin-top: 1rem;
+}
+
+.profile-card--full {
+    grid-column: 1 / -1;
+}
+
+.profile-field-list {
+    display: grid;
+    grid-template-columns: max-content minmax(0, 1fr);
+    gap: 0.5rem 0.75rem;
+    margin: 0;
+}
+
+.profile-field-list dt,
+.profile-nested-list dt {
+    margin: 0;
+    font-weight: 700;
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+
+.profile-field-list dd,
+.profile-nested-list dd {
+    margin: 0;
+}
+
+.profile-field-list > dd {
+    justify-self: start;
+}
+
+.profile-nested-list {
+    display: grid;
+    grid-template-columns: minmax(120px, 180px) 1fr;
+    gap: 0.4rem 0.75rem;
+    margin: 0;
+    width: 100%;
+    justify-self: start;
+    text-align: left;
+}
+
+.profile-value-list {
+    margin: 0;
+    padding-left: 0;
+    list-style: none;
+}
+
+.profile-value-list li {
+    margin: 0.25rem 0;
+}
+
+.ticket-details p strong {
+    color: var(--text-muted);
+}
+
+.section-divider {
+    margin: 1rem 0;
+    border-top: 1px solid var(--border);
 }
 
 .profile-extras .card {

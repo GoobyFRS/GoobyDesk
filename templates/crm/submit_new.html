@@ -16,78 +16,88 @@
     <title>New Customer Creation — GoobyDesk</title>
 </head>
 <body>
-    <div class="container container--narrow">
-        <h2>New Customer</h2>
+    <main class="container container--narrow">
+        <div class="logo">
+            <img src="{{ url_for('static', filename='/img/logo_white.webp') }}" alt="GoobyDesk Logo">
+        </div>
+        <h2>{% if customer %}Edit Customer{% else %}New Customer{% endif %}</h2>
         <p class="text-muted">Fields marked with * are required.</p>
 
         {% if error %}
-        <div class="alert alert--danger">{{ error }}</div>
+        <div class="alert alert--danger" role="alert">{{ error }}</div>
         {% endif %}
 
-        <form method="POST" action="{{ url_for('crm_module.new_customer') }}">
+        <form method="POST" action="{% if customer %}{{ url_for('crm_module.edit_customer', uuid=customer.get('uuid')) }}{% else %}{{ url_for('crm_module.new_customer') }}{% endif %}">
 
             <div class="form-row">
                 <div>
                     <label for="first_name">First Name *</label>
-                    <input type="text" id="first_name" name="first_name" required>
+                    <input type="text" id="first_name" name="first_name" value="{{ customer.get('first_name','') if customer else '' }}" required>
                 </div>
                 <div>
                     <label for="last_name">Last Name *</label>
-                    <input type="text" id="last_name" name="last_name" required>
+                    <input type="text" id="last_name" name="last_name" value="{{ customer.get('last_name','') if customer else '' }}" required>
                 </div>
             </div>
 
             <div class="form-row">
                 <div>
                     <label for="preferred_name">Preferred Name</label>
-                    <input type="text" id="preferred_name" name="preferred_name" placeholder="Defaults to First Name">
+                    <input type="text" id="preferred_name" name="preferred_name" value="{{ customer.get('preferred_name','') if customer else '' }}" placeholder="Defaults to First Name">
                 </div>
                 <div>
                     <label for="email">Email *</label>
-                    <input type="email" id="email" name="customer_email" placeholder="richard.hammond@example.com" minlength="6" maxlength="48" autocomplete="email" pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}" required>
+                    <input type="email" id="email" name="email" value="{{ customer.get('email','') if customer else '' }}" placeholder="richard.hammond@example.com" minlength="6" maxlength="48" autocomplete="email" pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}" required>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div>
+                    <label for="company">Company</label>
+                    <input type="text" id="company" name="company" value="{{ customer.get('company','') if customer else '' }}">
                 </div>
             </div>
 
             <div class="form-row">
                 <div>
                     <label for="phone">Phone</label>
-                    <input type="tel" id="phone" name="phone">
+                    <input type="tel" id="phone" name="phone" value="{{ customer.get('phone','') if customer else '' }}" placeholder="+1 555 555 5555">
                 </div>
             </div>
 
             <div class="form-row">
                 <div>
                     <label for="discord_username">Discord Username</label>
-                    <input type="text" id="discord_username" name="discord_username">
+                    <input type="text" id="discord_username" name="discord_username" value="{{ customer.get('discord', {}).get('username','') if customer else '' }}">
                 </div>
                 <div>
                     <label for="minecraft_username">Minecraft Username</label>
-                    <input type="text" id="minecraft_username" name="minecraft_username">
+                    <input type="text" id="minecraft_username" name="minecraft_username" value="{{ customer.get('minecraft', {}).get('username','') if customer else '' }}">
                 </div>
             </div>
 
             <div class="form-row">
                 <div>
                     <label for="country">Country</label>
-                    <input type="text" id="country" name="country" placeholder="US">
+                    <input type="text" id="country" name="country" value="{{ customer.get('country','US') if customer else 'US' }}" placeholder="US">
                 </div>
                 <div>
                     <label for="timezone">Timezone</label>
                     <select id="timezone" name="timezone" required>
                         <optgroup label="US Timezones">
-                            <option value="PST">Pacific</option>
-                            <option value="MST">Mountain</option>
-                            <option value="CST">Central</option>
-                            <option value="EST">Eastern</option>
-                            <option value="AKST">Alaskan</option>
-                            <option value="HST">Hawaiian</option>
+                            <option value="PST" {% if customer and customer.get('timezone') == 'PST' %}selected{% endif %}>Pacific</option>
+                            <option value="MST" {% if customer and customer.get('timezone') == 'MST' %}selected{% endif %}>Mountain</option>
+                            <option value="CST" {% if customer and customer.get('timezone') == 'CST' %}selected{% endif %}>Central</option>
+                            <option value="EST" {% if customer and customer.get('timezone') == 'EST' %}selected{% endif %}>Eastern</option>
+                            <option value="AKST" {% if customer and customer.get('timezone') == 'AKST' %}selected{% endif %}>Alaskan</option>
+                            <option value="HST" {% if customer and customer.get('timezone') == 'HST' %}selected{% endif %}>Hawaiian</option>
                         </optgroup>
                         <optgroup label="Other Timezones">
-                            <option value="UTC">Standard/Zulu</option>
-                            <option value="CET">Central European Time</option>
-                            <option value="EET">Eastern European Time</option>
-                            <option value="IST">India Standard Time</option>
-                            <option value="JST">Japan Standard Time</option>
+                            <option value="UTC" {% if not customer or customer.get('timezone') == 'UTC' %}selected{% endif %}>UTC/GMT/Zulu</option>
+                            <option value="CET" {% if customer and customer.get('timezone') == 'CET' %}selected{% endif %}>Central European Time</option>
+                            <option value="EET" {% if customer and customer.get('timezone') == 'EET' %}selected{% endif %}>Eastern European Time</option>
+                            <option value="IST" {% if customer and customer.get('timezone') == 'IST' %}selected{% endif %}>India Standard Time</option>
+                            <option value="JST" {% if customer and customer.get('timezone') == 'JST' %}selected{% endif %}>Japan Standard Time</option>
                         </optgroup>
                     </select>
                 </div>
@@ -97,48 +107,159 @@
                 <div>
                     <label for="status">Status</label>
                     <select id="status" name="status">
-                        <option value="active" selected>Active</option>
-                        <option value="inactive">Inactive</option>
-                        <option value="suspended">Suspended</option>
+                        <option value="active" {% if not customer or customer.get('status') == 'active' %}selected{% endif %}>Active</option>
+                        <option value="inactive" {% if customer and customer.get('status') == 'inactive' %}selected{% endif %}>Inactive</option>
+                        <option value="suspended" {% if customer and customer.get('status') == 'suspended' %}selected{% endif %}>Suspended</option>
                     </select>
                 </div>
                 <div>
                     <label for="preferred_contact">Preferred Contact</label>
                     <select id="preferred_contact" name="preferred_contact">
-                        <option value="email" selected>Email</option>
-                        <option value="phone">Text Message</option>
-                        <option value="discord">Discord</option>
+                        <option value="email" {% if not customer or customer.get('preferred_contact') == 'email' %}selected{% endif %}>Email</option>
+                        <option value="phone" {% if customer and customer.get('preferred_contact') == 'phone' %}selected{% endif %}>Text Message</option>
+                        <option value="discord" {% if customer and customer.get('preferred_contact') == 'discord' %}selected{% endif %}>Discord</option>
                     </select>
                 </div>
             </div>
 
-            <label for="notes">Initial Note</label>
-            <textarea id="notes" name="notes" placeholder="Optional note about this customer..."></textarea>
+            <div class="form-row">
+                <div>
+                    <label for="street">Street</label>
+                    <input type="text" id="street" name="street" value="{{ customer.get('address', {}).get('street','') if customer else '' }}">
+                </div>
+                <div>
+                    <label for="city">City</label>
+                    <input type="text" id="city" name="city" value="{{ customer.get('address', {}).get('city','') if customer else '' }}">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div>
+                    <label for="state">State / Province</label>
+                    <input type="text" id="state" name="state" value="{{ customer.get('address', {}).get('state','') if customer else '' }}">
+                </div>
+                <div>
+                    <label for="postal_code">Postal Code</label>
+                    <input type="text" id="postal_code" name="postal_code" value="{{ customer.get('address', {}).get('postal_code','') if customer else '' }}">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div>
+                    <label for="assigned_account_manager">Assigned Manager</label>
+                    <input type="text" id="assigned_account_manager" name="assigned_account_manager" value="{{ customer.get('assigned_account_manager','') if customer else '' }}">
+                </div>
+                <div>
+                    <label for="billing_currency">Billing Currency</label>
+                    <select id="billing_currency" name="billing_currency">
+                        <option value="USD" {% if not customer or customer.get('billing_currency') == 'USD' %}selected{% endif %}>USD</option>
+                        <option value="CAN" {% if customer and customer.get('billing_currency') == 'CAN' %}selected{% endif %}>CAN</option>
+                        <option value="other" {% if customer and customer.get('billing_currency') not in ['USD','CAN'] %}selected{% endif %}>Other</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div>
+                    <label for="lifetime_value">Lifetime Value</label>
+                    <input type="number" step="0.01" id="lifetime_value" name="lifetime_value" value="{{ customer.get('lifetime_value','') if customer else '' }}">
+                </div>
+                <div>
+                    <label for="account_tier">Account Tier</label>
+                    <select id="account_tier" name="account_tier">
+                        <option value="basic" {% if not customer or customer.get('account_tier') == 'basic' %}selected{% endif %}>Basic</option>
+                        <option value="standard" {% if customer and customer.get('account_tier') == 'standard' %}selected{% endif %}>Standard</option>
+                        <option value="premium" {% if customer and customer.get('account_tier') == 'premium' %}selected{% endif %}>Premium</option>
+                        <option value="none" {% if customer and customer.get('account_tier') == 'none' %}selected{% endif %}>None</option>
+                        <option value="other" {% if customer and customer.get('account_tier') not in ['basic','standard','premium','none'] %}selected{% endif %}>Other</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div>
+                    <label for="customer_type">Customer Type</label>
+                    <select id="customer_type" name="customer_type">
+                        <option value="individual" {% if not customer or customer.get('customer_type') == 'individual' %}selected{% endif %}>Individual</option>
+                        <option value="company" {% if customer and customer.get('customer_type') == 'company' %}selected{% endif %}>Company</option>
+                        <option value="other" {% if customer and customer.get('customer_type') not in ['individual','company'] %}selected{% endif %}>Other</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="risk_level">Risk Level</label>
+                    <select id="risk_level" name="risk_level">
+                        <option value="low" {% if not customer or customer.get('risk_level') == 'low' %}selected{% endif %}>Low</option>
+                        <option value="medium" {% if customer and customer.get('risk_level') == 'medium' %}selected{% endif %}>Medium</option>
+                        <option value="high" {% if customer and customer.get('risk_level') == 'high' %}selected{% endif %}>High</option>
+                        <option value="none" {% if customer and customer.get('risk_level') == 'none' %}selected{% endif %}>None</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div>
+                    <label for="services">Services (comma-separated)</label>
+                    <input type="text" id="services" name="services" value="{{ customer.get('services') | join(', ') if customer and customer.get('services') else '' }}">
+                </div>
+                <div>
+                    <label for="account_tags">Account Tags (comma-separated)</label>
+                    <input type="text" id="account_tags" name="account_tags" value="{{ customer.get('account_tags') | join(', ') if customer and customer.get('account_tags') else '' }}">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div>
+                    <label for="support_expires">Support Expires</label>
+                    <input type="date" id="support_expires" name="support_expires" value="{{ customer.get('support_contract', {}).get('expires','') if customer else '' }}">
+                </div>
+                <div>
+                    <label for="status_reason">Status Reason</label>
+                    <input type="text" id="status_reason" name="status_reason" value="{{ customer.get('status_reason','') if customer else '' }}">
+                </div>
+            </div>
+
+            <label for="crm_worknotes">Initial Note</label>
+            <textarea id="crm_worknotes" name="crm_worknotes" placeholder="Optional note about this customer..."></textarea>
 
             <div class="checkbox-row">
-                <input type="checkbox" id="vip" name="vip">
-                <label for="vip">VIP Customer</label>
+                <label class="checkbox-label" for="support_enabled">
+                    <input type="checkbox" id="support_enabled" name="support_enabled" {% if customer and customer.get('support_contract', {}).get('enabled') %}checked{% endif %}>
+                    Support Contract Enabled
+                </label>
             </div>
 
             <div class="checkbox-row">
-                <input type="checkbox" id="content_creator" name="content_creator">
-                <label for="content_creator">Content Creator</label>
+                <label class="checkbox-label" for="vip">
+                    <input type="checkbox" id="vip" name="vip" {% if customer and customer.get('vip') %}checked{% endif %}>
+                    VIP Customer
+                </label>
             </div>
 
             <div class="checkbox-row">
-                <input type="checkbox" id="marketing_opt_in" name="marketing_opt_in">
-                <label for="marketing_opt_in">Marketing Opt-In</label>
+                <label class="checkbox-label" for="content_creator">
+                    <input type="checkbox" id="content_creator" name="content_creator" {% if customer and customer.get('content_creator') %}checked{% endif %}>
+                    Content Creator
+                </label>
             </div>
 
             <div class="checkbox-row">
-                <input type="checkbox" id="maintenance_notifications" name="maintenance_notifications" checked>
-                <label for="maintenance_notifications">Maintenance Notifications</label>
+                <label class="checkbox-label" for="marketing_opt_in">
+                    <input type="checkbox" id="marketing_opt_in" name="marketing_opt_in" {% if customer and customer.get('marketing_opt_in') %}checked{% endif %}>
+                    Marketing Opt-In
+                </label>
             </div>
 
-            <button type="submit" class="submit-btn">Create Customer</button>
-            <a href="{{ url_for('crm_module.crm_dashboard') }}" class="form-link">Cancel</a>
+            <div class="checkbox-row">
+                <label class="checkbox-label" for="maintenance_notifications">
+                    <input type="checkbox" id="maintenance_notifications" name="maintenance_notifications" {% if not customer or customer.get('maintenance_notifications') %}checked{% endif %}>
+                    Maintenance Notifications
+                </label>
+            </div>
+
+            <button type="submit" class="submit-btn">{% if customer %}Save Changes{% else %}Create Customer{% endif %}</button>
+            <a href="{% if customer %}{{ url_for('crm_module.customer_profile', uuid=customer.get('uuid')) }}{% else %}{{ url_for('crm_module.crm_dashboard') }}{% endif %}" class="form-link">Cancel</a>
 
         </form>
-    </div>
+    </main>
 </body>
 </html>

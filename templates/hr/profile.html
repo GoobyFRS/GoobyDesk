@@ -1,18 +1,90 @@
 {% macro format_label(value) -%}
-    {{ value | replace('_', ' ') | replace('-', ' ') | title }}
+    {%- set raw = value | replace('_', ' ') | replace('-', ' ') | trim -%}
+    {%- set upper = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' -%}
+    {%- set lower = 'abcdefghijklmnopqrstuvwxyz' -%}
+    {%- set normalized = '' -%}
+    {%- set previous = '' -%}
+    {%- for ch in raw -%}
+        {%- if previous and ch in upper and previous in lower -%}
+            {%- set normalized = normalized + ' ' + ch -%}
+        {%- else -%}
+            {%- set normalized = normalized + ch -%}
+        {%- endif -%}
+        {%- set previous = ch -%}
+    {%- endfor -%}
+    {%- set words = [] -%}
+    {%- set current = '' -%}
+    {%- for ch in normalized -%}
+        {%- if ch == ' ' -%}
+            {%- if current -%}
+                {%- set words = words + [current] -%}
+                {%- set current = '' -%}
+            {%- endif -%}
+        {%- else -%}
+            {%- set current = current + ch -%}
+        {%- endif -%}
+    {%- endfor -%}
+    {%- if current -%}
+        {%- set words = words + [current] -%}
+    {%- endif -%}
+    {%- for w in words -%}
+        {%- set lw = w.lower() -%}
+        {%- if lw in ['mfa', 'hr', 'ip', 'api', 'crm', 'id', 'pto'] -%}
+            {{ w.upper() }}{%- if not loop.last %} {{- "" -}}{% endif %}
+        {%- else -%}
+            {{ w.title() }}{%- if not loop.last %} {{- "" -}}{% endif %}
+        {%- endif -%}
+    {%- endfor -%}
+{%- endmacro %}
+
+{% macro format_address(address) -%}
+    {% set parts = [] %}
+    {% if address.get('street') %}
+        {% set parts = parts + [address.get('street')] %}
+    {% endif %}
+    {% if address.get('city') %}
+        {% set parts = parts + [address.get('city')] %}
+    {% endif %}
+    {% if address.get('state') %}
+        {% set parts = parts + [address.get('state')] %}
+    {% endif %}
+    {% if address.get('postal_code') %}
+        {% set parts = parts + [address.get('postal_code')] %}
+    {% endif %}
+    {% if address.get('country') %}
+        {% set parts = parts + [address.get('country')] %}
+    {% endif %}
+    {{ parts | join(', ') }}
+{%- endmacro %}
+
+{% macro format_contact_preferences(prefs) -%}
+    {% set parts = [] %}
+    {% if prefs.get('preferred_contact') %}
+        {% set parts = parts + ['PreferredContact: ' ~ prefs.get('preferred_contact')] %}
+    {% endif %}
+    {% if prefs.get('maintenance_notifications') is sameas(true) %}
+        {% set parts = parts + ['MaintenanceNotifications: Yes'] %}
+    {% elif prefs.get('maintenance_notifications') is sameas(false) %}
+        {% set parts = parts + ['MaintenanceNotifications: No'] %}
+    {% endif %}
+    {{ parts | join(', ') }}
 {%- endmacro %}
 
 {% macro render_value(value) -%}
     {% if value is mapping %}
-        <dl class="ticket-details">
-            {% for key, nested_value in value.items() %}
-                <dt><strong>{{ format_label(key) }}:</strong></dt>
-                <dd>{{ render_value(nested_value) }}</dd>
-            {% endfor %}
-        </dl>
+        {% if value %}
+            <dl class="profile-nested-list">
+                {% for key, nested_value in value.items() %}
+                    <dt>{{ format_label(key) }}</dt>
+                    <dd>{{ render_value(nested_value) }}</dd>
+                {% endfor %}
+            </dl>
+        {% else %}
+            <span class="text-muted">None</span>
+        {% endif %}
     {% elif value is sequence and value is not string %}
         {% if value %}
-            <ul class="notes-list">
+            <ul class="profile-value-list">
                 {% for item in value %}
                     <li>{{ render_value(item) }}</li>
                 {% endfor %}
@@ -31,6 +103,20 @@
     {% else %}
         {{ value }}
     {% endif %}
+{%- endmacro %}
+
+{% macro render_section(title, fields, full_width=False) -%}
+    <div class="card profile-card{% if full_width %} profile-card--full{% endif %}">
+        <div class="card-header"><h3 class="card-title">{{ title }}</h3></div>
+        <div class="card-body ticket-details">
+            <dl class="profile-field-list">
+                {% for field in fields %}
+                    <dt>{{ field.label }}</dt>
+                    <dd>{{ render_value(field.value) }}</dd>
+                {% endfor %}
+            </dl>
+        </div>
+    </div>
 {%- endmacro %}
 
 <!DOCTYPE html>
@@ -59,7 +145,7 @@
     </title>
 </head>
 <body>
-    <div class="container container--wide">
+    <main class="container container--wide">
         <div class="page-header">
             <div>
                 <div class="profile-name">
@@ -84,8 +170,8 @@
                 {% endif %}
             </div>
             <div class="page-header-actions">
-                <a href="{{ url_for('hr_module.edit_employee', uuid=employee.get('uuid')) }}" class="submit-btn">Edit Employee</a>
-                <a href="{{ url_for('hr_module.hr_dashboard') }}">&larr; Back to Dashboard</a>
+                <a href="{{ url_for('hr_module.edit_employee', uuid=employee.get('uuid')) }}" class="submit-btn warning-btn">Edit Employee</a>
+                <a href="{{ url_for('hr_module.hr_dashboard') }}" class="submit-btn status-btn">&larr; Back to Dashboard</a>
             </div>
         </div>
 
@@ -100,25 +186,6 @@
         {% endwith %}
 
         {% if employee %}
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-card-title">Email</div>
-                    <div class="stat-card-value stat-card-value--compact">{{ employee.get('email') or 'None' }}</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-card-title">Role</div>
-                    <div class="stat-card-value stat-card-value--compact">{{ employee.get('access', {}).get('role', 'None') | replace('_', ' ') | title }}</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-card-title">Department</div>
-                    <div class="stat-card-value stat-card-value--compact">{{ employee.get('employment', {}).get('department') or 'None' }}</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-card-title">Timezone</div>
-                    <div class="stat-card-value">{{ employee.get('timezone') or 'None' }}</div>
-                </div>
-            </div>
-
             {% if reset_password %}
                 <div class="card">
                     <div class="card-header"><h3 class="card-title">One-time Password</h3></div>
@@ -129,12 +196,102 @@
                 </div>
             {% endif %}
 
-            <h3 class="section-title">Notes</h3>
+            {% set roles = session.get('roles', []) %}
+            {% set address = employee.get('address', {}) %}
+            {% set contact_preferences = employee.get('contact_preferences', {}) %}
+            {% set employment = employee.get('employment', {}) %}
+            {% set access = employee.get('access', {}) %}
+            {% set emergency_contact = employee.get('emergency_contact', {}) %}
+            {% set audit = employee.get('audit', {}) %}
+            {% set applications = employee.get('applications', {}) %}
+
             <h3 class="section-title">Employee Record</h3>
-            <div class="card">
-                <div class="card-body">
-                    <div class="three-col-record">{{ render_value(employee) }}</div>
-                </div>
+            <div class="grid grid-2 profile-sections">
+                {{ render_section('Identity', [
+                    {'label': 'Uuid', 'value': employee.get('uuid')},
+                    {'label': 'EmployeeID', 'value': employee.get('employee_id')},
+                    {'label': 'FirstName', 'value': employee.get('first_name')},
+                    {'label': 'LastName', 'value': employee.get('last_name')},
+                    {'label': 'PreferredName', 'value': employee.get('preferred_name')},
+                    {'label': 'DateOfBirth', 'value': employee.get('date_of_birth')},
+                    {'label': 'WorkAuthorization', 'value': employee.get('work_authorization')},
+                ]) }}
+
+                {{ render_section('Contact Info', [
+                    {'label': 'Email', 'value': employee.get('email')},
+                    {'label': 'Phone', 'value': employee.get('phone')},
+                    {'label': 'Timezone', 'value': employee.get('timezone')},
+                    {'label': 'Address', 'value': format_address(address)},
+                    {'label': 'Contact Preferences', 'value': format_contact_preferences(contact_preferences)},
+                ]) }}
+
+                {{ render_section('Employment', [
+                    {'label': 'HireDate', 'value': employment.get('hire_date')},
+                    {'label': 'TerminationDate', 'value': employment.get('termination_date')},
+                    {'label': 'Status', 'value': employment.get('status')},
+                    {'label': 'RehireEligible', 'value': employment.get('rehire_eligible')},
+                    {'label': 'Title', 'value': employment.get('title')},
+                    {'label': 'BusinessUnit', 'value': employment.get('business_unit')},
+                    {'label': 'Department', 'value': employment.get('department')},
+                    {'label': 'ReportsTo', 'value': employment.get('reports_to')},
+                    {'label': 'EmploymentType', 'value': employment.get('employment_type')},
+                ]) }}
+
+                {{ render_section('Compensation', [
+                    {'label': 'CompensationType', 'value': employment.get('compensation_type')},
+                    {'label': 'Salary', 'value': employment.get('salary')},
+                    {'label': 'HourlyRate', 'value': employment.get('hourly_rate')},
+                    {'label': 'PayFrequency', 'value': employment.get('pay_frequency')},
+                    {'label': 'DirectDepositInfo', 'value': employment.get('direct_deposit_info')},
+                    {'label': 'Equity', 'value': employment.get('equity')},
+                    {'label': 'BonusHistory', 'value': employment.get('bonus_history', [])},
+                    {'label': 'RaiseHistory', 'value': employment.get('raise_history', [])},
+                    {'label': 'SalaryExempt', 'value': employment.get('salary_exempt')},
+                    {'label': 'BonusEligible', 'value': employment.get('bonus_eligible')},
+                    {'label': 'BonusRate', 'value': employment.get('bonus_rate')},
+                ]) }}
+
+                {{ render_section('Leave', [
+                    {'label': 'PtoAvailableHours', 'value': employment.get('pto_available_hours')},
+                    {'label': 'PtoUsedHours', 'value': employment.get('pto_used_hours')},
+                ]) }}
+
+                {% if 'admin' in roles %}
+                    {{ render_section('Access & Security', [
+                        {'label': 'Role', 'value': access.get('role')},
+                        {'label': 'AssignmentQueue', 'value': access.get('assignment_queue')},
+                        {'label': 'AccountLocked', 'value': access.get('account_locked')},
+                        {'label': 'MFAEnabled', 'value': access.get('mfa_enabled')},
+                        {'label': 'LastLogin', 'value': access.get('last_login')},
+                        {'label': 'PasswordLastChanged', 'value': access.get('password_last_changed')},
+                        {'label': 'FailedLoginAttempts', 'value': access.get('failed_login_attempts')},
+                        {'label': 'LoginEnabled', 'value': access.get('login_enabled')},
+                        {'label': 'AuthUsername', 'value': access.get('auth_username')},
+                        {'label': 'ProvisioningStatus', 'value': access.get('provisioning_status')},
+                    ]) }}
+                {% endif %}
+
+                {{ render_section('Applications', [
+                    {'label': 'Applications', 'value': applications},
+                ]) }}
+
+                {{ render_section('Emergency Contact', [
+                    {'label': 'Name', 'value': emergency_contact.get('name')},
+                    {'label': 'Relationship', 'value': emergency_contact.get('relationship')},
+                    {'label': 'Phone', 'value': emergency_contact.get('phone')},
+                ]) }}
+
+                {{ render_section('Qualifications', [
+                    {'label': 'Certifications', 'value': employee.get('certifications', [])},
+                    {'label': 'Skills', 'value': employee.get('skills', [])},
+                ]) }}
+
+                {{ render_section('Audit / Metadata', [
+                    {'label': 'Created', 'value': employee.get('created')},
+                    {'label': 'CreatedBy', 'value': employee.get('created_by')},
+                    {'label': 'Updated', 'value': employee.get('updated')},
+                    {'label': 'Audit', 'value': audit},
+                ], true) }}
             </div>
 
             <div class="profile-extras">
@@ -152,15 +309,11 @@
 
                 {% if 'hr_technician' in roles or 'admin' in roles %}
                     <div class="card">
-                        <div class="card-header"><h3 class="card-title">Add Note</h3></div>
-                        <div class="card-body">
+                        <div class="card-header"><h3 class="card-title">HR Notes</h3></div>
+                        <div class="card-body ticket-details">
                             <textarea id="employee_note_content" placeholder="Add a confidential HR note..."></textarea>
                             <button type="button" class="submit-btn" onclick="submitEmployeeNote('{{ employee.uuid }}')">Add Note</button>
-                        </div>
-                    </div>
-
-                    <div class="card">
-                        <div class="card-body ticket-details">
+                            <div class="section-divider"></div>
                             {% if employee.get('hr_worknotes') %}
                                 <ul class="notes-list">
                                     {% for note in employee.hr_worknotes %}

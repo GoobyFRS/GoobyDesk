@@ -18,7 +18,7 @@
     <title>GoobyDesk - Technician Dashboard</title>
 </head>
 <body>
-    <div class="container">
+    <main class="container">
         <div class="logo">
             <img src="{{ url_for('static', filename='/img/logo_white.webp') }}" alt="GoobyDesk Logo">
         </div>
@@ -35,7 +35,7 @@
         <!-- Close Ticket button -->
         <div class="inline-form">
             <input type="text" id="ticketIdInput" placeholder="Close Ticket Number">
-            <button class="submit-btn inline-btn" onclick="closeTicket()">Close Ticket</button>
+            <button class="close-tkt-btn inline-btn" onclick="closeTicket()">Close Ticket</button>
         </div>
         <br>
         <!-- Technician logout button -->
@@ -47,6 +47,6 @@
             <br>
             <a href="{{ url_for('itsm.dashboard') }}">Queues</a> | <a href="{{ url_for('changes_module.changes_home') }}">Changes</a> | <a href="{{ url_for('crm_module.crm_dashboard') }}">CRM</a> | <a href="{{ url_for('hr_module.hr_dashboard') }}">HR</a> | <a href="{{ url_for('serviceid_module.serviceid_dashboard') }}">ServiceID</a> | <a href="{{ url_for('reports_module.reports_home') }}">Reports</a>
         </p>
-    </div>
+    </main>
 </body>
 </html>

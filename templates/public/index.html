@@ -30,7 +30,7 @@
 </head>
 <!-- Start of the displayed HTML -->
 <body>
-    <div class="container">
+    <main class="container">
         <div class="logo">
             <img src="{{ url_for('static', filename='/img/logo_white.webp') }}" alt="GoobyDesk Logo">
         </div>
@@ -49,22 +49,22 @@
             <textarea id="message" name="ticket_body" placeholder="Please provide some detail in order to submit your request." minlength="4" maxlength="512" required></textarea>
 
             <label for="ticket_impact">Ticket Impact:</label>
-            <select id="type" name="ticket_impact" required>
+            <select id="ticket_impact" name="ticket_impact" required>
                 <option value="low">Low</option>
                 <option value="medium">Medium</option>
                 <option value="high">High</option>
             </select>
 
             <label for="ticket_urgency">Ticket Urgency:</label>
-            <select id="type" name="ticket_urgency" required>
+            <select id="ticket_urgency" name="ticket_urgency" required>
                 <option value="planning">Planning</option>
                 <option value="low">Low</option>
                 <option value="medium">Medium</option>
                 <option value="high">High</option>
             </select>
 
-            <label for="type">Ticket Type:</label>
-            <select id="type" name="request_type" required>
+            <label for="request_type">Ticket Type:</label>
+            <select id="request_type" name="request_type" required>
                 <option value="Request">Request</option>
                 <option value="Maintenance">Maintenance</option>
                 <option value="Incident">Incident</option>
@@ -72,20 +72,21 @@
                 <option value="Access">Access</option>
             </select>
             <br><br>
-            <div class="cf-turnstile" data-sitekey="{{ sitekey }}" data-theme="light"></div>
-
-            <button type="submit" class="submit-btn">Submit Ticket</button>
+            <div class="form-actions">
+              <div class="cf-turnstile" data-sitekey="{{ sitekey }}" data-theme="light"></div>
+              <button type="submit" class="submit-btn index-btn">Submit Ticket</button>
+            </div>
         </form>
         {% with messages = get_flashed_messages(with_categories=True) %}
           {% if messages %}
             {% for category, message in messages %}
-              <div class="alert alert-{{ category }}">
+              <div class="alert alert-{{ category }}" role="alert">
                 {{ message }}
               </div>
             {% endfor %}
           {% endif %}
         {% endwith %}
         <p class="footer-text">©2025 GoobyDesk, FOSS created by <a href="https://github.com/GoobyFRS">GoobyFRS</a> | <a href="{{ url_for('login') }}">Technician Login</a></p>
-    </div>
+    </main>
 </body>
 </html>
