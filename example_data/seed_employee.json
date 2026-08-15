@@ -2,7 +2,7 @@
     {
         "uuid": "10cbe068-11da-4c77-ac13-b37aff9a9f55",
         "tech_username": "admin0",
-        "password_hash": "$2a$12$GDuFBPUDIMCAav1KCM9vzOJQwHKnfQj15mIhoMM6zk/PGiM0Ule8e",
+        "password_hash": "$2a$12$pkqLkd3p6cncnZZhgnYaqe7J6rxZISKXhcHRoZ3P0xmBuBnzrb/rq",
         "roles": [
             "admin"
         ],
