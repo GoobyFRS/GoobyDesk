@@ -16,7 +16,6 @@ from typing import Any, Callable
 
 JsonValidator = Callable[[Any], bool]
 
-
 class JsonStore:
     """Generic JSON file store with atomic write semantics.
     Args:
