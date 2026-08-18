@@ -2,9 +2,9 @@
 
 The Ultimate Simple, Lightweight, Databaseless Service Desk for Home Labbers, Families, and One Man MSPs.
 
-**Current Version:**  v1.0.0
+**Current Version:**  v1.0.1
 
-**Revision Date:** 2026.08.15
+**Revision Date:** 2026.08.18
 
 [GoobyDesk Repo Wiki](https://github.com/GoobyFRS/GoobyDesk/wiki) & [Production Deployment Guide](https://github.com/GoobyFRS/GoobyDesk/wiki/Production-Deployment-Guide).
 
