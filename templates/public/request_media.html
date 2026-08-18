@@ -28,7 +28,7 @@
 
         <h1 id="media-request-title">Media Request</h1>
 
-        <form method="post" novalidate>
+        <form method="post">
             <div class="form-row">
                 <label for="requestor_name">Your Name</label>
                 <input
@@ -38,8 +38,9 @@
                     value="{{ requestor_name or '' }}"
                     placeholder="Jeremy Clarkson"
                     minlength="2"
-                    maxlength="24"
+                    maxlength="64"
                     autocomplete="name"
+                    pattern="[A-Za-z0-9 .,'’-]{2,64}"
                     required
                 >
             </div>
@@ -90,9 +91,11 @@
                     name="imdb_link"
                     value="{{ imdb_link or '' }}"
                     placeholder="https://www.imdb.com/title/..."
+                    maxlength="255"
                     inputmode="url"
+                    aria-describedby="imdb-help"
                 >
-                <div id="media-type-help" class="form-help">Include an IMDb link when available to help with matching.</div>
+                <div id="imdb-help" class="form-help">Include an IMDb link when available to help with matching.</div>
             </div>
 
             <button type="submit" class="submit-btn">Submit</button>
