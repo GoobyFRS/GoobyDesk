@@ -16,9 +16,19 @@ from storage.ticket_store import TicketStore
 ALLOWED_MEDIA_TYPES = {"TV Show", "Movie", "Other"}
 NAME_RE = re.compile(r"^[A-Za-z0-9 .,'’-]{2,64}$")
 
-media_request_module_bp = Blueprint('media_request_module', __name__, url_prefix='/requst-media')
+media_request_module_bp = Blueprint(
+    'media_request_module',
+    __name__,
+    url_prefix='/requst-media',
+)
 
-def _sanitize_text(value: str, *, max_length: int, allow_newlines: bool = False) -> str:
+
+def _sanitize_text(
+    value: str,
+    *,
+    max_length: int,
+    allow_newlines: bool = False,
+) -> str:
     """Normalize user-entered text and enforce bounded length."""
     if value is None:
         return ""
@@ -37,6 +47,7 @@ def _sanitize_text(value: str, *, max_length: int, allow_newlines: bool = False)
         sanitized = sanitized[:max_length].rstrip()
 
     return sanitized
+
 
 def _normalize_media_type(value: str) -> str:
     """Return a safe media type or the default option."""
@@ -60,6 +71,7 @@ def _normalize_imdb_link(value: str) -> str:
         return ""
     return candidate
 
+
 def _get_ticket_store() -> TicketStore:
     """Return a configured ticket store for the current app context."""
     config = current_app.config.get("LOADED_CONFIG")
@@ -69,14 +81,25 @@ def _get_ticket_store() -> TicketStore:
         config = load_core_config()
     return TicketStore(config["core"]["tickets_file"])
 
+
 @media_request_module_bp.route("/", methods=["GET", "POST"])
 def submit_media_request():
     """Render a media request form and create a normal ticket on submit."""
-    requestor_name = _sanitize_text(request.form.get("requestor_name", ""), max_length=64)
-    requestor_email = _sanitize_text(request.form.get("requestor_email", ""), max_length=254).lower()
+    requestor_name = _sanitize_text(
+        request.form.get("requestor_name", ""),
+        max_length=64,
+    )
+    requestor_email = _sanitize_text(
+        request.form.get("requestor_email", ""),
+        max_length=254,
+    ).lower()
     media_type = _normalize_media_type(request.form.get("media_type", "TV Show"))
     imdb_link = _normalize_imdb_link(request.form.get("imdb_link", ""))
-    description = _sanitize_text(request.form.get("ticket_body", ""), max_length=2000, allow_newlines=True)
+    description = _sanitize_text(
+        request.form.get("ticket_body", ""),
+        max_length=2000,
+        allow_newlines=True,
+    )
 
     context = {
         "requestor_name": requestor_name,
@@ -92,11 +115,16 @@ def submit_media_request():
 
     if request.method == "POST":
         if not requestor_name or not requestor_email or not description:
-            context["error_message"] = "Please complete your name, email, and request details."
+            context["error_message"] = (
+                "Please complete your name, email, and request details."
+            )
             return render_template("public/request_media.html", **context)
 
         if not NAME_RE.match(requestor_name):
-            context["error_message"] = "Please enter a valid name using letters, numbers, spaces, and common punctuation only."
+            context["error_message"] = (
+                "Please enter a valid name using letters, numbers, spaces, "
+                "and common punctuation only."
+            )
             return render_template("public/request_media.html", **context)
 
         if not is_valid_email(requestor_email):
@@ -104,14 +132,21 @@ def submit_media_request():
             return render_template("public/request_media.html", **context)
 
         if len(description) < 4:
-            context["error_message"] = "Please provide a longer description for your request."
+            context["error_message"] = (
+                "Please provide a longer description for your request."
+            )
             return render_template("public/request_media.html", **context)
 
         if request.form.get("imdb_link") and not imdb_link:
-            context["error_message"] = "Please provide a valid IMDb URL beginning with http:// or https:// and ending on imdb.com."
+            context["error_message"] = (
+                "Please provide a valid IMDb URL beginning with http:// or "
+                "https:// and ending on imdb.com."
+            )
             return render_template("public/request_media.html", **context)
 
-        ticket_number = _get_ticket_store().next_ticket_number(datetime.now().year)
+        ticket_number = _get_ticket_store().next_ticket_number(
+            datetime.now().year,
+        )
         ticket_body = description
         if imdb_link:
             ticket_body = f"{ticket_body}\n\nIMDB Link: {imdb_link}"
@@ -131,7 +166,9 @@ def submit_media_request():
         )
 
         _get_ticket_store().append(ticket)
-        context["success_message"] = f"Your media request has been logged as ticket {ticket_number}."
+        context["success_message"] = (
+            f"Your media request has been logged as ticket {ticket_number}."
+        )
         context["ticket_number"] = ticket_number
         return render_template("public/request_media.html", **context)
 
