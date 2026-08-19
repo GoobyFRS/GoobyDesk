@@ -16,7 +16,7 @@ from storage.ticket_store import TicketStore
 ALLOWED_MEDIA_TYPES = {"TV Show", "Movie", "Other"}
 NAME_RE = re.compile(r"^[A-Za-z0-9 .,'’-]{2,64}$")
 
-media_request_module_bp = Blueprint('media_request_module', __name__, url_prefix='/requst-media')
+media_request_module_bp = Blueprint('media_request_module', __name__, url_prefix='/media-request')
 
 def _sanitize_text(
     value: str,
