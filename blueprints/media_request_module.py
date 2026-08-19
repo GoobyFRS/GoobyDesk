@@ -16,12 +16,7 @@ from storage.ticket_store import TicketStore
 ALLOWED_MEDIA_TYPES = {"TV Show", "Movie", "Other"}
 NAME_RE = re.compile(r"^[A-Za-z0-9 .,'’-]{2,64}$")
 
-media_request_module_bp = Blueprint(
-    'media_request_module',
-    __name__,
-    url_prefix='/requst-media',
-)
-
+media_request_module_bp = Blueprint('media_request_module', __name__, url_prefix='/requst-media')
 
 def _sanitize_text(
     value: str,
@@ -48,14 +43,12 @@ def _sanitize_text(
 
     return sanitized
 
-
 def _normalize_media_type(value: str) -> str:
     """Return a safe media type or the default option."""
     candidate = _sanitize_text(value, max_length=32)
     if candidate in ALLOWED_MEDIA_TYPES:
         return candidate
     return "TV Show"
-
 
 def _normalize_imdb_link(value: str) -> str:
     """Return a safe IMDb URL when provided, else an empty string."""
@@ -71,7 +64,6 @@ def _normalize_imdb_link(value: str) -> str:
         return ""
     return candidate
 
-
 def _get_ticket_store() -> TicketStore:
     """Return a configured ticket store for the current app context."""
     config = current_app.config.get("LOADED_CONFIG")
@@ -80,7 +72,6 @@ def _get_ticket_store() -> TicketStore:
 
         config = load_core_config()
     return TicketStore(config["core"]["tickets_file"])
-
 
 @media_request_module_bp.route("/", methods=["GET", "POST"])
 def submit_media_request():
@@ -98,8 +89,7 @@ def submit_media_request():
     description = _sanitize_text(
         request.form.get("ticket_body", ""),
         max_length=2000,
-        allow_newlines=True,
-    )
+        allow_newlines=True,)
 
     context = {
         "requestor_name": requestor_name,
