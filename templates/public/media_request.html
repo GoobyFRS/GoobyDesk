@@ -53,12 +53,10 @@
                     name="requestor_email"
                     value="{{ requestor_email or '' }}"
                     placeholder="richard.hammond@example.com"
-                    minlength="6"
-                    maxlength="48"
+                    minlength="6" maxlength="48"
                     autocomplete="email"
                     pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}"
-                    required
-                >
+                    required>
             </div>
 
             <div class="form-row">
@@ -68,6 +66,7 @@
                         <option value="{{ option }}" {% if media_type == option or (not media_type and option == 'TV Show') %}selected{% endif %}>{{ option }}</option>
                     {% endfor %}
                 </select>
+                <div id="media-type-help" class="form-help">Choose the type of media you want requested.</div>
             </div>
 
             <div class="form-row">
@@ -93,6 +92,7 @@
                     placeholder="https://www.imdb.com/title/..."
                     maxlength="255"
                     inputmode="url"
+                    autocomplete="url"
                     aria-describedby="imdb-help"
                 >
                 <div id="imdb-help" class="form-help">Include an IMDb link when available to help with matching.</div>
