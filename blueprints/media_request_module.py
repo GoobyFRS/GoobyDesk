@@ -19,9 +19,7 @@ NAME_RE = re.compile(r"^[A-Za-z0-9 .,'’-]{2,64}$")
 media_request_module_bp = Blueprint('media_request_module', __name__, url_prefix='/media-request')
 
 def _sanitize_text(
-    value: str,
-    *,
-    max_length: int,
+    value: str, *, max_length: int,
     allow_newlines: bool = False,
 ) -> str:
     """Normalize user-entered text and enforce bounded length."""
@@ -108,31 +106,31 @@ def submit_media_request():
             context["error_message"] = (
                 "Please complete your name, email, and request details."
             )
-            return render_template("public/request_media.html", **context)
+            return render_template("public/media_request.html", **context)
 
         if not NAME_RE.match(requestor_name):
             context["error_message"] = (
                 "Please enter a valid name using letters, numbers, spaces, "
                 "and common punctuation only."
             )
-            return render_template("public/request_media.html", **context)
+            return render_template("public/media_request.html", **context)
 
         if not is_valid_email(requestor_email):
             context["error_message"] = "Please provide a valid email address."
-            return render_template("public/request_media.html", **context)
+            return render_template("public/media_request.html", **context)
 
         if len(description) < 4:
             context["error_message"] = (
                 "Please provide a longer description for your request."
             )
-            return render_template("public/request_media.html", **context)
+            return render_template("public/media_request.html", **context)
 
         if request.form.get("imdb_link") and not imdb_link:
             context["error_message"] = (
                 "Please provide a valid IMDb URL beginning with http:// or "
                 "https:// and ending on imdb.com."
             )
-            return render_template("public/request_media.html", **context)
+            return render_template("public/media_request.html", **context)
 
         ticket_number = _get_ticket_store().next_ticket_number(
             datetime.now().year,
@@ -160,6 +158,6 @@ def submit_media_request():
             f"Your media request has been logged as ticket {ticket_number}."
         )
         context["ticket_number"] = ticket_number
-        return render_template("public/request_media.html", **context)
+        return render_template("public/media_request.html", **context)
 
-    return render_template("public/request_media.html", **context)
+    return render_template("public/media_request.html", **context)
