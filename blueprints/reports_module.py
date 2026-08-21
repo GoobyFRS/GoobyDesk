@@ -122,19 +122,21 @@ def reports_home():
         "In-Progress": 0,
         "Closed": 0,
     }
-    
+
     time_buckets = {
         "last_60_days": 0,
         "last_30_days": 0,
         "last_14_days": 0,
         "last_7_days": 0,
     }
-    
+
     for ticket in tickets:
-        status = ticket.get("ticket_status")
-        if status in status_counts:
-            status_counts[status] += 1
-        
+        status = str(ticket.get("ticket_status", "") or "").strip().lower()
+        for canonical_status in status_counts:
+            if status == canonical_status.lower():
+                status_counts[canonical_status] += 1
+                break
+
         try:
             submitted_at = datetime.strptime(ticket["submission_date"], "%Y-%m-%d %H:%M:%S")
             age = now - submitted_at
