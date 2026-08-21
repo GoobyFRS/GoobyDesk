@@ -13,7 +13,6 @@ import requests
 from flask import Blueprint, current_app, render_template, request
 
 from local_handlers.ticket_builder import build_ticket_record
-from local_handlers.validation import is_valid_email
 from storage.ticket_store import TicketStore
 
 ALLOWED_MEDIA_TYPES = {"TV Show", "Movie", "Other"}
@@ -119,10 +118,6 @@ def submit_media_request():
         request.form.get("requestor_name", ""),
         max_length=64,
     )
-    requestor_email = _sanitize_text(
-        request.form.get("requestor_email", ""),
-        max_length=254,
-    ).lower()
     media_type = _normalize_media_type(request.form.get("media_type", "TV Show"))
     imdb_link = _normalize_imdb_link(request.form.get("imdb_link", ""))
     description = _sanitize_text(
@@ -132,11 +127,10 @@ def submit_media_request():
 
     context = {
         "requestor_name": requestor_name,
-        "requestor_email": requestor_email,
         "media_type": media_type,
         "imdb_link": imdb_link,
         "description": description,
-        "media_options": ["TV Show", "Movie", "Other"],
+        "media_options": ["TV Show", "Movie", "Audio", "Other"],
         "error_message": "",
         "success_message": "",
         "ticket_number": "",
@@ -149,9 +143,9 @@ def submit_media_request():
             context["error_message"] = turnstile_error
             return render_template("public/media_request.html", **context)
 
-        if not requestor_name or not requestor_email or not description:
+        if not requestor_name or not description:
             context["error_message"] = (
-                "Please complete your name, email, and request details."
+                "Please complete your name and request details."
             )
             return render_template("public/media_request.html", **context)
 
@@ -160,10 +154,6 @@ def submit_media_request():
                 "Please enter a valid name using letters, numbers, spaces, "
                 "and common punctuation only."
             )
-            return render_template("public/media_request.html", **context)
-
-        if not is_valid_email(requestor_email):
-            context["error_message"] = "Please provide a valid email address."
             return render_template("public/media_request.html", **context)
 
         if len(description) < 4:
@@ -189,7 +179,6 @@ def submit_media_request():
         ticket = build_ticket_record(
             {
                 "requestor_name": requestor_name,
-                "requestor_email": requestor_email,
                 "ticket_subject": f"Media Request - {media_type}",
                 "ticket_body": ticket_body,
                 "request_type": media_type,
