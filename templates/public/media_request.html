@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='img/favicon.ico') }}" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="Matt Faulkner">
+    <meta name="description" content="Submit an entertainment media request to GoobyDesk.">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="theme-color" content="#284389">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta property="og:title" content="GoobyDesk - Media Request">
+    <meta property="og:description" content="Submit a media request to GoobyDesk.">
+    <meta property="og:image" content="{{ url_for('static', filename='img/logo_black.webp') }}">
+    <meta property="og:url" content="{{ request.url }}">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="GoobyDesk - Media Request">
+    <meta name="twitter:description" content="Submit a media request to GoobyDesk.">
+    <meta name="twitter:image" content="{{ url_for('static', filename='img/logo_black.webp') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+    <title>Media Request - GoobyDesk</title>
+</head>
+<body>
+    <main class="container" aria-labelledby="media-request-title">
+        <div class="logo" aria-label="GoobyDesk logo">
+            <img src="{{ url_for('static', filename='img/logo_white.webp') }}" alt="GoobyDesk Logo">
+        </div>
+
+        <h1 id="media-request-title">Media Request</h1>
+
+        <form method="post" class="media-request-form">
+            <div class="form-row">
+                <label for="requestor_name">Your Name</label>
+                <input
+                    type="text"
+                    id="requestor_name"
+                    name="requestor_name"
+                    value="{{ requestor_name or '' }}"
+                    placeholder="James May"
+                    minlength="2"
+                    maxlength="64"
+                    autocomplete="name"
+                    pattern="[A-Za-z0-9 .,'’-]{2,64}"
+                    required>
+            </div>
+
+            <div class="form-row">
+                <label for="media_type">Media Type</label>
+                <select id="media_type" name="media_type" aria-describedby="media-type-help" required>
+                    {% for option in media_options %}
+                        <option value="{{ option }}" {% if media_type == option or (not media_type and option == 'TV Show') %}selected{% endif %}>{{ option }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-row">
+                <label for="ticket_body">Request Details</label>
+                <textarea
+                    id="ticket_body"
+                    name="ticket_body"
+                    rows="6"
+                    minlength="4"
+                    maxlength="512"
+                    placeholder="Tell us what you want to watch."
+                    required
+                >{{ description or '' }}</textarea>
+            </div>
+
+            <div class="form-row">
+                <label for="imdb_link">IMDB Link</label>
+                <input
+                    type="url"
+                    id="imdb_link"
+                    name="imdb_link"
+                    value="{{ imdb_link or '' }}"
+                    placeholder="https://www.imdb.com/title/..."
+                    maxlength="128"
+                    inputmode="url"
+                    autocomplete="url"
+                    aria-describedby="imdb-help">
+            </div>
+
+            <div class="form-actions">
+                {% if sitekey %}
+                <div class="cf-turnstile" data-sitekey="{{ sitekey }}" data-theme="light"></div>
+                {% endif %}
+                <button type="submit" class="submit-btn">Submit</button>
+            </div>
+        </form>
+
+        {% if error_message %}
+            <div class="alert alert--danger" role="alert" aria-live="assertive">
+                {{ error_message }}
+            </div>
+        {% endif %}
+
+        {% if success_message %}
+            <div class="alert flash success" role="status" aria-live="polite">
+                {{ success_message }}
+            </div>
+            {% if ticket_number %}
+                <p><a href="{{ request.path }}">Submit another request</a></p>
+            {% endif %}
+        {% endif %}
+
+        <p class="footer-text">©2025 GoobyDesk, FOSS created by <a href="https://github.com/GoobyFRS">GoobyFRS</a> | <a href="{{ url_for('login') }}">Technician Login</a></p>
+    </main>
+</body>
+</html>

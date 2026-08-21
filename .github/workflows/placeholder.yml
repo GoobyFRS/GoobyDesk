@@ -1,0 +1,13 @@
+name: Placeholder Workflow
+
+on:
+  workflow_dispatch:
+
+jobs:
+  placeholder:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Placeholder step
+        run: echo "This workflow exists to provide GitHub Actions source for CodeQL analysis."
