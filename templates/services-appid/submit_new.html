@@ -50,7 +50,13 @@
             <div class="form-row">
                 <div>
                     <label for="service_type">Service Type</label>
-                    <input type="text" id="service_type" name="service_type" value="" placeholder="web">
+                    <select id="service_type" name="service_type">
+                        <option value="">Select...</option>
+                        <option value="application_server">Application Server</option>
+                        <option value="game_server">Game Server</option>
+                        <option value="web_server">Web Server</option>
+                        <option value="other">Other</option>
+                    </select>
                 </div>
                 <div>
                     <label for="service_sku">Service SKU</label>
@@ -94,7 +100,13 @@
             <div class="form-row">
                 <div>
                     <label for="service_provision_source">Provision Source</label>
-                    <input type="text" id="service_provision_source" name="service_provision_source" value="">
+                    <select id="service_provision_source" name="service_provision_source">
+                        <option value="manual" selected>Manual</option>
+                        <option value="pipeline">Pipeline</option>
+                        <option value="cli_api">CLI/API</option>
+                        <option value="script">Script</option>
+                        <option value="other">Other</option>
+                    </select>
                 </div>
                 <div>
                     <label for="server_type">Server Type</label>
