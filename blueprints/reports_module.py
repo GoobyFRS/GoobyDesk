@@ -95,13 +95,17 @@ def _summarize_source_counts(tickets: list[dict]) -> dict[str, int]:
     return source_counts
 
 
+VALID_TICKET_QUEUES = {"support", "escalation", "billing"}
+
 def _summarize_queue_counts(tickets: list[dict]) -> dict[str, int]:
-    """Summarize active (non-closed) ticket counts grouped by request type/queue."""
+    """Summarize active (non-closed) ticket counts grouped by queue (Support/Escalation/Billing only)."""
     queue_counts: dict[str, int] = {}
     for ticket in tickets:
         if (ticket.get("ticket_status", "") or "").lower() == "closed":
             continue
-        queue = str(ticket.get("request_type", "") or "unknown").strip() or "unknown"
+        queue = str(ticket.get("request_type", "") or "").strip()
+        if queue.lower() not in VALID_TICKET_QUEUES:
+            continue
         queue_counts[queue] = queue_counts.get(queue, 0) + 1
     return queue_counts
 
