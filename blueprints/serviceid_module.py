@@ -84,6 +84,69 @@ def service_profile(uuid):
     )
 
 
+@serviceid_module_bp.route("/edit/<uuid>", methods=["GET", "POST"])
+@role_required(ROLE_ITSM_TECH)
+def edit_service(uuid):
+    """Render and process the service edit form for a given record."""
+    services = load_service_appids()
+    service = next((record for record in services if record.get("uuid") == uuid), None)
+    if service is None:
+        return render_template("errors/404.html"), 404
+
+    if request.method == "GET":
+        return render_template(
+            "services-appid/submit_new.html",
+            service=service,
+            loggedInTech=resolve_preferred_name(session.get("technician")),
+        )
+
+    form = request.form.to_dict()
+    raw_ports = (form.get("allocated_ports") or "").strip()
+    allocated_ports = [int(port.strip()) for port in raw_ports.split(",") if port.strip()] if raw_ports else []
+
+    service_rcon_port = form.get("service_rcon_port")
+    if service_rcon_port in ("", "null", "None"):
+        service_rcon_port = None
+    else:
+        service_rcon_port = int(service_rcon_port)
+
+    service_terminated_timestamp = form.get("service_terminated_timestamp")
+    if service_terminated_timestamp in ("", "null", "None"):
+        service_terminated_timestamp = None
+
+    service.update({
+        "allocated_cpu_cores": float(form.get("allocated_cpu_cores") or 0.0),
+        "allocated_disk_gb": int(form.get("allocated_disk_gb") or 0),
+        "allocated_ports": allocated_ports,
+        "allocated_ram_mb": int(form.get("allocated_ram_mb") or 0),
+        "cluster_id": (form.get("cluster_id") or "").strip(),
+        "customer_id": (form.get("customer_id") or "").strip(),
+        "customer_uuid": (form.get("customer_uuid") or "").strip(),
+        "minecraft_version": (form.get("minecraft_version") or "").strip(),
+        "modpack_name": (form.get("modpack_name") or "").strip(),
+        "node_id": (form.get("node_id") or "").strip(),
+        "player_limit": int(form.get("player_limit") or 0),
+        "provisioning_status": (form.get("provisioning_status") or "pending").strip(),
+        "region": (form.get("region") or "").strip(),
+        "server_type": (form.get("server_type") or "").strip(),
+        "service_ip": (form.get("service_ip") or "").strip(),
+        "service_name": (form.get("service_name") or "").strip() or service.get("service_name"),
+        "service_provision_source": (form.get("service_provision_source") or "").strip(),
+        "service_rcon_port": service_rcon_port,
+        "service_rcon_pwd": (form.get("service_rcon_pwd") or "").strip(),
+        "service_sku": (form.get("service_sku") or "").strip(),
+        "service_status": (form.get("service_status") or "provisioning").strip(),
+        "service_subdomain": (form.get("service_subdomain") or "").strip(),
+        "service_terminated_timestamp": service_terminated_timestamp,
+        "service_type": (form.get("service_type") or "").strip(),
+        "service_updated_timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
+    })
+
+    store = _get_service_appid_store()
+    store.save_all(services)
+    return redirect(url_for("serviceid_module.service_profile", uuid=uuid))
+
+
 @serviceid_module_bp.route("/submit-new", methods=["GET", "POST"])
 @role_required(ROLE_ITSM_TECH)
 def new_service():
