@@ -17,12 +17,14 @@ from storage.ticket_store import TicketStore
 
 ALLOWED_MEDIA_TYPES = {"TV Show", "Movie", "Other"}
 NAME_RE = re.compile(r"^[A-Za-z0-9 .,'’-]{2,64}$")
-
-CF_TURNSTILE_SITE_KEY = os.getenv("CF_TURNSTILE_SITE_KEY")
-CF_TURNSTILE_SECRET_KEY = os.getenv("CF_TURNSTILE_SECRET_KEY")
-CAPTCHA_ENABLED = bool(CF_TURNSTILE_SITE_KEY and CF_TURNSTILE_SECRET_KEY)
+IMDB_HOSTS = {"imdb.com", "www.imdb.com", "m.imdb.com"}
 
 media_request_module_bp = Blueprint('media_request_module', __name__, url_prefix='/media-request')
+
+
+def _turnstile_keys() -> tuple[str | None, str | None]:
+    """Read Turnstile keys lazily so `.env` (loaded after blueprint import) is respected."""
+    return os.getenv("CF_TURNSTILE_SITE_KEY"), os.getenv("CF_TURNSTILE_SECRET_KEY")
 
 
 def _verify_turnstile() -> tuple[bool, str]:
@@ -30,7 +32,8 @@ def _verify_turnstile() -> tuple[bool, str]:
     Returns:
         tuple[bool, str]: Success flag and an error message when verification fails.
     """
-    if not CAPTCHA_ENABLED:
+    site_key, secret_key = _turnstile_keys()
+    if not (site_key and secret_key):
         return True, ""
 
     turnstile_token = request.form.get("cf-turnstile-response")
@@ -40,7 +43,7 @@ def _verify_turnstile() -> tuple[bool, str]:
 
     url = "https://challenges.cloudflare.com/turnstile/v0/siteverify"
     data = {
-        "secret": CF_TURNSTILE_SECRET_KEY,
+        "secret": secret_key,
         "response": turnstile_token,
         "remoteip": request.remote_addr,
     }
@@ -95,10 +98,10 @@ def _normalize_imdb_link(value: str) -> str:
         return ""
 
     parsed = urlparse(candidate)
-    host = (parsed.netloc or "").lower()
+    host = (parsed.hostname or "").lower()
     if parsed.scheme not in {"http", "https"}:
         return ""
-    if not parsed.netloc or "imdb.com" not in host:
+    if host not in IMDB_HOSTS:
         return ""
     return candidate
 
@@ -125,6 +128,7 @@ def submit_media_request():
         max_length=2000,
         allow_newlines=True,)
 
+    site_key, secret_key = _turnstile_keys()
     context = {
         "requestor_name": requestor_name,
         "media_type": media_type,
@@ -134,7 +138,7 @@ def submit_media_request():
         "error_message": "",
         "success_message": "",
         "ticket_number": "",
-        "sitekey": CF_TURNSTILE_SITE_KEY if CAPTCHA_ENABLED else None,
+        "sitekey": site_key if (site_key and secret_key) else None,
     }
 
     if request.method == "POST":
@@ -190,6 +194,7 @@ def submit_media_request():
         )
 
         _get_ticket_store().append(ticket)
+        logging.info("Media request ticket %s created (type=%s).", ticket_number, media_type)
         context["success_message"] = (
             f"Your media request has been logged as ticket {ticket_number}."
         )
