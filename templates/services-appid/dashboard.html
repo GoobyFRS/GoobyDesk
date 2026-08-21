@@ -1,63 +1,85 @@
 <!DOCTYPE html>
-<html lang="en"><head>
+<html lang="en">
+<head>
     <meta charset="UTF-8">
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='img/favicon.ico') }}"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="author" content="Matt Faulkner">
-    <meta name="description" content="GoobyDesk ITSM Services Dashboard">
-    <meta name="robots" content="noindex, nofollow"> <!--Discourage Search Engine Indexing of this page-->
+    <meta name="description" content="GoobyDesk ServiceID Dashboard">
+    <meta name="robots" content="noindex, nofollow">
     <meta name="theme-color" content="#284389">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <link rel="preconnect" href="https://fonts.bunny.net/css">
     <link rel="preconnect" href="https://fonts.bunny.net/css" crossorigin>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <script src="{{ url_for('static', filename='main.js') }}"></script>
-    <title>Services Dashboard - GoobyDesk</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <title>ServiceID Dashboard - GoobyDesk</title>
 </head>
 <body>
     <main class="container container--wide">
-
-        <div class="page-header" style="display:grid; grid-template-columns: 1fr auto 1fr; text-align:center;">
+        <div class="page-header">
             <div class="logo">
                 <img src="{{ url_for('static', filename='/img/logo_white.webp') }}" alt="GoobyDesk Logo">
             </div>
             <div>
-                <h2>Services / APPID Dashboard</h2>
+                <h2>ServiceID / APPID Dashboard</h2>
                 <p class="text-muted">Welcome back, {{ loggedInTech }}</p>
             </div>
             <div class="page-header-actions">
-                <a href="{{ url_for('serviceid_module.new_service') }}" class="submit-btn">+ Service</a>
+                <a href="{{ url_for('serviceid_module.new_service') }}" class="submit-btn">+ New Service</a>
             </div>
         </div>
 
-        <p><strong>Total Services:</strong> {{ services|length }}</p>
-
-        {% if services %}
-            <table style="width: 100%; border-collapse: collapse; margin-bottom: 1rem;">
-                <thead>
-                    <tr>
-                        <th scope="col">APPID</th>
-                        <th scope="col">Service Name</th>
-                        <th scope="col">Provisioning Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for service in services %}
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Services</h3>
+            </div>
+            <div class="card-body">
+                <table class="table">
+                    <thead>
                         <tr>
-                            <td>{{ service.get('service_id') or service.get('app_id') or service.get('id') or 'N/A' }}</td>
-                            <td>{{ service.get('service_name') or service.get('name') or 'N/A' }}</td>
-                            <td>{{ service.get('provisioning_status') or service.get('status') or 'Unknown' }}</td>
+                            <th scope="col">APPID</th>
+                            <th scope="col">Service Name</th>
+                            <th scope="col">Type</th>
+                            <th scope="col">Status</th>
+                            <th scope="col">Customer ID</th>
                         </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        {% else %}
-            <p>No service/app ID records found.</p>
-        {% endif %}
+                    </thead>
+                    <tbody>
+                        {% for service in services %}
+                        <tr>
+                            <td>
+                                {% if service.get('uuid') %}
+                                <a href="{{ url_for('serviceid_module.service_profile', uuid=service.get('uuid')) }}">
+                                    {{ service.get('service_id') or service.get('app_id') or service.get('id') or 'N/A' }}
+                                </a>
+                                {% else %}
+                                {{ service.get('service_id') or service.get('app_id') or service.get('id') or 'N/A' }}
+                                {% endif %}
+                            </td>
+                            <td>{{ service.get('service_name') or service.get('name') or '—' }}</td>
+                            <td>{{ service.get('service_type') or service.get('type') or '—' }}</td>
+                            <td>
+                                <span class="badge badge-secondary">
+                                    {{ service.get('provisioning_status') or service.get('status') or 'Unknown' }}
+                                </span>
+                            </td>
+                            <td>{{ service.get('customer_id') or '—' }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="5" class="text-muted">No service records found.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
         <p class="footer-text">©2025 GoobyDesk, FOSS created by GoobyFRS | Logged In as: {{ loggedInTech }} |
             <br>
             <a href="{{ url_for('itsm.dashboard') }}">Queues</a> | <a href="{{ url_for('changes_module.changes_home') }}">Changes</a> | <a href="{{ url_for('crm_module.crm_dashboard') }}">CRM</a> | <a href="{{ url_for('hr_module.hr_dashboard') }}">HR</a> | <a href="{{ url_for('serviceid_module.serviceid_dashboard') }}">ServiceID</a> | <a href="{{ url_for('reports_module.reports_home') }}">Reports</a>
         </p>
     </main>
 </body>
-</html>    
+</html>

@@ -62,7 +62,27 @@ def generate_service_id(services):
 def serviceid_dashboard():
     """Render service APPID dashboard view."""
     services = load_service_appids()
-    return render_template("services-appid/dashboard.html", services=services, loggedInTech=resolve_preferred_name(session.get("technician")),)
+    return render_template(
+        "services-appid/dashboard.html",
+        services=services,
+        loggedInTech=resolve_preferred_name(session.get("technician")),
+    )
+
+
+@serviceid_module_bp.route("/profile/<uuid>", methods=["GET"])
+@role_required(ROLE_ITSM_TECH)
+def service_profile(uuid):
+    """Render the profile for a single service record."""
+    services = load_service_appids()
+    service = next((record for record in services if record.get("uuid") == uuid), None)
+    if service is None:
+        return render_template("errors/404.html"), 404
+    return render_template(
+        "services-appid/profile.html",
+        service=service,
+        loggedInTech=resolve_preferred_name(session.get("technician")),
+    )
+
 
 @serviceid_module_bp.route("/submit-new", methods=["GET", "POST"])
 @role_required(ROLE_ITSM_TECH)
