@@ -169,3 +169,21 @@ setTimeout(function() {
     let alerts = document.querySelectorAll(".alert");
     alerts.forEach(alert => alert.style.display = "none");
 }, 5000);  // Hides after 5 seconds
+
+document.addEventListener("DOMContentLoaded", function() {
+    const customerSelect = document.getElementById("customer_id");
+    const customerUuidInput = document.getElementById("customer_uuid");
+
+    if (!customerSelect || !customerUuidInput) {
+        return;
+    }
+
+    const syncCustomerSelection = function() {
+        const selectedOption = customerSelect.options[customerSelect.selectedIndex];
+        const selectedUuid = selectedOption ? selectedOption.dataset.customerUuid || "" : "";
+        customerUuidInput.value = selectedUuid;
+    };
+
+    customerSelect.addEventListener("change", syncCustomerSelection);
+    syncCustomerSelection();
+});

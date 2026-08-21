@@ -39,11 +39,19 @@
             <div class="form-row">
                 <div>
                     <label for="customer_id">Customer ID</label>
-                    <input type="text" id="customer_id" name="customer_id" value="">
+                    <select id="customer_id" name="customer_id" size="6" aria-label="Select customer ID">
+                        <option value="">Select a customer...</option>
+                        {% for customer in customers or [] %}
+                            {% set customer_label = customer.get('customer_id') or customer.get('uuid') or 'Unknown Customer' %}
+                            <option value="{{ customer_label }}" data-customer-uuid="{{ customer.get('uuid', '') }}" {% if customer_label == selected_customer_id %}selected{% endif %}>
+                                {{ customer_label }}{% if customer.get('preferred_name') or customer.get('first_name') %} — {{ customer.get('preferred_name') or customer.get('first_name') }} {{ customer.get('last_name', '') }}{% endif %}
+                            </option>
+                        {% endfor %}
+                    </select>
                 </div>
                 <div>
                     <label for="customer_uuid">Customer UUID</label>
-                    <input type="text" id="customer_uuid" name="customer_uuid" value="">
+                    <input type="text" id="customer_uuid" name="customer_uuid" value="{{ selected_customer_uuid or '' }}" readonly>
                 </div>
             </div>
 

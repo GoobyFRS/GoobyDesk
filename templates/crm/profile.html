@@ -151,7 +151,13 @@
         <h3 class="section-title">Services</h3>
         <div class="card">
             <div class="card-body">
-                {% if customer.get('services') %}
+                {% if linked_services %}
+                    <div class="tag-list">
+                        {% for service in linked_services %}
+                            <a href="{{ url_for('serviceid_module.service_profile', uuid=service.get('uuid')) }}" class="badge badge-info">{{ service.get('service_id', service.get('uuid')) }}</a>
+                        {% endfor %}
+                    </div>
+                {% elif customer.get('services') %}
                     <div class="tag-list">
                         {% for service in customer.services %}
                             <span class="badge badge-info">{{ service }}</span>

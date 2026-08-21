@@ -33,6 +33,49 @@ def _get_service_appid_store():
     cfg = _get_config()
     return ServiceAppIdStore(cfg["core"]["serviceid_appid_file"])
 
+
+def _resolve_customer_uuid_from_id(customer_id: str | None, customers: list | None = None) -> str:
+    """Resolve a customer UUID from its customer ID."""
+    normalized_customer_id = (customer_id or "").strip()
+    if not normalized_customer_id:
+        return ""
+
+    if customers is None:
+        from blueprints.crm_module import load_customers_file
+        customers = load_customers_file()
+
+    for customer in customers:
+        if str(customer.get("customer_id") or "") == normalized_customer_id:
+            return str(customer.get("uuid") or "")
+    return ""
+
+
+def _sync_customer_service_links(service_record: dict, previous_customer_uuid: str | None = None) -> None:
+    """Keep the linked customer record aligned with the APPID list."""
+    from blueprints.crm_module import load_customers_file, save_customers_file
+
+    service_id = str(service_record.get("service_id") or "").strip()
+    if not service_id:
+        return
+
+    customers = load_customers_file()
+    customer_uuid = str(service_record.get("customer_uuid") or "").strip()
+    for customer in customers:
+        customer_uuid_value = str(customer.get("uuid") or "")
+        services = customer.get("services")
+        if not isinstance(services, list):
+            customer["services"] = []
+            services = customer["services"]
+
+        if previous_customer_uuid and customer_uuid_value == previous_customer_uuid and service_id in services:
+            services.remove(service_id)
+
+        if customer_uuid and customer_uuid_value == customer_uuid and service_id not in services:
+            services.append(service_id)
+
+    save_customers_file(customers)
+
+
 serviceid_module_bp = Blueprint("serviceid_module", __name__, url_prefix="/serviceid")
 
 # use @role_required(ROLE_ITSM_TECH)
@@ -107,13 +150,23 @@ def edit_service(uuid):
 
     if request.method == "GET":
         logging.info("SERVICEID MODULE - Edit form opened actor=%s service_id=%s uuid=%s", _pseudonymize_actor(actor), service.get("service_id"), uuid)
+        from blueprints.crm_module import load_customers_file
         return render_template(
             "services-appid/submit_new.html",
             service=service,
             loggedInTech=actor,
+            customers=load_customers_file(),
+            selected_customer_id=service.get("customer_id"),
+            selected_customer_uuid=service.get("customer_uuid"),
         )
 
     form = request.form.to_dict()
+    selected_customer_id = (form.get("customer_id") or "").strip()
+    selected_customer_uuid = (form.get("customer_uuid") or "").strip()
+    previous_customer_uuid = str(service.get("customer_uuid") or "").strip()
+    if not selected_customer_uuid and selected_customer_id:
+        selected_customer_uuid = _resolve_customer_uuid_from_id(selected_customer_id)
+
     raw_ports = (form.get("allocated_ports") or "").strip()
     allocated_ports = [int(port.strip()) for port in raw_ports.split(",") if port.strip()] if raw_ports else []
 
@@ -133,8 +186,8 @@ def edit_service(uuid):
         "allocated_ports": allocated_ports,
         "allocated_ram_mb": int(form.get("allocated_ram_mb") or 0),
         "cluster_id": (form.get("cluster_id") or "").strip(),
-        "customer_id": (form.get("customer_id") or "").strip(),
-        "customer_uuid": (form.get("customer_uuid") or "").strip(),
+        "customer_id": selected_customer_id or service.get("customer_id"),
+        "customer_uuid": selected_customer_uuid or service.get("customer_uuid"),
         "minecraft_version": (form.get("minecraft_version") or "").strip(),
         "modpack_name": (form.get("modpack_name") or "").strip(),
         "node_id": (form.get("node_id") or "").strip(),
@@ -162,6 +215,8 @@ def edit_service(uuid):
         logging.exception("SERVICEID MODULE - Service update failed actor=%s service_id=%s uuid=%s", _pseudonymize_actor(actor), service.get("service_id"), uuid)
         raise
 
+    _sync_customer_service_links(service, previous_customer_uuid=previous_customer_uuid or None)
+
     logging.info("SERVICEID MODULE - Service updated actor=%s service_id=%s uuid=%s", _pseudonymize_actor(actor), service.get("service_id"), uuid)
     return redirect(url_for("serviceid_module.service_profile", uuid=uuid))
 
@@ -172,9 +227,11 @@ def new_service():
     actor = resolve_preferred_name(session.get("technician"))
     if request.method == "GET":
         logging.info("SERVICEID MODULE - New service form opened actor=%s", _pseudonymize_actor(actor))
+        from blueprints.crm_module import load_customers_file
         return render_template(
             "services-appid/submit_new.html",
             loggedInTech=actor,
+            customers=load_customers_file(),
         )
 
     form = request.form.to_dict()
@@ -182,10 +239,14 @@ def new_service():
     service_name = (form.get("service_name") or "").strip()
     if not service_name:
         logging.warning("SERVICEID MODULE - Service creation rejected actor=%s reason=missing_service_name", _pseudonymize_actor(actor))
+        from blueprints.crm_module import load_customers_file
         return render_template(
             "services-appid/submit_new.html",
             error="Service name is required.",
             loggedInTech=actor,
+            customers=load_customers_file(),
+            selected_customer_id=(form.get("customer_id") or "").strip(),
+            selected_customer_uuid=(form.get("customer_uuid") or "").strip(),
         ), 400
 
     raw_ports = (form.get("allocated_ports") or "").strip()
@@ -195,6 +256,10 @@ def new_service():
         allocated_ports = []
 
     service_id = generate_service_id(services)
+    customer_id = (form.get("customer_id") or "").strip()
+    customer_uuid = (form.get("customer_uuid") or "").strip()
+    if not customer_uuid and customer_id:
+        customer_uuid = _resolve_customer_uuid_from_id(customer_id)
 
     now = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
     service_rcon_port = form.get("service_rcon_port")
@@ -214,8 +279,8 @@ def new_service():
         "allocated_ports": allocated_ports,
         "allocated_ram_mb": int(form.get("allocated_ram_mb") or 0),
         "cluster_id": (form.get("cluster_id") or "").strip(),
-        "customer_id": (form.get("customer_id") or "").strip(),
-        "customer_uuid": (form.get("customer_uuid") or "").strip(),
+        "customer_id": customer_id,
+        "customer_uuid": customer_uuid,
         "minecraft_version": (form.get("minecraft_version") or "").strip(),
         "modpack_name": (form.get("modpack_name") or "").strip(),
         "node_id": (form.get("node_id") or "").strip(),
@@ -245,6 +310,8 @@ def new_service():
     except Exception:
         logging.exception("SERVICEID MODULE - Service creation failed actor=%s service_id=%s service_name=%s", _pseudonymize_actor(actor), service_id, service_name)
         raise
+
+    _sync_customer_service_links(new_record)
 
     logging.info("SERVICEID MODULE - Service created actor=%s service_id=%s service_name=%s", _pseudonymize_actor(actor), service_id, service_name)
     return redirect(url_for("serviceid_module.serviceid_dashboard"))
