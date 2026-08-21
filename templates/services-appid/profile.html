@@ -1,14 +1,177 @@
+{% macro format_label(value) -%}
+    {%- set raw = value | replace('_', ' ') | replace('-', ' ') -%}
+    {%- set words = raw.split() -%}
+    {%- for word in words -%}
+        {%- if word.lower() in ['uuid', 'id', 'ip', 'api', 'mfa', 'rcon', 'cpu', 'ram', 'sku', 'dns'] -%}
+            {{ word.upper() }}{%- if not loop.last %} {{- "" -}}{% endif %}
+        {%- else -%}
+            {{ word.title() }}{%- if not loop.last %} {{- "" -}}{% endif %}
+        {%- endif -%}
+    {%- endfor -%}
+{%- endmacro %}
+
+{% macro render_value(value) -%}
+    {% if value is mapping %}
+        {% if value %}
+            <dl class="profile-nested-list">
+                {% for key, nested_value in value.items() %}
+                    <dt>{{ format_label(key) }}</dt>
+                    <dd>{{ render_value(nested_value) }}</dd>
+                {% endfor %}
+            </dl>
+        {% else %}
+            <span class="text-muted">None</span>
+        {% endif %}
+    {% elif value is sequence and value is not string %}
+        {% if value %}
+            <ul class="profile-value-list">
+                {% for item in value %}
+                    <li>{{ render_value(item) }}</li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <span class="text-muted">None</span>
+        {% endif %}
+    {% elif value is sameas(true) %}
+        Yes
+    {% elif value is sameas(false) %}
+        No
+    {% elif value is none %}
+        <span class="text-muted">None</span>
+    {% elif value == '' %}
+        <span class="text-muted">Empty</span>
+    {% else %}
+        {{ value }}
+    {% endif %}
+{%- endmacro %}
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='img/favicon.ico') }}"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="robots" content="noindex, nofollow"> <!--Discourage Search Engine Indexing of this page-->
-    <!-- Performance Enhancements -->
+    <meta name="author" content="Matt Faulkner">
+    <meta name="description" content="Service Profile">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="theme-color" content="#284389">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta http-equiv="refresh" content="600">
     <link rel="preconnect" href="https://fonts.bunny.net/css">
     <link rel="preconnect" href="https://fonts.bunny.net/css" crossorigin>
-    <title>ServiceID Profile — GoobyDesk</title>
+    <script src="{{ url_for('static', filename='main.js') }}"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <title>{{ service.get('service_name', 'Service') }} - GoobyDesk ServiceID</title>
 </head>
 <body>
+    <main class="container container--wide">
+        <div class="page-header">
+            <div>
+                <div class="profile-name">
+                    <h2 class="card-title">{{ service.get('service_name', 'Unnamed Service') }}</h2>
+                    {% if service.get('service_status') %}
+                        <span class="badge badge-secondary">{{ service.get('service_status', 'Unknown') | capitalize }}</span>
+                    {% endif %}
+                    {% if service.get('provisioning_status') %}
+                        <span class="badge badge-info">{{ service.get('provisioning_status', 'Unknown') | capitalize }}</span>
+                    {% endif %}
+                </div>
+                <p class="text-muted">{{ service.get('service_id', service.get('uuid', 'Unknown')) }}</p>
+            </div>
+            <div class="page-header-actions">
+                <a href="{{ url_for('serviceid_module.serviceid_dashboard') }}" class="submit-btn status-btn">&larr; Back to Dashboard</a>
+            </div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-card-title">Service Type</div>
+                <div class="stat-card-value">{{ service.get('service_type') or service.get('type') or '—' }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card-title">Customer ID</div>
+                <div class="stat-card-value">{{ service.get('customer_id') or '—' }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card-title">Region</div>
+                <div class="stat-card-value">{{ service.get('region') or '—' }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card-title">Created</div>
+                <div class="stat-card-value stat-card-value--compact">{{ service.get('service_created_timestamp') or service.get('created') or '—' }}</div>
+            </div>
+        </div>
+
+        <div class="grid grid-2">
+            <div class="card">
+                <div class="card-header"><h3 class="card-title">Service Details</h3></div>
+                <div class="card-body ticket-details">
+                    <p><strong>Service ID:</strong> {{ service.get('service_id') or '—' }}</p>
+                    <p><strong>Service Name:</strong> {{ service.get('service_name') or '—' }}</p>
+                    <p><strong>Service Type:</strong> {{ service.get('service_type') or service.get('type') or '—' }}</p>
+                    <p><strong>Service Status:</strong> {{ service.get('service_status') or '—' }}</p>
+                    <p><strong>Provisioning Status:</strong> {{ service.get('provisioning_status') or '—' }}</p>
+                    <p><strong>Provision Source:</strong> {{ service.get('service_provision_source') or '—' }}</p>
+                    <p><strong>SKU:</strong> {{ service.get('service_sku') or '—' }}</p>
+                    <p><strong>Subdomain:</strong> {{ service.get('service_subdomain') or '—' }}</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header"><h3 class="card-title">Resource Allocation</h3></div>
+                <div class="card-body ticket-details">
+                    <p><strong>CPU Cores:</strong> {{ service.get('allocated_cpu_cores') or 0 }}</p>
+                    <p><strong>RAM MB:</strong> {{ service.get('allocated_ram_mb') or 0 }}</p>
+                    <p><strong>Disk GB:</strong> {{ service.get('allocated_disk_gb') or 0 }}</p>
+                    <p><strong>Allocated Ports:</strong> {{ service.get('allocated_ports') or '—' }}</p>
+                    <p><strong>Player Limit:</strong> {{ service.get('player_limit') or 0 }}</p>
+                    <p><strong>Server Type:</strong> {{ service.get('server_type') or '—' }}</p>
+                    <p><strong>Cluster ID:</strong> {{ service.get('cluster_id') or '—' }}</p>
+                    <p><strong>Node ID:</strong> {{ service.get('node_id') or '—' }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-2">
+            <div class="card">
+                <div class="card-header"><h3 class="card-title">Network & Access</h3></div>
+                <div class="card-body ticket-details">
+                    <p><strong>Service IP:</strong> {{ service.get('service_ip') or '—' }}</p>
+                    <p><strong>Service Domain:</strong> {{ service.get('service_domain') or service.get('service_subdomain') or '—' }}</p>
+                    <p><strong>RCON Port:</strong> {{ service.get('service_rcon_port') or '—' }}</p>
+                    <p><strong>RCON Password:</strong> {{ service.get('service_rcon_pwd') or '—' }}</p>
+                    <p><strong>Minecraft Version:</strong> {{ service.get('minecraft_version') or '—' }}</p>
+                    <p><strong>Modpack Name:</strong> {{ service.get('modpack_name') or '—' }}</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header"><h3 class="card-title">Ownership & Lifecycle</h3></div>
+                <div class="card-body ticket-details">
+                    <p><strong>Customer UUID:</strong> {{ service.get('customer_uuid') or '—' }}</p>
+                    <p><strong>Service Created:</strong> {{ service.get('service_created_timestamp') or '—' }}</p>
+                    <p><strong>Service Updated:</strong> {{ service.get('service_updated_timestamp') or '—' }}</p>
+                    <p><strong>Service Terminated:</strong> {{ service.get('service_terminated_timestamp') or '—' }}</p>
+                    <p><strong>UUID:</strong> {{ service.get('uuid') or '—' }}</p>
+                </div>
+            </div>
+        </div>
+
+        <h3 class="section-title">Full Service Record</h3>
+        <div class="card">
+            <div class="card-body">
+                <div class="three-col-record">
+                    {% for key, value in service.items() %}
+                        <p><strong>{{ format_label(key) }}:</strong> {{ render_value(value) }}</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <p class="footer-text">©2025 GoobyDesk, FOSS created by GoobyFRS | Logged In as: {{ loggedInTech }} |
+            <br>
+            <a href="{{ url_for('itsm.dashboard') }}">Queues</a> | <a href="{{ url_for('changes_module.changes_home') }}">Changes</a> | <a href="{{ url_for('crm_module.crm_dashboard') }}">CRM</a> | <a href="{{ url_for('hr_module.hr_dashboard') }}">HR</a> | <a href="{{ url_for('serviceid_module.serviceid_dashboard') }}">ServiceID</a> | <a href="{{ url_for('reports_module.reports_home') }}">Reports</a>
+        </p>
+    </main>
 </body>
 </html>
