@@ -60,6 +60,31 @@ def _summarize_changes(changes: list[dict]) -> tuple[int, int, dict[str,int], di
 
     return total_changes, active_changes, status_counts, risk_counts
 
+
+def _summarize_resolution_times(tickets: list[dict]) -> dict[str, float]:
+    """Compute average/min/max resolution hours for closed tickets."""
+    resolution_hours = []
+    for ticket in tickets:
+        if (ticket.get("ticket_status", "") or "").lower() != "closed":
+            continue
+        try:
+            submitted_at = datetime.strptime(ticket["submission_date"], "%Y-%m-%d %H:%M:%S")
+            closed_at = datetime.strptime(ticket["closure_date"], "%Y-%m-%d %H:%M:%S")
+        except (KeyError, ValueError):
+            logging.warning("REPORTING - Missing or invalid submission/closure date on ticket")
+            continue
+        resolution_hours.append((closed_at - submitted_at).total_seconds() / 3600)
+
+    if not resolution_hours:
+        return {"total_resolved": 0, "avg_resolution_hours": 0, "min_resolution_hours": 0, "max_resolution_hours": 0}
+
+    return {
+        "total_resolved": len(resolution_hours),
+        "avg_resolution_hours": sum(resolution_hours) / len(resolution_hours),
+        "min_resolution_hours": min(resolution_hours),
+        "max_resolution_hours": max(resolution_hours),
+    }
+
 reports_module_bp = Blueprint('reports_module', __name__, url_prefix='/reports')
 
 @reports_module_bp.route("/dashboard", methods=["GET"])
@@ -108,7 +133,8 @@ def reports_home():
 
     changes = _load_changes()
     total_changes, active_changes, change_status_counts, change_risk_counts = _summarize_changes(changes)
-    
+    resolution_stats = _summarize_resolution_times(tickets)
+
     return render_template("reports/reports_dashboard.html",
         total_tickets=total_tickets,
         open_tickets=status_counts["Open"],
@@ -122,6 +148,7 @@ def reports_home():
         active_changes=active_changes,
         change_status_counts=change_status_counts,
         change_risk_counts=change_risk_counts,
+        resolution_stats=resolution_stats,
         loggedInTech=resolve_preferred_name(session.get("technician")))
 
 @reports_module_bp.route("/export/csv", endpoint='export_tickets_csv')
