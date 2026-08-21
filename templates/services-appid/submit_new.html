@@ -3,12 +3,194 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="robots" content="noindex, nofollow"> <!--Discourage Search Engine Indexing of this page-->
-    <!-- Performance Enhancements -->
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="description" content="Create New Service">
     <link rel="preconnect" href="https://fonts.bunny.net/css">
     <link rel="preconnect" href="https://fonts.bunny.net/css" crossorigin>
-    <title>ServiceID Submit New — GoobyDesk</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <script src="{{ url_for('static', filename='main.js') }}"></script>
+    <title>Create New Service — GoobyDesk</title>
 </head>
 <body>
+    <main class="container container--narrow">
+        <div class="logo">
+            <img src="{{ url_for('static', filename='/img/logo_white.webp') }}" alt="GoobyDesk Logo">
+        </div>
+
+        <h2>New Service</h2>
+        <p class="text-muted">Track the service details that should be persisted for provisioning and operations.</p>
+
+        {% if error %}
+        <div class="alert alert--danger" role="alert">{{ error }}</div>
+        {% endif %}
+
+        <form method="POST" action="{{ url_for('serviceid_module.new_service') }}">
+            <div class="form-row">
+                <div>
+                    <label for="service_name">Service Name *</label>
+                    <input type="text" id="service_name" name="service_name" value="" required>
+                </div>
+                <div>
+                    <label for="service_id">Service ID</label>
+                    <input type="text" id="service_id" name="service_id" value="" placeholder="SVC-0001">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div>
+                    <label for="customer_id">Customer ID</label>
+                    <input type="text" id="customer_id" name="customer_id" value="">
+                </div>
+                <div>
+                    <label for="customer_uuid">Customer UUID</label>
+                    <input type="text" id="customer_uuid" name="customer_uuid" value="">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div>
+                    <label for="service_type">Service Type</label>
+                    <input type="text" id="service_type" name="service_type" value="" placeholder="web">
+                </div>
+                <div>
+                    <label for="service_sku">Service SKU</label>
+                    <input type="text" id="service_sku" name="service_sku" value="">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div>
+                    <label for="service_status">Service Status</label>
+                    <select id="service_status" name="service_status">
+                        <option value="provisioning" selected>provisioning</option>
+                        <option value="active">active</option>
+                        <option value="maintenance">maintenance</option>
+                        <option value="degraded">degraded</option>
+                        <option value="terminated">terminated</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="provisioning_status">Provisioning Status</label>
+                    <select id="provisioning_status" name="provisioning_status">
+                        <option value="pending" selected>pending</option>
+                        <option value="in_progress">in_progress</option>
+                        <option value="provisioned">provisioned</option>
+                        <option value="failed">failed</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div>
+                    <label for="service_ip">Service IP</label>
+                    <input type="text" id="service_ip" name="service_ip" value="">
+                </div>
+                <div>
+                    <label for="service_subdomain">Service Subdomain</label>
+                    <input type="text" id="service_subdomain" name="service_subdomain" value="">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div>
+                    <label for="service_provision_source">Provision Source</label>
+                    <input type="text" id="service_provision_source" name="service_provision_source" value="">
+                </div>
+                <div>
+                    <label for="server_type">Server Type</label>
+                    <input type="text" id="server_type" name="server_type" value="">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div>
+                    <label for="region">Region</label>
+                    <input type="text" id="region" name="region" value="">
+                </div>
+                <div>
+                    <label for="cluster_id">Cluster ID</label>
+                    <input type="text" id="cluster_id" name="cluster_id" value="">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div>
+                    <label for="node_id">Node ID</label>
+                    <input type="text" id="node_id" name="node_id" value="">
+                </div>
+                <div>
+                    <label for="service_rcon_port">RCON Port</label>
+                    <input type="number" id="service_rcon_port" name="service_rcon_port" value="" min="0">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div>
+                    <label for="service_rcon_pwd">RCON Password</label>
+                    <input type="text" id="service_rcon_pwd" name="service_rcon_pwd" value="">
+                </div>
+                <div>
+                    <label for="minecraft_version">Minecraft Version</label>
+                    <input type="text" id="minecraft_version" name="minecraft_version" value="">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div>
+                    <label for="modpack_name">Modpack Name</label>
+                    <input type="text" id="modpack_name" name="modpack_name" value="">
+                </div>
+                <div>
+                    <label for="player_limit">Player Limit</label>
+                    <input type="number" id="player_limit" name="player_limit" value="0" min="0">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div>
+                    <label for="allocated_cpu_cores">Allocated CPU Cores</label>
+                    <input type="number" step="0.1" id="allocated_cpu_cores" name="allocated_cpu_cores" value="0.0" min="0">
+                </div>
+                <div>
+                    <label for="allocated_ram_mb">Allocated RAM (MB)</label>
+                    <input type="number" id="allocated_ram_mb" name="allocated_ram_mb" value="0" min="0">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div>
+                    <label for="allocated_disk_gb">Allocated Disk (GB)</label>
+                    <input type="number" id="allocated_disk_gb" name="allocated_disk_gb" value="0" min="0">
+                </div>
+                <div>
+                    <label for="allocated_ports">Allocated Ports</label>
+                    <input type="text" id="allocated_ports" name="allocated_ports" value="" placeholder="25565,25575">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div>
+                    <label for="service_created_timestamp">Created Timestamp</label>
+                    <input type="datetime-local" id="service_created_timestamp" name="service_created_timestamp" value="">
+                </div>
+                <div>
+                    <label for="service_updated_timestamp">Updated Timestamp</label>
+                    <input type="datetime-local" id="service_updated_timestamp" name="service_updated_timestamp" value="">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div>
+                    <label for="service_terminated_timestamp">Terminated Timestamp</label>
+                    <input type="datetime-local" id="service_terminated_timestamp" name="service_terminated_timestamp" value="">
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="submit-btn">Create Service</button>
+                <a href="{{ url_for('serviceid_module.serviceid_dashboard') }}" class="secondary-btn">Cancel</a>
+            </div>
+        </form>
+    </main>
 </body>
 </html>

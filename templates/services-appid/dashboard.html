@@ -25,7 +25,9 @@
                 <h2>Services / APPID Dashboard</h2>
                 <p class="text-muted">Welcome back, {{ loggedInTech }}</p>
             </div>
-            <div></div>
+            <div class="page-header-actions">
+                <a href="{{ url_for('serviceid_module.new_service') }}" class="submit-btn">+ Service</a>
+            </div>
         </div>
 
         <p><strong>Total Services:</strong> {{ services|length }}</p>
