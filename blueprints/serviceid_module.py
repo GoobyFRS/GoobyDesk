@@ -32,6 +32,31 @@ def load_service_appids():
     store = _get_service_appid_store()
     return store.load_all()
 
+
+def generate_service_id(services):
+    """Return the next service identifier in the APP-YYYY-#### format."""
+    current_year = datetime.now().strftime("%Y")
+    highest_number = 0
+
+    for service in services:
+        service_id = str(service.get("service_id") or "")
+        if not service_id.startswith("APP-"):
+            continue
+
+        parts = service_id.split("-")
+        if len(parts) != 3:
+            continue
+
+        try:
+            candidate = int(parts[2])
+        except ValueError:
+            continue
+
+        highest_number = max(highest_number, candidate)
+
+    return f"APP-{current_year}-{highest_number + 1:04d}"
+
+
 @serviceid_module_bp.route("/", methods=["GET"])
 @role_required(ROLE_ITSM_TECH)
 def serviceid_dashboard():
@@ -65,9 +90,7 @@ def new_service():
     else:
         allocated_ports = []
 
-    service_id = (form.get("service_id") or "").strip()
-    if not service_id:
-        service_id = f"SVC-{datetime.now().strftime('%Y%m%d')}-{len(services) + 1:04d}"
+    service_id = generate_service_id(services)
 
     now = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
     service_rcon_port = form.get("service_rcon_port")
