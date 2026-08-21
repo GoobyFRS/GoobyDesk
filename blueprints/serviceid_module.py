@@ -12,6 +12,15 @@ from flask import current_app
 from local_handlers.local_config_loader import load_core_config
 from storage.service_appid_store import ServiceAppIdStore
 
+def _pseudonymize_actor(name: str | None) -> str:
+    """Return a stable opaque actor id for logging."""
+    if not name:
+        return "actor_unknown"
+    safe_name = str(name).strip()
+    if not safe_name:
+        return "actor_unknown"
+    return f"actor_{abs(hash(safe_name)) % 1000000:06d}"
+
 def _get_config():
     """Return loaded app config or fallback loader."""
     cfg = current_app.config.get("LOADED_CONFIG")
@@ -31,7 +40,6 @@ def load_service_appids():
     """Load and return configured service APPIDs."""
     store = _get_service_appid_store()
     return store.load_all()
-
 
 def generate_service_id(services):
     """Return the next service identifier in the APP-YYYY-#### format."""
@@ -56,48 +64,53 @@ def generate_service_id(services):
 
     return f"APP-{current_year}-{highest_number + 1:04d}"
 
-
 @serviceid_module_bp.route("/", methods=["GET"])
 @role_required(ROLE_ITSM_TECH)
 def serviceid_dashboard():
     """Render service APPID dashboard view."""
+    actor = resolve_preferred_name(session.get("technician"))
     services = load_service_appids()
+    logging.info("SERVICEID MODULE - Dashboard loaded actor=%s total_services=%s", _pseudonymize_actor(actor), len(services))
     return render_template(
         "services-appid/dashboard.html",
         services=services,
-        loggedInTech=resolve_preferred_name(session.get("technician")),
+        loggedInTech=actor,
     )
-
 
 @serviceid_module_bp.route("/profile/<uuid>", methods=["GET"])
 @role_required(ROLE_ITSM_TECH)
 def service_profile(uuid):
     """Render the profile for a single service record."""
+    actor = resolve_preferred_name(session.get("technician"))
     services = load_service_appids()
     service = next((record for record in services if record.get("uuid") == uuid), None)
     if service is None:
+        logging.warning("SERVICEID MODULE - Profile lookup failed actor=%s uuid=%s", _pseudonymize_actor(actor), uuid)
         return render_template("errors/404.html"), 404
+    logging.info("SERVICEID MODULE - Service profile viewed actor=%s service_id=%s uuid=%s", _pseudonymize_actor(actor), service.get("service_id"), uuid)
     return render_template(
         "services-appid/profile.html",
         service=service,
-        loggedInTech=resolve_preferred_name(session.get("technician")),
+        loggedInTech=actor,
     )
-
 
 @serviceid_module_bp.route("/edit/<uuid>", methods=["GET", "POST"])
 @role_required(ROLE_ITSM_TECH)
 def edit_service(uuid):
     """Render and process the service edit form for a given record."""
+    actor = resolve_preferred_name(session.get("technician"))
     services = load_service_appids()
     service = next((record for record in services if record.get("uuid") == uuid), None)
     if service is None:
+        logging.warning("SERVICEID MODULE - Edit lookup failed actor=%s uuid=%s", _pseudonymize_actor(actor), uuid)
         return render_template("errors/404.html"), 404
 
     if request.method == "GET":
+        logging.info("SERVICEID MODULE - Edit form opened actor=%s service_id=%s uuid=%s", _pseudonymize_actor(actor), service.get("service_id"), uuid)
         return render_template(
             "services-appid/submit_new.html",
             service=service,
-            loggedInTech=resolve_preferred_name(session.get("technician")),
+            loggedInTech=actor,
         )
 
     form = request.form.to_dict()
@@ -143,28 +156,36 @@ def edit_service(uuid):
     })
 
     store = _get_service_appid_store()
-    store.save_all(services)
-    return redirect(url_for("serviceid_module.service_profile", uuid=uuid))
+    try:
+        store.save_all(services)
+    except Exception:
+        logging.exception("SERVICEID MODULE - Service update failed actor=%s service_id=%s uuid=%s", _pseudonymize_actor(actor), service.get("service_id"), uuid)
+        raise
 
+    logging.info("SERVICEID MODULE - Service updated actor=%s service_id=%s uuid=%s", _pseudonymize_actor(actor), service.get("service_id"), uuid)
+    return redirect(url_for("serviceid_module.service_profile", uuid=uuid))
 
 @serviceid_module_bp.route("/submit-new", methods=["GET", "POST"])
 @role_required(ROLE_ITSM_TECH)
 def new_service():
     """Render and process the service creation form."""
+    actor = resolve_preferred_name(session.get("technician"))
     if request.method == "GET":
+        logging.info("SERVICEID MODULE - New service form opened actor=%s", _pseudonymize_actor(actor))
         return render_template(
             "services-appid/submit_new.html",
-            loggedInTech=resolve_preferred_name(session.get("technician")),
+            loggedInTech=actor,
         )
 
     form = request.form.to_dict()
     services = load_service_appids()
     service_name = (form.get("service_name") or "").strip()
     if not service_name:
+        logging.warning("SERVICEID MODULE - Service creation rejected actor=%s reason=missing_service_name", _pseudonymize_actor(actor))
         return render_template(
             "services-appid/submit_new.html",
             error="Service name is required.",
-            loggedInTech=resolve_preferred_name(session.get("technician")),
+            loggedInTech=actor,
         ), 400
 
     raw_ports = (form.get("allocated_ports") or "").strip()
@@ -219,6 +240,11 @@ def new_service():
 
     services.append(new_record)
     store = _get_service_appid_store()
-    store.save_all(services)
+    try:
+        store.save_all(services)
+    except Exception:
+        logging.exception("SERVICEID MODULE - Service creation failed actor=%s service_id=%s service_name=%s", _pseudonymize_actor(actor), service_id, service_name)
+        raise
 
+    logging.info("SERVICEID MODULE - Service created actor=%s service_id=%s service_name=%s", _pseudonymize_actor(actor), service_id, service_name)
     return redirect(url_for("serviceid_module.serviceid_dashboard"))
