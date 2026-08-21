@@ -18,6 +18,7 @@
     <meta name="twitter:description" content="Submit a media request to GoobyDesk.">
     <meta name="twitter:image" content="{{ url_for('static', filename='img/logo_black.webp') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
     <title>Media Request - GoobyDesk</title>
 </head>
 <body>
@@ -36,7 +37,7 @@
                     id="requestor_name"
                     name="requestor_name"
                     value="{{ requestor_name or '' }}"
-                    placeholder="Jeremy Clarkson"
+                    placeholder="James May"
                     minlength="2"
                     maxlength="64"
                     autocomplete="name"
@@ -80,7 +81,12 @@
                     aria-describedby="imdb-help">
             </div>
 
-            <button type="submit" class="submit-btn">Submit</button>
+            <div class="form-actions">
+                {% if sitekey %}
+                <div class="cf-turnstile" data-sitekey="{{ sitekey }}" data-theme="light"></div>
+                {% endif %}
+                <button type="submit" class="submit-btn">Submit</button>
+            </div>
         </form>
 
         {% if error_message %}

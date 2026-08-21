@@ -3,10 +3,13 @@
 
 from __future__ import annotations
 
+import logging
+import os
 import re
 from datetime import datetime
 from urllib.parse import urlparse
 
+import requests
 from flask import Blueprint, current_app, render_template, request
 
 from local_handlers.ticket_builder import build_ticket_record
@@ -16,7 +19,45 @@ from storage.ticket_store import TicketStore
 ALLOWED_MEDIA_TYPES = {"TV Show", "Movie", "Other"}
 NAME_RE = re.compile(r"^[A-Za-z0-9 .,'’-]{2,64}$")
 
+CF_TURNSTILE_SITE_KEY = os.getenv("CF_TURNSTILE_SITE_KEY")
+CF_TURNSTILE_SECRET_KEY = os.getenv("CF_TURNSTILE_SECRET_KEY")
+CAPTCHA_ENABLED = bool(CF_TURNSTILE_SITE_KEY and CF_TURNSTILE_SECRET_KEY)
+
 media_request_module_bp = Blueprint('media_request_module', __name__, url_prefix='/media-request')
+
+
+def _verify_turnstile() -> tuple[bool, str]:
+    """Validate the Cloudflare Turnstile token when CAPTCHA is enabled.
+    Returns:
+        tuple[bool, str]: Success flag and an error message when verification fails.
+    """
+    if not CAPTCHA_ENABLED:
+        return True, ""
+
+    turnstile_token = request.form.get("cf-turnstile-response")
+    if not turnstile_token:
+        logging.warning("Missing Turnstile token in media request submission")
+        return False, "CAPTCHA verification failed. Please try again."
+
+    url = "https://challenges.cloudflare.com/turnstile/v0/siteverify"
+    data = {
+        "secret": CF_TURNSTILE_SECRET_KEY,
+        "response": turnstile_token,
+        "remoteip": request.remote_addr,
+    }
+    try:
+        resp = requests.post(url, data=data, timeout=5)
+        result = resp.json()
+    except Exception as e:
+        logging.error("Turnstile verification error while contacting provider")
+        logging.debug("Turnstile verification exception: %s", str(e))
+        return False, "Error verifying CAPTCHA. Please try again later."
+
+    if not result.get("success"):
+        logging.warning("Turnstile verification failed for media request: %s", result)
+        return False, "CAPTCHA verification failed. Please try again."
+
+    return True, ""
 
 def _sanitize_text(
     value: str, *, max_length: int,
@@ -99,9 +140,15 @@ def submit_media_request():
         "error_message": "",
         "success_message": "",
         "ticket_number": "",
+        "sitekey": CF_TURNSTILE_SITE_KEY if CAPTCHA_ENABLED else None,
     }
 
     if request.method == "POST":
+        turnstile_ok, turnstile_error = _verify_turnstile()
+        if not turnstile_ok:
+            context["error_message"] = turnstile_error
+            return render_template("public/media_request.html", **context)
+
         if not requestor_name or not requestor_email or not description:
             context["error_message"] = (
                 "Please complete your name, email, and request details."
