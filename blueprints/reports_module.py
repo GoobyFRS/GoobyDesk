@@ -85,6 +85,26 @@ def _summarize_resolution_times(tickets: list[dict]) -> dict[str, float]:
         "max_resolution_hours": max(resolution_hours),
     }
 
+
+def _summarize_source_counts(tickets: list[dict]) -> dict[str, int]:
+    """Summarize ticket counts grouped by ticket source channel."""
+    source_counts: dict[str, int] = {}
+    for ticket in tickets:
+        source = str(ticket.get("ticket_source", "") or "unknown").strip() or "unknown"
+        source_counts[source] = source_counts.get(source, 0) + 1
+    return source_counts
+
+
+def _summarize_queue_counts(tickets: list[dict]) -> dict[str, int]:
+    """Summarize active (non-closed) ticket counts grouped by request type/queue."""
+    queue_counts: dict[str, int] = {}
+    for ticket in tickets:
+        if (ticket.get("ticket_status", "") or "").lower() == "closed":
+            continue
+        queue = str(ticket.get("request_type", "") or "unknown").strip() or "unknown"
+        queue_counts[queue] = queue_counts.get(queue, 0) + 1
+    return queue_counts
+
 reports_module_bp = Blueprint('reports_module', __name__, url_prefix='/reports')
 
 @reports_module_bp.route("/dashboard", methods=["GET"])
@@ -134,6 +154,8 @@ def reports_home():
     changes = _load_changes()
     total_changes, active_changes, change_status_counts, change_risk_counts = _summarize_changes(changes)
     resolution_stats = _summarize_resolution_times(tickets)
+    source_counts = _summarize_source_counts(tickets)
+    queue_counts = _summarize_queue_counts(tickets)
 
     return render_template("reports/reports_dashboard.html",
         total_tickets=total_tickets,
@@ -149,6 +171,8 @@ def reports_home():
         change_status_counts=change_status_counts,
         change_risk_counts=change_risk_counts,
         resolution_stats=resolution_stats,
+        source_counts=source_counts,
+        queue_counts=queue_counts,
         loggedInTech=resolve_preferred_name(session.get("technician")))
 
 @reports_module_bp.route("/export/csv", endpoint='export_tickets_csv')
