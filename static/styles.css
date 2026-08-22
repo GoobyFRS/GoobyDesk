@@ -526,6 +526,48 @@ textarea {
     width: auto;
 }
 
+.queue-ticket-list {
+    margin-top: 16px;
+}
+
+.queue-ticket-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+}
+
+.queue-ticket-select {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+}
+
+.queue-ticket-select input {
+    width: auto;
+    margin: 0;
+    accent-color: var(--warning);
+}
+
+.queue-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.queue-actions .assign-btn,
+.queue-actions .submit-btn {
+    width: auto;
+    margin-top: 0;
+}
+
+.logout-form {
+    margin: 0;
+}
+
 /* ==========================================================
    Buttons
    ========================================================== */

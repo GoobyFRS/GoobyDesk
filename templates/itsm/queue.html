@@ -31,22 +31,27 @@
             <a href="{{ url_for('itsm.queue_escalation') }}">Escalation</a> |
             <a href="{{ url_for('itsm.queue_billing') }}">Billing</a>
         </nav>
-        <ul class="ticket-list">
+        <ul class="ticket-list queue-ticket-list">
             {% for ticket in tickets %}
-                <li>
+                <li class="queue-ticket-item">
+                    <label class="queue-ticket-select">
+                        <input type="checkbox" name="ticket_numbers" value="{{ ticket.ticket_number }}">
+                    </label>
                     <a href="{{ url_for('itsm.ticket_detail', ticket_number=ticket.ticket_number) }}">
                         {{ ticket.ticket_number }} - {{ ticket.ticket_subject }} ({{ ticket.ticket_status }})
                     </a>
                     &mdash; Assigned to: {{ ticket.assigned_to or "Unassigned" }}
-                    <button class="assign-btn inline-btn" onclick="assignTicketToMe('{{ ticket.ticket_number }}')">Assign to Me</button>
                 </li>
             {% else %}
                 <li class="text-muted">No tickets in this queue.</li>
             {% endfor %}
         </ul>
-        <form action="{{ url_for('logout') }}" method="GET">
-        <button type="submit" class="submit-btn">Logout</button>
-        </form>
+        <div class="queue-actions">
+            <button type="button" class="assign-btn" onclick="assignSelectedTicketsToMe()">Assign Selected to Me</button>
+            <form action="{{ url_for('logout') }}" method="GET" class="logout-form">
+                <button type="submit" class="submit-btn">Logout</button>
+            </form>
+        </div>
         <p class="footer-text">©2025 GoobyDesk, FOSS created by GoobyFRS | Logged In as: {{ loggedInTech }} |
             <br>
             <a href="{{ url_for('itsm.dashboard') }}">Queues</a> | <a href="{{ url_for('changes_module.changes_home') }}">Changes</a> | <a href="{{ url_for('crm_module.crm_dashboard') }}">CRM</a> | <a href="{{ url_for('hr_module.hr_dashboard') }}">HR</a> | <a href="{{ url_for('serviceid_module.serviceid_dashboard') }}">ServiceID</a> | <a href="{{ url_for('reports_module.reports_home') }}">Reports</a>
