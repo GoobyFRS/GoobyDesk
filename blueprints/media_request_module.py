@@ -1,17 +1,13 @@
 #!/usr/bin/env python3
 """Media request form that submits a standard ITSM ticket."""
-
 from __future__ import annotations
-
+import requests
 import logging
 import os
 import re
 from datetime import datetime
 from urllib.parse import urlparse
-
-import requests
 from flask import Blueprint, current_app, render_template, request
-
 from local_handlers.ticket_builder import build_ticket_record
 from storage.ticket_store import TicketStore
 
@@ -21,11 +17,9 @@ IMDB_HOSTS = {"imdb.com", "www.imdb.com", "m.imdb.com"}
 
 media_request_module_bp = Blueprint('media_request_module', __name__, url_prefix='/media-request')
 
-
 def _turnstile_keys() -> tuple[str | None, str | None]:
     """Read Turnstile keys lazily so `.env` (loaded after blueprint import) is respected."""
     return os.getenv("CF_TURNSTILE_SITE_KEY"), os.getenv("CF_TURNSTILE_SECRET_KEY")
-
 
 def _verify_turnstile() -> tuple[bool, str]:
     """Validate the Cloudflare Turnstile token when CAPTCHA is enabled.
@@ -148,34 +142,28 @@ def submit_media_request():
             return render_template("public/media_request.html", **context)
 
         if not requestor_name or not description:
-            context["error_message"] = (
-                "Please complete your name and request details."
-            )
+            context["error_message"] = ("Please complete your name and request details.")
             return render_template("public/media_request.html", **context)
 
         if not NAME_RE.match(requestor_name):
             context["error_message"] = (
                 "Please enter a valid name using letters, numbers, spaces, "
-                "and common punctuation only."
-            )
+                "and common punctuation only.")
             return render_template("public/media_request.html", **context)
 
         if len(description) < 4:
             context["error_message"] = (
-                "Please provide a longer description for your request."
-            )
+                "Please provide a longer description for your request.")
             return render_template("public/media_request.html", **context)
 
         if request.form.get("imdb_link") and not imdb_link:
             context["error_message"] = (
                 "Please provide a valid IMDb URL beginning with http:// or "
-                "https:// and ending on imdb.com."
-            )
+                "https:// and ending on imdb.com.")
             return render_template("public/media_request.html", **context)
 
         ticket_number = _get_ticket_store().next_ticket_number(
-            datetime.now().year,
-        )
+            datetime.now().year,)
         ticket_body = description
         if imdb_link:
             ticket_body = f"{ticket_body}\n\nIMDB Link: {imdb_link}"
@@ -190,14 +178,11 @@ def submit_media_request():
                 "ticket_urgency": "Normal",
             },
             ticket_number,
-            source="web",
-        )
+            source="web",)
 
         _get_ticket_store().append(ticket)
         logging.info("Media request ticket %s created (type=%s).", ticket_number, media_type)
-        context["success_message"] = (
-            f"Your media request has been logged as ticket {ticket_number}."
-        )
+        context["success_message"] = ( f"Your media request has been logged as ticket {ticket_number}.")
         context["ticket_number"] = ticket_number
         return render_template("public/media_request.html", **context)
 
