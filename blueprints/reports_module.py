@@ -103,7 +103,7 @@ def _summarize_queue_counts(tickets: list[dict]) -> dict[str, int]:
     for ticket in tickets:
         if (ticket.get("ticket_status", "") or "").lower() == "closed":
             continue
-        queue = str(ticket.get("request_type", "") or "").strip()
+        queue = str(ticket.get("ticket_queue", "") or "").strip()
         if queue.lower() not in VALID_TICKET_QUEUES:
             continue
         queue_counts[queue] = queue_counts.get(queue, 0) + 1

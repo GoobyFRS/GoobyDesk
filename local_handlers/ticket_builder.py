@@ -41,6 +41,8 @@ def build_ticket_record(form_or_payload: Any, ticket_number: str, source: str = 
         "ticket_impact": ticket_impact,
         "ticket_urgency": ticket_urgency,
         "ticket_status": "open",
+        "ticket_queue": "support",
+        "assigned_to": None,
         "submission_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "ticket_acknowledged_timestamp": None,
         "ticket_escalation_timestamp": None,

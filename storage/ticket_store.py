@@ -91,4 +91,7 @@ class TicketStore:
         ticket.setdefault("ticket_notes", [])
         ticket.setdefault("ticket_worknotes", list(ticket.get("ticket_notes", [])))
         ticket.setdefault("ticket_resolution_notes", [])
+        ticket.setdefault("ticket_queue", "support")
+        ticket.setdefault("assigned_to", None)
+        ticket.setdefault("ticket_acknowledged_timestamp", None)
         return ticket

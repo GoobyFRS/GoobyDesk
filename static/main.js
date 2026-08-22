@@ -49,6 +49,32 @@ async function updateTicketStatus(ticketId, newStatus) {
 }
 
 /**
+ * Assigns a ticket to the currently logged-in technician
+ * @param {string} ticketNumber - The ticket number to assign
+ * @returns {Promise<void>}
+ */
+async function assignTicketToMe(ticketNumber) {
+    try {
+        let response = await fetch(`/itsm/ticket/${ticketNumber}/assign_to_me`, {
+            method: "POST",
+            headers: { "Accept": "application/json" }
+        });
+
+        let data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.message || "Unknown error");
+        }
+
+        alert(data.message);
+        location.reload();
+    } catch (error) {
+        console.error("Error:", error);
+        alert("An error occurred while assigning the ticket. Please try again.");
+    }
+}
+
+/**
  * Closes a ticket by reading the ticket ID from the dashboard input field
  * This function is typically called from the dashboard view
  * @returns {void}

@@ -22,7 +22,12 @@
         <div class="logo">
             <img src="{{ url_for('static', filename='/img/logo_white.webp') }}" alt="GoobyDesk Logo">
         </div>
-        <h2>Technician Dashboard</h2>
+        <h2>My Tickets</h2>
+        <nav class="queue-links">
+            <a href="{{ url_for('itsm.queue_support') }}">Support Queue</a> |
+            <a href="{{ url_for('itsm.queue_escalation') }}">Escalation Queue</a> |
+            <a href="{{ url_for('itsm.queue_billing') }}">Billing Queue</a>
+        </nav>
         <ul class="ticket-list">
             {% for ticket in tickets %}
                 <li>

@@ -32,6 +32,7 @@
             <p><strong>Type:</strong> {{ ticket.request_type }}</p>
             <p><strong>Impact:</strong> {{ ticket.ticket_impact }}</p>
             <p><strong>Urgency:</strong> {{ ticket.ticket_urgency }}</p>
+            <p><strong>Assigned To:</strong> {{ ticket.assigned_to or "Unassigned" }}</p>
             <p><strong>Ticket Body:</strong> {{ticket.ticket_body}}</p>
         </div>
 
@@ -56,6 +57,7 @@
         <div class="button-row">
             <button class="status-btn" onclick="updateTicketStatus('{{ ticket.ticket_number }}', 'In-Progress')">Mark In-Progress</button>
             <button class="close-tkt-btn" onclick="updateTicketStatus('{{ ticket.ticket_number }}', 'Closed')">Close Ticket</button>
+            <button class="assign-btn" onclick="assignTicketToMe('{{ ticket.ticket_number }}')">Assign to Me</button>
             <button class="addNote-btn" onclick="submitNote('{{ ticket.ticket_number }}')">Add Note</button>
         </div>
         <p class="footer-text">©2025 GoobyDesk, FOSS created by GoobyFRS | Logged In as: {{ loggedInTech }} |
