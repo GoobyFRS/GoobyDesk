@@ -23,6 +23,12 @@
     --danger: #da3633;
     --danger-hover: #f85149;
 
+    --warning: #d29922;
+    --warning-hover: #e3b341;
+
+    --secondary: #30363d;
+    --secondary-hover: #484f58;
+
     --link: #58a6ff;
     --link-hover: #79c0ff;
 
@@ -484,7 +490,9 @@ button:focus-visible,
 .submit-btn:focus-visible,
 .addNote-btn:focus-visible,
 .status-btn:focus-visible,
-.close-tkt-btn:focus-visible {
+.close-tkt-btn:focus-visible,
+.warning-btn:focus-visible,
+.secondary-btn:focus-visible {
     outline: 3px solid var(--link);
     outline-offset: 2px;
 }
@@ -576,6 +584,44 @@ textarea {
 
 .close-tkt-btn:hover {
     background: var(--danger-hover);
+}
+
+.warning-btn,
+.secondary-btn {
+    width: 100%;
+
+    margin-top: 15px;
+    padding: 10px;
+
+    color: white;
+
+    border: 1px solid transparent;
+    border-radius: 6px;
+
+    font-size: 16px;
+    font-weight: 500;
+
+    cursor: pointer;
+
+    transition: .2s;
+}
+
+.warning-btn {
+    background: var(--warning);
+    border-color: var(--warning);
+}
+
+.warning-btn:hover {
+    background: var(--warning-hover);
+}
+
+.secondary-btn {
+    background: var(--secondary);
+    border-color: var(--secondary);
+}
+
+.secondary-btn:hover {
+    background: var(--secondary-hover);
 }
 
 /* ==========================================================

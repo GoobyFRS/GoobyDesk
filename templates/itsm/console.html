@@ -13,7 +13,6 @@
     <!-- Performance Enhancements -->
     <link rel="preconnect" href="https://fonts.bunny.net/css">
     <link rel="preconnect" href="https://fonts.bunny.net/css" crossorigin>
-    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
     <!-- Local CSS and JavaScript Imports-->
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <script src="{{ url_for('static', filename='main.js') }}"></script>
@@ -53,7 +52,7 @@
             {% endfor %}
         </ul>
 
-        <textarea id="noteContent" placeholder="Append a ticket note...."></textarea>
+        <textarea id="noteContent" placeholder="Append a ticket note...." aria-label="Append a ticket note"></textarea>
         <div class="button-row">
             <button class="status-btn" onclick="updateTicketStatus('{{ ticket.ticket_number }}', 'In-Progress')">Mark In-Progress</button>
             <button class="close-tkt-btn" onclick="updateTicketStatus('{{ ticket.ticket_number }}', 'Closed')">Close Ticket</button>
