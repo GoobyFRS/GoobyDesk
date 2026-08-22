@@ -123,6 +123,7 @@
                         <option value="container" {% if service and service.get('server_type') in ['container', 'Container'] %}selected{% endif %}>Container</option>
                         <option value="bare_metal" {% if service and service.get('server_type') in ['bare_metal', 'Bare Metal'] %}selected{% endif %}>Bare Metal</option>
                         <option value="instance" {% if service and service.get('server_type') in ['instance', 'Instance'] %}selected{% endif %}>Instance</option>
+                        <option value="other" {% if service and service.get('server_type') in ['other', 'Other'] %}selected{% endif %}>Other</option>
                     </select>
                 </div>
             </div>

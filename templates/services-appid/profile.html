@@ -99,7 +99,8 @@
             </div>
             <div class="stat-card">
                 <div class="stat-card-title">Created</div>
-                <div class="stat-card-value stat-card-value--compact">{{ service.get('service_created_timestamp') or service.get('created') or '—' }}</div>
+                {% set _created = service.get('service_created_timestamp') or service.get('created') %}
+                <div class="stat-card-value stat-card-value--compact">{{ _created[:10] if _created else '—' }}</div>
             </div>
         </div>
 
