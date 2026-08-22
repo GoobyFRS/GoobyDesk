@@ -27,6 +27,23 @@ def _get_ticket_store():
 
 itsm_module_bp = Blueprint('itsm', __name__, url_prefix='/itsm')
 
+def _apply_ticket_status_update(record: dict, canonical_status: str, logged_in_tech: str) -> dict:
+    """Apply a normalized status update and keep close timestamps consistent."""
+    record.setdefault("ticket_subject", "No Subject Provided")
+    record["ticket_status"] = canonical_status
+
+    if canonical_status == "Closed":
+        resolved_timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        record["closed_by"] = logged_in_tech
+        record["closure_date"] = resolved_timestamp
+        record["ticket_resolved_timestamp"] = resolved_timestamp
+        return record
+
+    record.pop("closed_by", None)
+    record["closure_date"] = None
+    record["ticket_resolved_timestamp"] = None
+    return record
+
 def _pseudonymize_actor(name: str) -> str:
     if not name:
         return "actor_unknown"
@@ -90,12 +107,7 @@ def update_ticket_status(ticket_number, ticket_status):
     store = _get_ticket_store()
 
     def _updater(record: dict):
-        record.setdefault("ticket_subject", "No Subject Provided")
-        record["ticket_status"] = canonical_status
-        if canonical_status == "Closed":
-            record["closed_by"] = logged_in_tech
-            record["closure_date"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        return record
+        return _apply_ticket_status_update(record, canonical_status, logged_in_tech)
 
     changed = store.update(lambda record: record.get("ticket_number") == ticket_number, _updater)
     if not changed:
