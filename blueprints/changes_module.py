@@ -32,11 +32,9 @@ def load_changes():
     store = _get_changes_store()
     return sorted(store.load_all(), key=_change_sort_key, reverse=True)
 
-
 def get_change_by_number(change_number: str) -> dict | None:
     """Return the matching change record or None if it does not exist."""
     return _get_changes_store().get_by_change_number(change_number)
-
 
 def _change_sort_key(change: dict) -> datetime:
     timestamp = change.get("change_created_timestamp")
@@ -110,7 +108,6 @@ def changes_home():
     """Render the change dashboard."""
     changes = load_changes()
     return render_template("changes/changes_dashboard.html", changes=changes, loggedInTech=resolve_preferred_name(session.get("technician")))
-
 
 @changes_module_bp.route("/<change_number>", methods=["GET"])
 @role_required(ROLE_ITSM_TECH)
