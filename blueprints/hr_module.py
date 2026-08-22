@@ -217,8 +217,7 @@ def _append_initial_compensation_history(employee_record: dict, form: dict, crea
     initial_bonus = form.get("initial_bonus")
     if initial_bonus:
         employee_record["employment"]["bonus_history"].append(
-            {"date": created_date, "note": initial_bonus}
-        )
+            {"date": created_date, "note": initial_bonus})
 
     initial_raise = form.get("initial_raise")
     if initial_raise:
@@ -368,6 +367,7 @@ def _pseudonymize_actor(name: str) -> str:
     salt = os.getenv("LOG_SALT", "")
     short_hash = hashlib.sha256((str(name) + salt).encode()).hexdigest()[:8]
     return f"actor_{short_hash}"
+
 # Dashboard Route
 @hr_module_bp.route("/", methods=["GET"])
 @role_required(ROLE_HR_TECH)
@@ -389,8 +389,7 @@ def hr_dashboard():
         employees=displayed_employees,
         stats=stats,
         loggedInTech=resolve_preferred_name(session.get("technician")),
-        show_all=show_all,
-    )
+        show_all=show_all,)
 
 # View Employee Details Route
 @hr_module_bp.route("/employee/<uuid>", methods=["GET"])
@@ -467,7 +466,8 @@ def reset_employee_password(uuid: str):
 
     # Show password once to admin via template variable and flash
     flash("Password reset successful - show it once below.", "success")
-    return render_template("hr/profile.html", employee=employee, reset_password=new_password, loggedInTech=resolve_preferred_name(session.get("technician")))
+    return render_template("hr/profile.html", employee=employee, reset_password=new_password, 
+                           loggedInTech=resolve_preferred_name(session.get("technician")))
 
 @hr_module_bp.route("/employee/<uuid>/append_note", methods=["POST"])
 @role_required(ROLE_HR_TECH)
@@ -537,8 +537,7 @@ def new_employee():
             auth_record, temporary_password = _provision_employee_login_access(
                 new_record,
                 auth_employees,
-                auth_username_override,
-            )
+                auth_username_override,)
         except ValueError as exc:
             return render_template("hr/submit_new.html", error=str(exc), loggedInTech=resolve_preferred_name(session.get("technician"))), 400
     else:

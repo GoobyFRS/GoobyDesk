@@ -7,7 +7,6 @@ import requests
 from flask import current_app
 from local_handlers.local_config_loader import load_core_config
 
-
 # CONFIG HELPERS
 def _get_webhook_config():
     cfg = current_app.config.get("LOADED_CONFIG")
@@ -15,12 +14,10 @@ def _get_webhook_config():
         cfg = load_core_config()
     return cfg.get("webhooks", {})
 
-
 def is_enabled(service_name: str) -> bool:
     webhook_service_status = _get_webhook_config()
     webhook_service_cfg = webhook_service_status.get(service_name.lower(), {})
     return bool(webhook_service_cfg.get("enabled", False))
-
 
 def get_webhook_urls():
     # LOAD WEBHOOK URLS - Easy to add more services/platforms.
