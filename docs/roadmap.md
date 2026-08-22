@@ -13,3 +13,5 @@
 - Implement Password Reset function
 - Implement Billable Hours text box.
 - Pick `closure_date` or `ticket_resolved_timestamp`
+- Develop a test suite.
+
