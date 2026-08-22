@@ -491,6 +491,7 @@ button:focus-visible,
 .addNote-btn:focus-visible,
 .status-btn:focus-visible,
 .close-tkt-btn:focus-visible,
+.assign-btn:focus-visible,
 .warning-btn:focus-visible,
 .secondary-btn:focus-visible {
     outline: 3px solid var(--link);
@@ -532,7 +533,8 @@ textarea {
 .submit-btn,
 .addNote-btn,
 .status-btn,
-.close-tkt-btn {
+.close-tkt-btn,
+.assign-btn {
     width: 100%;
 
     margin-top: 15px;
@@ -584,6 +586,16 @@ textarea {
 
 .close-tkt-btn:hover {
     background: var(--danger-hover);
+}
+
+.assign-btn {
+    background: var(--warning);
+    border-color: var(--warning);
+}
+
+.assign-btn:hover {
+    background: var(--warning-hover);
+    border-color: var(--warning-hover);
 }
 
 .warning-btn,
