@@ -60,6 +60,55 @@ def _summarize_changes(changes: list[dict]) -> tuple[int, int, dict[str,int], di
 
     return total_changes, active_changes, status_counts, risk_counts
 
+
+def _summarize_resolution_times(tickets: list[dict]) -> dict[str, float]:
+    """Compute average/min/max resolution hours for closed tickets."""
+    resolution_hours = []
+    for ticket in tickets:
+        if (ticket.get("ticket_status", "") or "").lower() != "closed":
+            continue
+        try:
+            submitted_at = datetime.strptime(ticket["submission_date"], "%Y-%m-%d %H:%M:%S")
+            closed_at = datetime.strptime(ticket["closure_date"], "%Y-%m-%d %H:%M:%S")
+        except (KeyError, ValueError):
+            logging.warning("REPORTING - Missing or invalid submission/closure date on ticket")
+            continue
+        resolution_hours.append((closed_at - submitted_at).total_seconds() / 3600)
+
+    if not resolution_hours:
+        return {"total_resolved": 0, "avg_resolution_hours": 0, "min_resolution_hours": 0, "max_resolution_hours": 0}
+
+    return {
+        "total_resolved": len(resolution_hours),
+        "avg_resolution_hours": sum(resolution_hours) / len(resolution_hours),
+        "min_resolution_hours": min(resolution_hours),
+        "max_resolution_hours": max(resolution_hours),
+    }
+
+
+def _summarize_source_counts(tickets: list[dict]) -> dict[str, int]:
+    """Summarize ticket counts grouped by ticket source channel."""
+    source_counts: dict[str, int] = {}
+    for ticket in tickets:
+        source = str(ticket.get("ticket_source", "") or "unknown").strip() or "unknown"
+        source_counts[source] = source_counts.get(source, 0) + 1
+    return source_counts
+
+
+VALID_TICKET_QUEUES = {"support", "escalation", "billing"}
+
+def _summarize_queue_counts(tickets: list[dict]) -> dict[str, int]:
+    """Summarize active (non-closed) ticket counts grouped by queue (Support/Escalation/Billing only)."""
+    queue_counts: dict[str, int] = {}
+    for ticket in tickets:
+        if (ticket.get("ticket_status", "") or "").lower() == "closed":
+            continue
+        queue = str(ticket.get("request_type", "") or "").strip()
+        if queue.lower() not in VALID_TICKET_QUEUES:
+            continue
+        queue_counts[queue] = queue_counts.get(queue, 0) + 1
+    return queue_counts
+
 reports_module_bp = Blueprint('reports_module', __name__, url_prefix='/reports')
 
 @reports_module_bp.route("/dashboard", methods=["GET"])
@@ -77,19 +126,21 @@ def reports_home():
         "In-Progress": 0,
         "Closed": 0,
     }
-    
+
     time_buckets = {
         "last_60_days": 0,
         "last_30_days": 0,
         "last_14_days": 0,
         "last_7_days": 0,
     }
-    
+
     for ticket in tickets:
-        status = ticket.get("ticket_status")
-        if status in status_counts:
-            status_counts[status] += 1
-        
+        status = str(ticket.get("ticket_status", "") or "").strip().lower()
+        for canonical_status in status_counts:
+            if status == canonical_status.lower():
+                status_counts[canonical_status] += 1
+                break
+
         try:
             submitted_at = datetime.strptime(ticket["submission_date"], "%Y-%m-%d %H:%M:%S")
             age = now - submitted_at
@@ -108,7 +159,10 @@ def reports_home():
 
     changes = _load_changes()
     total_changes, active_changes, change_status_counts, change_risk_counts = _summarize_changes(changes)
-    
+    resolution_stats = _summarize_resolution_times(tickets)
+    source_counts = _summarize_source_counts(tickets)
+    queue_counts = _summarize_queue_counts(tickets)
+
     return render_template("reports/reports_dashboard.html",
         total_tickets=total_tickets,
         open_tickets=status_counts["Open"],
@@ -122,6 +176,9 @@ def reports_home():
         active_changes=active_changes,
         change_status_counts=change_status_counts,
         change_risk_counts=change_risk_counts,
+        resolution_stats=resolution_stats,
+        source_counts=source_counts,
+        queue_counts=queue_counts,
         loggedInTech=resolve_preferred_name(session.get("technician")))
 
 @reports_module_bp.route("/export/csv", endpoint='export_tickets_csv')

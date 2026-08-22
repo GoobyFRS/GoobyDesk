@@ -372,13 +372,25 @@ def _pseudonymize_actor(name: str) -> str:
 @hr_module_bp.route("/", methods=["GET"])
 @role_required(ROLE_HR_TECH)
 def hr_dashboard():
-    """Render the HR dashboard listing all employees and summary stats.
+    """Render the HR dashboard listing active employees and summary stats.
     Returns:
         The rendered HR dashboard template.
     """
+    show_all = request.args.get("show_all") == "1"
     employees = load_hr_employees()
     stats = build_hr_stats(employees)
-    return render_template("hr/hr_dashboard.html", employees=employees, stats=stats, loggedInTech=resolve_preferred_name(session.get("technician")))
+    active_employees_list = [
+        employee for employee in employees
+        if employee.get("employment", {}).get("status") == "active"
+    ]
+    displayed_employees = employees if show_all else active_employees_list
+    return render_template(
+        "hr/hr_dashboard.html",
+        employees=displayed_employees,
+        stats=stats,
+        loggedInTech=resolve_preferred_name(session.get("technician")),
+        show_all=show_all,
+    )
 
 # View Employee Details Route
 @hr_module_bp.route("/employee/<uuid>", methods=["GET"])

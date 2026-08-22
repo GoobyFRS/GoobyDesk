@@ -1,13 +1,9 @@
 # Project Roadmap
 
-## 1.0.0
-
-- Update Wiki
-- Update code comments
+## 1.0.3
 
 ### Small Fixes
 
-- ServiceID module has no function.
 - Change Managaement workflow does not exisit.
 - Reorder Customer Profile edit boxes
 - Reorder Customer Profile boxes

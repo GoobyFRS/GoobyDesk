@@ -239,7 +239,23 @@ def customer_profile(uuid):
     customer = next((cust for cust in customers if cust["uuid"] == uuid), None)
     if not customer:
         return render_template("errors/404.html"), 404
-    return render_template("crm/profile.html", customer=customer, loggedInTech=resolve_preferred_name(session.get("technician")))
+
+    linked_services = []
+    try:
+        from blueprints.serviceid_module import _get_service_appid_store
+        linked_services = [
+            service for service in _get_service_appid_store().load_all()
+            if str(service.get("customer_uuid") or "") == str(uuid)
+        ]
+    except Exception:
+        logging.exception("CRM MODULE - Failed to load linked services for customer_uuid=%s", uuid)
+
+    return render_template(
+        "crm/profile.html",
+        customer=customer,
+        linked_services=linked_services,
+        loggedInTech=resolve_preferred_name(session.get("technician")),
+    )
 
 @crm_module_bp.route("/customer/<uuid>/append_note", methods=["POST"])
 @role_required(ROLE_ITSM_TECH)
