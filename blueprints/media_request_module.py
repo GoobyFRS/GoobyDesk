@@ -50,9 +50,9 @@ def _verify_turnstile() -> tuple[bool, str]:
     try:
         resp = requests.post(url, data=data, timeout=5)
         result = resp.json()
-    except Exception as e:
+    except Exception as exception:
         logging.error("Turnstile verification error while contacting provider")
-        logging.debug("Turnstile verification exception: %s", str(e))
+        logging.debug("Turnstile verification exception: %s", str(exception))
         return False, "Error verifying CAPTCHA. Please try again later."
 
     if not result.get("success"):

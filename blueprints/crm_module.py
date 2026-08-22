@@ -134,11 +134,15 @@ def _update_customer_record(customer: dict, form: dict) -> None:
     # Lists: services and account tags (comma-separated input)
     services_val = _clean_form_value(form, "services")
     if services_val is not None:
-        customer["services"] = [s.strip() for s in services_val.split(",") if s.strip()]
+        customer["services"] = [
+            service_name.strip() for service_name in services_val.split(",") if service_name.strip()
+        ]
 
     tags_val = _clean_form_value(form, "account_tags")
     if tags_val is not None:
-        customer["account_tags"] = [t.strip() for t in tags_val.split(",") if t.strip()]
+        customer["account_tags"] = [
+            tag_name.strip() for tag_name in tags_val.split(",") if tag_name.strip()
+        ]
 
     # Support contract
     support_enabled = True if form.get("support_enabled") else False
