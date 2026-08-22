@@ -191,10 +191,13 @@ def edit_service(uuid):
     allocated_ports = [int(port.strip()) for port in raw_ports.split(",") if port.strip()] if raw_ports else []
 
     service_rcon_port = form.get("service_rcon_port")
-    if service_rcon_port in ("", "null", "None"):
+    if service_rcon_port in (None, "", "null", "None"):
         service_rcon_port = None
     else:
-        service_rcon_port = int(service_rcon_port)
+        try:
+            service_rcon_port = int(service_rcon_port)
+        except (TypeError, ValueError):
+            service_rcon_port = None
 
     service_terminated_timestamp = form.get("service_terminated_timestamp")
     if service_terminated_timestamp in ("", "null", "None"):
@@ -283,10 +286,13 @@ def new_service():
 
     now = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
     service_rcon_port = form.get("service_rcon_port")
-    if service_rcon_port in ("", "null", "None"):
+    if service_rcon_port in (None, "", "null", "None"):
         service_rcon_port = None
     else:
-        service_rcon_port = int(service_rcon_port)
+        try:
+            service_rcon_port = int(service_rcon_port)
+        except (TypeError, ValueError):
+            service_rcon_port = None
 
     service_terminated_timestamp = form.get("service_terminated_timestamp")
     if service_terminated_timestamp in ("", "null", "None"):
