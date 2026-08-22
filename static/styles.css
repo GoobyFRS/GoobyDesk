@@ -209,6 +209,14 @@
     margin-top: 0;
 }
 
+.header-row--flush {
+    margin-bottom: 0;
+}
+
+.inline-form--flush {
+    margin: 0;
+}
+
 .login-btn,
 .index-btn {
     width: auto;
@@ -241,6 +249,7 @@
     background: var(--color-canvas-subtle);
     border: 1px solid var(--color-border-default);
     border-radius: 10px;
+    text-align: left;
 }
 
 .stat-card {
@@ -302,11 +311,6 @@
 
 /* .container below has text-align:center for the centered marketing-page
    look elsewhere on the site. These dashboard pieces read better left-aligned. */
-.stat-card,
-.card {
-    text-align: left;
-}
-
 .section-title {
     margin-top: 2.5rem;
     margin-bottom: 1rem;
@@ -565,16 +569,14 @@ textarea {
     background: var(--success-hover);
 }
 
-    .close-tkt-btn {
-        background: var(--danger);
-        border-color: var(--danger);
-    }
+.close-tkt-btn {
+    background: var(--danger);
+    border-color: var(--danger);
+}
 
-    .close-tkt-btn:hover {
-        background: var(--danger-hover);
-    }
-
-    }
+.close-tkt-btn:hover {
+    background: var(--danger-hover);
+}
 
 /* ==========================================================
    Alerts and Flash Messages
@@ -637,22 +639,6 @@ a:hover {
 /* ==========================================================
    Dashboard
    ========================================================== */
-
-.ticket-list {
-    list-style: none;
-    padding: 0;
-    text-align: left;
-}
-
-.ticket-list li {
-    background: var(--panel-alt);
-
-    margin: 8px 0;
-    padding: 12px;
-
-    border: 1px solid var(--border);
-    border-radius: 6px;
-}
 
 .ticket-details {
     margin-top: 15px;
