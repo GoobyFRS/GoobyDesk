@@ -107,17 +107,41 @@ def generate_service_id(services):
 
     return f"APP-{current_year}-{highest_number + 1:04d}"
 
+
+def _is_terminated_service(service: dict) -> bool:
+    """Return True when a service record should be hidden by default."""
+    service_status = str(service.get("service_status") or service.get("status") or "").strip().lower()
+    if service_status == "terminated":
+        return True
+
+    terminated_timestamp = service.get("service_terminated_timestamp") or service.get("terminated")
+    if terminated_timestamp in (None, "", "null", "None"):
+        return False
+    return True
+
+
 @serviceid_module_bp.route("/", methods=["GET"])
 @role_required(ROLE_ITSM_TECH)
 def serviceid_dashboard():
     """Render service APPID dashboard view."""
     actor = resolve_preferred_name(session.get("technician"))
+    show_all = request.args.get("show_all") == "1"
     services = load_service_appids()
-    logging.info("SERVICEID MODULE - Dashboard loaded actor=%s total_services=%s", _pseudonymize_actor(actor), len(services))
+    displayed_services = services if show_all else [
+        service for service in services if not _is_terminated_service(service)
+    ]
+    logging.info(
+        "SERVICEID MODULE - Dashboard loaded actor=%s total_services=%s visible_services=%s show_all=%s",
+        _pseudonymize_actor(actor),
+        len(services),
+        len(displayed_services),
+        show_all,
+    )
     return render_template(
         "services-appid/dashboard.html",
-        services=services,
+        services=displayed_services,
         loggedInTech=actor,
+        show_all=show_all,
     )
 
 @serviceid_module_bp.route("/profile/<uuid>", methods=["GET"])
