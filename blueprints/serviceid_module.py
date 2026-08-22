@@ -33,7 +33,6 @@ def _get_service_appid_store():
     cfg = _get_config()
     return ServiceAppIdStore(cfg["core"]["serviceid_appid_file"])
 
-
 def _resolve_customer_uuid_from_id(customer_id: str | None, customers: list | None = None) -> str:
     """Resolve a customer UUID from its customer ID."""
     normalized_customer_id = (customer_id or "").strip()
@@ -48,7 +47,6 @@ def _resolve_customer_uuid_from_id(customer_id: str | None, customers: list | No
         if str(customer.get("customer_id") or "") == normalized_customer_id:
             return str(customer.get("uuid") or "")
     return ""
-
 
 def _sync_customer_service_links(service_record: dict, previous_customer_uuid: str | None = None) -> None:
     """Keep the linked customer record aligned with the APPID list."""
@@ -107,7 +105,6 @@ def generate_service_id(services):
 
     return f"APP-{current_year}-{highest_number + 1:04d}"
 
-
 def _is_terminated_service(service: dict) -> bool:
     """Return True when a service record should be hidden by default."""
     service_status = str(service.get("service_status") or service.get("status") or "").strip().lower()
@@ -118,7 +115,6 @@ def _is_terminated_service(service: dict) -> bool:
     if terminated_timestamp in (None, "", "null", "None"):
         return False
     return True
-
 
 @serviceid_module_bp.route("/", methods=["GET"])
 @role_required(ROLE_ITSM_TECH)
