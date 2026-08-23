@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
+import hashlib
 import logging
+import os
 import uuid
 from datetime import datetime
 from functools import wraps
@@ -12,6 +14,8 @@ from flask import current_app
 from local_handlers.local_config_loader import load_core_config
 from storage.service_appid_store import ServiceAppIdStore
 
+logger = logging.getLogger(__name__)
+
 def _pseudonymize_actor(name: str | None) -> str:
     """Return a stable opaque actor id for logging."""
     if not name:
@@ -19,24 +23,26 @@ def _pseudonymize_actor(name: str | None) -> str:
     safe_name = str(name).strip()
     if not safe_name:
         return "actor_unknown"
-    return f"actor_{abs(hash(safe_name)) % 1000000:06d}"
+    salt = os.getenv("LOG_SALT", "")
+    short_hash = hashlib.sha256((safe_name + salt).encode("utf-8")).hexdigest()[:8]
+    return f"actor_{short_hash}"
 
 def _get_config():
     """Return loaded app config or fallback loader."""
     cfg = current_app.config.get("LOADED_CONFIG")
     if cfg is None:
+        logger.debug("SERVICEID MODULE - Falling back to legacy core config loader")
         cfg = load_core_config()
     return cfg
 
 def _get_service_appid_store():
     """Return a ServiceAppIdStore instance from loaded config."""
     cfg = _get_config()
-    return ServiceAppIdStore(cfg["core"]["serviceid_appid_file"])
-
-def _resolve_customer_uuid_from_id(customer_id: str | None, customers: list | None = None) -> str:
-    """Resolve a customer UUID from its customer ID."""
-    normalized_customer_id = (customer_id or "").strip()
+    service_file = cfg["core"]["serviceid_appid_file"]
+    logger.debug("SERVICEID MODULE - Opening service APPID store file=%s", service_file)
+    return ServiceAppIdStore(service_file)
     if not normalized_customer_id:
+        logger.debug("SERVICEID MODULE - Customer ID resolution skipped; empty input")
         return ""
 
     if customers is None:
@@ -45,7 +51,10 @@ def _resolve_customer_uuid_from_id(customer_id: str | None, customers: list | No
 
     for customer in customers:
         if str(customer.get("customer_id") or "") == normalized_customer_id:
-            return str(customer.get("uuid") or "")
+            resolved_uuid = str(customer.get("uuid") or "")
+            logger.debug("SERVICEID MODULE - Resolved customer_id=%s to uuid=%s", normalized_customer_id, resolved_uuid)
+            return resolved_uuid
+    logger.warning("SERVICEID MODULE - Unable to resolve customer_id=%s to customer_uuid", normalized_customer_id)
     return ""
 
 def _sync_customer_service_links(service_record: dict, previous_customer_uuid: str | None = None) -> None:
@@ -54,6 +63,7 @@ def _sync_customer_service_links(service_record: dict, previous_customer_uuid: s
 
     service_id = str(service_record.get("service_id") or "").strip()
     if not service_id:
+        logger.warning("SERVICEID MODULE - Service link sync skipped; missing service_id")
         return
 
     customers = load_customers_file()
@@ -72,6 +82,7 @@ def _sync_customer_service_links(service_record: dict, previous_customer_uuid: s
             services.append(service_id)
 
     save_customers_file(customers)
+    logger.debug("SERVICEID MODULE - Synced linked services for service_id=%s customer_uuid=%s", service_id, customer_uuid)
 
 
 serviceid_module_bp = Blueprint("serviceid_module", __name__, url_prefix="/serviceid")
@@ -80,7 +91,9 @@ serviceid_module_bp = Blueprint("serviceid_module", __name__, url_prefix="/servi
 def load_service_appids():
     """Load and return configured service APPIDs."""
     store = _get_service_appid_store()
-    return store.load_all()
+    services = store.load_all()
+    logger.debug("SERVICEID MODULE - Loaded %s service APPID records", len(services))
+    return services
 
 def generate_service_id(services):
     """Return the next service identifier in the APP-YYYY-#### format."""
@@ -103,7 +116,9 @@ def generate_service_id(services):
 
         highest_number = max(highest_number, candidate)
 
-    return f"APP-{current_year}-{highest_number + 1:04d}"
+    next_service_id = f"APP-{current_year}-{highest_number + 1:04d}"
+    logger.debug("SERVICEID MODULE - Generated service identifier=%s", next_service_id)
+    return next_service_id
 
 def _is_terminated_service(service: dict) -> bool:
     """Return True when a service record should be hidden by default."""
@@ -126,7 +141,7 @@ def serviceid_dashboard():
     displayed_services = services if show_all else [
         service for service in services if not _is_terminated_service(service)
     ]
-    logging.info(
+    logger.info(
         "SERVICEID MODULE - Dashboard loaded actor=%s total_services=%s visible_services=%s show_all=%s",
         _pseudonymize_actor(actor),
         len(services),
@@ -148,9 +163,9 @@ def service_profile(uuid):
     services = load_service_appids()
     service = next((record for record in services if record.get("uuid") == uuid), None)
     if service is None:
-        logging.warning("SERVICEID MODULE - Profile lookup failed actor=%s uuid=%s", _pseudonymize_actor(actor), uuid)
+        logger.warning("SERVICEID MODULE - Profile lookup failed actor=%s uuid=%s", _pseudonymize_actor(actor), uuid)
         return render_template("errors/404.html"), 404
-    logging.info("SERVICEID MODULE - Service profile viewed actor=%s service_id=%s uuid=%s", _pseudonymize_actor(actor), service.get("service_id"), uuid)
+    logger.info("SERVICEID MODULE - Service profile viewed actor=%s service_id=%s uuid=%s", _pseudonymize_actor(actor), service.get("service_id"), uuid)
     return render_template(
         "services-appid/profile.html",
         service=service,
@@ -165,11 +180,11 @@ def edit_service(uuid):
     services = load_service_appids()
     service = next((record for record in services if record.get("uuid") == uuid), None)
     if service is None:
-        logging.warning("SERVICEID MODULE - Edit lookup failed actor=%s uuid=%s", _pseudonymize_actor(actor), uuid)
+        logger.warning("SERVICEID MODULE - Edit lookup failed actor=%s uuid=%s", _pseudonymize_actor(actor), uuid)
         return render_template("errors/404.html"), 404
 
     if request.method == "GET":
-        logging.info("SERVICEID MODULE - Edit form opened actor=%s service_id=%s uuid=%s", _pseudonymize_actor(actor), service.get("service_id"), uuid)
+        logger.info("SERVICEID MODULE - Edit form opened actor=%s service_id=%s uuid=%s", _pseudonymize_actor(actor), service.get("service_id"), uuid)
         from blueprints.crm_module import load_customers_file
         return render_template(
             "services-appid/submit_new.html",
@@ -189,6 +204,8 @@ def edit_service(uuid):
 
     raw_ports = (form.get("allocated_ports") or "").strip()
     allocated_ports = [int(port.strip()) for port in raw_ports.split(",") if port.strip()] if raw_ports else []
+    if raw_ports and not allocated_ports:
+        logger.warning("SERVICEID MODULE - Service update for uuid=%s contained no valid allocated_ports", uuid)
 
     service_rcon_port = form.get("service_rcon_port")
     if service_rcon_port in (None, "", "null", "None"):
@@ -235,12 +252,12 @@ def edit_service(uuid):
     try:
         store.save_all(services)
     except Exception:
-        logging.exception("SERVICEID MODULE - Service update failed actor=%s service_id=%s uuid=%s", _pseudonymize_actor(actor), service.get("service_id"), uuid)
+        logger.exception("SERVICEID MODULE - Service update failed actor=%s service_id=%s uuid=%s", _pseudonymize_actor(actor), service.get("service_id"), uuid)
         raise
 
     _sync_customer_service_links(service, previous_customer_uuid=previous_customer_uuid or None)
 
-    logging.info("SERVICEID MODULE - Service updated actor=%s service_id=%s uuid=%s", _pseudonymize_actor(actor), service.get("service_id"), uuid)
+    logger.info("SERVICEID MODULE - Service updated actor=%s service_id=%s uuid=%s", _pseudonymize_actor(actor), service.get("service_id"), uuid)
     return redirect(url_for("serviceid_module.service_profile", uuid=uuid))
 
 @serviceid_module_bp.route("/submit-new", methods=["GET", "POST"])
@@ -249,7 +266,7 @@ def new_service():
     """Render and process the service creation form."""
     actor = resolve_preferred_name(session.get("technician"))
     if request.method == "GET":
-        logging.info("SERVICEID MODULE - New service form opened actor=%s", _pseudonymize_actor(actor))
+        logger.info("SERVICEID MODULE - New service form opened actor=%s", _pseudonymize_actor(actor))
         from blueprints.crm_module import load_customers_file
         return render_template(
             "services-appid/submit_new.html",
@@ -261,7 +278,7 @@ def new_service():
     services = load_service_appids()
     service_name = (form.get("service_name") or "").strip()
     if not service_name:
-        logging.warning("SERVICEID MODULE - Service creation rejected actor=%s reason=missing_service_name", _pseudonymize_actor(actor))
+        logger.warning("SERVICEID MODULE - Service creation rejected actor=%s reason=missing_service_name", _pseudonymize_actor(actor))
         from blueprints.crm_module import load_customers_file
         return render_template(
             "services-appid/submit_new.html",
@@ -334,10 +351,10 @@ def new_service():
     try:
         store.save_all(services)
     except Exception:
-        logging.exception("SERVICEID MODULE - Service creation failed actor=%s service_id=%s service_name=%s", _pseudonymize_actor(actor), service_id, service_name)
+        logger.exception("SERVICEID MODULE - Service creation failed actor=%s service_id=%s service_name=%s", _pseudonymize_actor(actor), service_id, service_name)
         raise
 
     _sync_customer_service_links(new_record)
 
-    logging.info("SERVICEID MODULE - Service created actor=%s service_id=%s service_name=%s", _pseudonymize_actor(actor), service_id, service_name)
+    logger.info("SERVICEID MODULE - Service created actor=%s service_id=%s service_name=%s", _pseudonymize_actor(actor), service_id, service_name)
     return redirect(url_for("serviceid_module.serviceid_dashboard"))
