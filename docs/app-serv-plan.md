@@ -2,13 +2,50 @@
 
 ## Service ID
 
-End User Service DB
+Remove Service ID from 
+
+- Ownership
+Service Name
+Customer ID
+Customer UUID
+Service SKU
 
 - System Details
+Server Type
+Service Type
+Service Status
+Platform (Drop Down) [Local, AWS, GCP, Linode, Oracle, Other]
+Region ID
+Cluster ID
+Node ID
+Service IP
+Service Subdomain
+Allocated CPU Cores
+Allocated RAM (MB)
+Allocated Disk (GB)
+Allocated Ports
+
 - Minecraft Details
+Minecraft Version
+RCON Port
+RCON Password
+Player Limit
+Modpack Name
+
 - Mumble Details
+Placeholder
+
 - Web Server Details
-- Notes
+Web Server Engine
+Homepage URL
+Management URL
+
+- State and Activities
+Provisioning Status
+Provision Source
+Created Timestamp
+Updated Timestamp
+Terminated Timestamp
 
 ## Application ID
 
