@@ -14,7 +14,6 @@ import blueprints.serviceid_module as serviceid_module
 
 from app import app
 
-
 class BlueprintRouteTests(unittest.TestCase):
     """Base test case for blueprint route coverage using temp JSON stores."""
 
@@ -74,7 +73,6 @@ class BlueprintRouteTests(unittest.TestCase):
         for module in modules:
             self.assertTrue(hasattr(module, "logger"))
             self.assertEqual(module.logger.name, module.__name__)
-
 
 class ApiBlueprintTests(BlueprintRouteTests):
     """Validate the public API ingress endpoints."""
@@ -145,7 +143,6 @@ class ChangesBlueprintTests(BlueprintRouteTests):
         self.assertEqual(len(change_records), 1)
         self.assertEqual(change_records[0]["change_short_description"], "Patch firewall rules")
 
-
 class CrmBlueprintTests(BlueprintRouteTests):
     """Validate the CRM customer dashboard and creation workflow."""
 
@@ -164,7 +161,7 @@ class CrmBlueprintTests(BlueprintRouteTests):
             data={
                 "first_name": "Steve",
                 "last_name": "Customer",
-                "email": "alice@example.com",
+                "email": "steve@example.com",
                 "status": "active",
                 "country": "United States",
                 "timezone": "UTC",
@@ -278,7 +275,6 @@ class HrBlueprintTests(BlueprintRouteTests):
         self.assertIn("attachment; filename=employees_", response.headers.get("Content-Disposition", ""))
         self.assertIn("Dana", response.get_data(as_text=True))
 
-
 class ItsmBlueprintTests(BlueprintRouteTests):
     """Validate the ITSM ticket queues and assignment workflows."""
 
@@ -309,7 +305,6 @@ class ItsmBlueprintTests(BlueprintRouteTests):
             tickets = json.load(handle)
         self.assertEqual(tickets[0]["assigned_to"], "alice")
 
-
 class MediaRequestBlueprintTests(BlueprintRouteTests):
     """Validate public media request ticket creation."""
 
@@ -338,7 +333,6 @@ class MediaRequestBlueprintTests(BlueprintRouteTests):
             tickets = json.load(handle)
         self.assertEqual(len(tickets), 1)
         self.assertEqual(tickets[0]["requestor_name"], "Alice Example")
-
 
 class ReportsBlueprintTests(BlueprintRouteTests):
     """Validate the reporting dashboard and CSV export actions."""
@@ -422,7 +416,6 @@ class ServiceIdBlueprintTests(BlueprintRouteTests):
             services = json.load(handle)
         self.assertEqual(len(services), 1)
         self.assertEqual(services[0]["service_name"], "Test Service")
-
 
 if __name__ == "__main__":
     unittest.main()
