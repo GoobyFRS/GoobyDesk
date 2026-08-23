@@ -159,7 +159,7 @@ Comment out unused code. Do not delete it.
 │   │   └── signup.html      #
 │   ├── reports/      #
 │   │   └── reports_dashboard.html      #
-│   └── services-appid/      #
+│   └── serviceid/      #
 │       ├── dashboard.html      #
 │       ├── profile.html      #
 │       └── submit_new.html      #

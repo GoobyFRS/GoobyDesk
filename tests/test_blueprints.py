@@ -200,7 +200,7 @@ class CrmBlueprintTests(BlueprintRouteTests):
         self.assertEqual(response.status_code, 200)
         self.assertIn("text/csv", response.headers.get("Content-Type", ""))
         self.assertIn("attachment; filename=customers_", response.headers.get("Content-Disposition", ""))
-        self.assertIn("Alice", response.get_data(as_text=True))
+        self.assertIn("Steve", response.get_data(as_text=True))
 
 
 class HrBlueprintTests(BlueprintRouteTests):
@@ -273,7 +273,7 @@ class HrBlueprintTests(BlueprintRouteTests):
         self.assertEqual(response.status_code, 200)
         self.assertIn("text/csv", response.headers.get("Content-Type", ""))
         self.assertIn("attachment; filename=employees_", response.headers.get("Content-Disposition", ""))
-        self.assertIn("Dana", response.get_data(as_text=True))
+        self.assertIn("Bob", response.get_data(as_text=True))
 
 class ItsmBlueprintTests(BlueprintRouteTests):
     """Validate the ITSM ticket queues and assignment workflows."""

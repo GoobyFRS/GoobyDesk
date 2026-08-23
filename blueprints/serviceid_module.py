@@ -43,7 +43,6 @@ def _get_service_appid_store():
     logger.debug("SERVICEID MODULE - Opening service store file=%s", service_file)
     return ServiceAppIdStore(service_file)
 
-
 def _resolve_customer_uuid_from_id(normalized_customer_id: str) -> str:
     """Return the matching customer UUID for a customer_id when one exists."""
     if not normalized_customer_id:
@@ -61,7 +60,6 @@ def _resolve_customer_uuid_from_id(normalized_customer_id: str) -> str:
 
     logger.warning("SERVICEID MODULE - Unable to resolve customer_id=%s to customer_uuid", normalized_customer_id)
     return ""
-
 
 def _sync_customer_service_links(service_record: dict, previous_customer_uuid: str | None = None) -> None:
     """Keep the linked customer record aligned with the service list."""
@@ -156,14 +154,12 @@ def serviceid_dashboard():
         _pseudonymize_actor(actor),
         len(services),
         len(displayed_services),
-        show_all,
-    )
+        show_all,)
     return render_template(
-        "services-appid/dashboard.html",
+        "serviceid/dashboard.html",
         services=displayed_services,
         loggedInTech=actor,
-        show_all=show_all,
-    )
+        show_all=show_all,)
 
 @serviceid_module_bp.route("/profile/<uuid>", methods=["GET"])
 @role_required(ROLE_ITSM_TECH)
@@ -177,10 +173,9 @@ def service_profile(uuid):
         return render_template("errors/404.html"), 404
     logger.info("SERVICEID MODULE - Service profile viewed actor=%s service_id=%s uuid=%s", _pseudonymize_actor(actor), service.get("service_id"), uuid)
     return render_template(
-        "services-appid/profile.html",
+        "serviceid/profile.html",
         service=service,
-        loggedInTech=actor,
-    )
+        loggedInTech=actor,)
 
 @serviceid_module_bp.route("/edit/<uuid>", methods=["GET", "POST"])
 @role_required(ROLE_ITSM_TECH)
@@ -197,7 +192,7 @@ def edit_service(uuid):
         logger.info("SERVICEID MODULE - Edit form opened actor=%s service_id=%s uuid=%s", _pseudonymize_actor(actor), service.get("service_id"), uuid)
         from blueprints.crm_module import load_customers_file
         return render_template(
-            "services-appid/submit_new.html",
+            "serviceid/submit_new.html",
             service=service,
             loggedInTech=actor,
             customers=load_customers_file(),
@@ -279,10 +274,9 @@ def new_service():
         logger.info("SERVICEID MODULE - New service form opened actor=%s", _pseudonymize_actor(actor))
         from blueprints.crm_module import load_customers_file
         return render_template(
-            "services-appid/submit_new.html",
+            "serviceid/submit_new.html",
             loggedInTech=actor,
-            customers=load_customers_file(),
-        )
+            customers=load_customers_file(),)
 
     form = request.form.to_dict()
     services = load_service_appids()
@@ -291,7 +285,7 @@ def new_service():
         logger.warning("SERVICEID MODULE - Service creation rejected actor=%s reason=missing_service_name", _pseudonymize_actor(actor))
         from blueprints.crm_module import load_customers_file
         return render_template(
-            "services-appid/submit_new.html",
+            "serviceid/submit_new.html",
             error="Service name is required.",
             loggedInTech=actor,
             customers=load_customers_file(),
