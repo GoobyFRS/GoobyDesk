@@ -43,7 +43,7 @@
                     <div class="form-row">
                         <div>
                             <label for="customer_id">Customer ID</label>
-                            <select id="customer_id" name="customer_id" size="6" aria-label="Select customer ID">
+                            <select id="customer_id" name="customer_id" aria-label="Select customer ID">
                                 <option value="">Select a customer...</option>
                                 {% for customer in customers or [] %}
                                     {% set customer_label = customer.get('customer_id') or customer.get('uuid') or 'Unknown Customer' %}
