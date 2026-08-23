@@ -283,6 +283,10 @@ form > .card + .card {
     gap: 1.5rem;
 }
 
+.grid + .grid {
+    margin-top: 1.5rem;
+}
+
 .grid-2 {
     grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
 }
