@@ -677,6 +677,16 @@ textarea {
     background: var(--warning-hover);
 }
 
+.danger-btn {
+    background: var(--danger);
+    border-color: var(--danger);
+}
+
+.danger-btn:hover {
+    background: var(--danger-hover);
+    border-color: var(--danger-hover);
+}
+
 .secondary-btn {
     background: var(--secondary);
     border-color: var(--secondary);
