@@ -283,6 +283,16 @@
 
             <div class="form-actions">
                 <button type="submit" class="submit-btn">{% if service %}Save Service{% else %}Create Service{% endif %}</button>
+                {% if service %}
+                <button
+                    type="submit"
+                    class="submit-btn danger-btn"
+                    formaction="{{ url_for('serviceid_module.delete_service', uuid=service.get('uuid')) }}"
+                    formmethod="post"
+                    formnovalidate
+                    onclick="return confirm('Delete this service record? This cannot be undone.');"
+                >Delete Record</button>
+                {% endif %}
                 <a href="{% if service %}{{ url_for('serviceid_module.service_profile', uuid=service.get('uuid')) }}{% else %}{{ url_for('serviceid_module.serviceid_dashboard') }}{% endif %}" class="secondary-btn">Cancel</a>
             </div>
         </form>

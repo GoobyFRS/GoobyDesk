@@ -1,8 +1,20 @@
 # Plan
 
+Organize routes in this order in their blueprints.
+
+1. Dashboard Route
+1. Submit New
+1. View
+1. Edit
+1. Delete
+1. Export
+1. Import
+1. Search
+1. Bulk Update
+
 ## Service ID
 
-Remove Service ID from 
+Remove Service ID from...
 
 - Ownership
 Service Name

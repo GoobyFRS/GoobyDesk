@@ -491,6 +491,34 @@ def edit_service(uuid):
     logger.info("SERVICEID MODULE - Service updated actor=%s service_id=%s uuid=%s", _pseudonymize_actor(actor), service.get("service_id"), uuid)
     return redirect(url_for("serviceid_module.service_profile", uuid=uuid))
 
+
+@serviceid_module_bp.route("/delete/<uuid>", methods=["POST"])
+@role_required(ROLE_ITSM_TECH)
+def delete_service(uuid):
+    """Delete a service record and unlink it from the owning customer."""
+    actor = resolve_preferred_name(str(session.get("technician") or ""))
+    services = load_service_appids()
+    service = next((record for record in services if record.get("uuid") == uuid), None)
+    if service is None:
+        logger.warning("SERVICEID MODULE - Delete lookup failed actor=%s uuid=%s", _pseudonymize_actor(actor), uuid)
+        return render_template("errors/404.html"), 404
+
+    previous_customer_uuid = str(service.get("customer_uuid") or "").strip() or None
+    services = [record for record in services if record.get("uuid") != uuid]
+
+    store = _get_service_appid_store()
+    try:
+        store.save_all(services)
+    except Exception:
+        logger.exception("SERVICEID MODULE - Service delete failed actor=%s service_id=%s uuid=%s", _pseudonymize_actor(actor), service.get("service_id"), uuid)
+        raise
+
+    if previous_customer_uuid:
+        _sync_customer_service_links({"service_id": service.get("service_id"), "customer_uuid": ""}, previous_customer_uuid=previous_customer_uuid)
+
+    logger.info("SERVICEID MODULE - Service deleted actor=%s service_id=%s uuid=%s", _pseudonymize_actor(actor), service.get("service_id"), uuid)
+    return redirect(url_for("serviceid_module.serviceid_dashboard"))
+
 @serviceid_module_bp.route("/submit-new", methods=["GET", "POST"])
 @role_required(ROLE_ITSM_TECH)
 def new_service():

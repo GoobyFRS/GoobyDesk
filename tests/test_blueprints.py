@@ -478,5 +478,55 @@ class ServiceIdBlueprintTests(BlueprintRouteTests):
         self.assertEqual(services[0]["customer_uuid"], "customer-123")
         self.assertEqual(services[0]["allocated_ports"], [25565, 25575])
 
+    def test_service_delete_route(self):
+        """The edit form should expose delete and the delete route should remove the record."""
+        customer_file = os.path.join(self.temp_dir.name, "customers.json")
+        service_file = os.path.join(self.temp_dir.name, "serviceid.json")
+        self._write_json(
+            customer_file,
+            [{
+                "uuid": "customer-123",
+                "customer_id": "CID-2026-0001",
+                "first_name": "Alice",
+                "last_name": "Customer",
+                "services": ["SRV-2026-0001"],
+            }],
+        )
+        self._write_json(
+            service_file,
+            [{
+                "uuid": "service-123",
+                "service_id": "SRV-2026-0001",
+                "service_name": "Delete Me",
+                "customer_id": "CID-2026-0001",
+                "customer_uuid": "customer-123",
+                "service_status": "active",
+            }],
+        )
+        self.app.config["LOADED_CONFIG"] = {
+            "core": {
+                "customers_file": customer_file,
+                "serviceid_appid_file": service_file,
+            }
+        }
+        self._set_auth_session()
+
+        edit_response = self.client.get("/serviceid/edit/service-123")
+        self.assertEqual(edit_response.status_code, 200)
+        edit_body = edit_response.get_data(as_text=True)
+        self.assertIn("Delete Record", edit_body)
+        self.assertIn("Delete this service record? This cannot be undone.", edit_body)
+
+        delete_response = self.client.post("/serviceid/delete/service-123")
+        self.assertEqual(delete_response.status_code, 302)
+
+        with open(service_file, "r", encoding="utf-8") as handle:
+            services = json.load(handle)
+        self.assertEqual(services, [])
+
+        with open(customer_file, "r", encoding="utf-8") as handle:
+            customers = json.load(handle)
+        self.assertEqual(customers[0]["services"], [])
+
 if __name__ == "__main__":
     unittest.main()
