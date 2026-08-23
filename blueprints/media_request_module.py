@@ -16,6 +16,7 @@ NAME_RE = re.compile(r"^[A-Za-z0-9 .,'’-]{2,64}$")
 IMDB_HOSTS = {"imdb.com", "www.imdb.com", "m.imdb.com"}
 
 media_request_module_bp = Blueprint('media_request_module', __name__, url_prefix='/media-request')
+logger = logging.getLogger(__name__)
 
 def _turnstile_keys() -> tuple[str | None, str | None]:
     """Read Turnstile keys lazily so `.env` (loaded after blueprint import) is respected."""
@@ -32,7 +33,7 @@ def _verify_turnstile() -> tuple[bool, str]:
 
     turnstile_token = request.form.get("cf-turnstile-response")
     if not turnstile_token:
-        logging.warning("Missing Turnstile token in media request submission")
+        logger.warning("MEDIA REQUEST MODULE - Missing Turnstile token in media request submission")
         return False, "CAPTCHA verification failed. Please try again."
 
     url = "https://challenges.cloudflare.com/turnstile/v0/siteverify"
@@ -44,13 +45,12 @@ def _verify_turnstile() -> tuple[bool, str]:
     try:
         resp = requests.post(url, data=data, timeout=5)
         result = resp.json()
-    except Exception as exception:
-        logging.error("Turnstile verification error while contacting provider")
-        logging.debug("Turnstile verification exception: %s", str(exception))
+    except Exception:
+        logger.exception("MEDIA REQUEST MODULE - Turnstile verification error while contacting provider")
         return False, "Error verifying CAPTCHA. Please try again later."
 
     if not result.get("success"):
-        logging.warning("Turnstile verification failed for media request: %s", result)
+        logger.warning("MEDIA REQUEST MODULE - Turnstile verification failed for media request; status=%s", result.get("error-codes", "unknown"))
         return False, "CAPTCHA verification failed. Please try again."
 
     return True, ""
@@ -181,7 +181,7 @@ def submit_media_request():
             source="web",)
 
         _get_ticket_store().append(ticket)
-        logging.info("Media request ticket %s created (type=%s).", ticket_number, media_type)
+        logger.info("MEDIA REQUEST MODULE - Media request ticket %s created (type=%s).", ticket_number, media_type)
         context["success_message"] = ( f"Your media request has been logged as ticket {ticket_number}.")
         context["ticket_number"] = ticket_number
         return render_template("public/media_request.html", **context)

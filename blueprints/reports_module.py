@@ -71,7 +71,10 @@ def _summarize_resolution_times(tickets: list[dict]) -> dict[str, float]:
             submitted_at = datetime.strptime(ticket["submission_date"], "%Y-%m-%d %H:%M:%S")
             closed_at = datetime.strptime(ticket["closure_date"], "%Y-%m-%d %H:%M:%S")
         except (KeyError, ValueError):
-            logging.warning("REPORTING - Missing or invalid submission/closure date on ticket")
+            logger.warning(
+                "REPORTING - Missing or invalid submission/closure date on ticket ticket=%s",
+                ticket.get("ticket_number", "unknown"),
+            )
             continue
         resolution_hours.append((closed_at - submitted_at).total_seconds() / 3600)
 
@@ -110,6 +113,7 @@ def _summarize_queue_counts(tickets: list[dict]) -> dict[str, int]:
     return queue_counts
 
 reports_module_bp = Blueprint('reports_module', __name__, url_prefix='/reports')
+logger = logging.getLogger(__name__)
 
 @reports_module_bp.route("/dashboard", methods=["GET"])
 @role_required("*")
@@ -155,7 +159,10 @@ def reports_home():
                 time_buckets["last_7_days"] += 1
         
         except (KeyError, ValueError):
-            logging.warning("REPORTING - Invalid submission_date on ticket")
+            logger.warning(
+                "REPORTING - Invalid submission_date on ticket ticket=%s",
+                ticket.get("ticket_number", "unknown"),
+            )
 
     changes = _load_changes()
     total_changes, active_changes, change_status_counts, change_risk_counts = _summarize_changes(changes)

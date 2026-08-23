@@ -13,6 +13,7 @@ from storage.changes_store import ChangesStore
 
 # Blueprint
 changes_module_bp = Blueprint("changes_module", __name__, url_prefix="/changes")
+logger = logging.getLogger(__name__)
 
 def _get_config():
     """Return loaded app config or fallback loader."""
@@ -166,7 +167,7 @@ def submit_new() -> str:
     store = _get_changes_store()
     store.append(new_change)
     actor = _pseudonymize_actor(resolve_preferred_name(session.get("technician")))
-    logging.info(
+    logger.info(
         "CHANGES MODULE - Created change %s actor=%s",
         new_change["change_number"],
         actor,
@@ -207,7 +208,7 @@ def export_changes_csv():
 
     output.seek(0)
 
-    logging.info(
+    logger.info(
         "CHANGES MODULE - Exported %s change tickets to CSV",
         len(open_changes),
     )

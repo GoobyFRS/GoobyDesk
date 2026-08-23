@@ -41,21 +41,26 @@ def _get_service_appid_store():
     service_file = cfg["core"]["serviceid_appid_file"]
     logger.debug("SERVICEID MODULE - Opening service APPID store file=%s", service_file)
     return ServiceAppIdStore(service_file)
+
+
+def _resolve_customer_uuid_from_id(normalized_customer_id: str) -> str:
+    """Return the matching customer UUID for a customer_id when one exists."""
     if not normalized_customer_id:
         logger.debug("SERVICEID MODULE - Customer ID resolution skipped; empty input")
         return ""
 
-    if customers is None:
-        from blueprints.crm_module import load_customers_file
-        customers = load_customers_file()
+    from blueprints.crm_module import load_customers_file
 
+    customers = load_customers_file()
     for customer in customers:
         if str(customer.get("customer_id") or "") == normalized_customer_id:
             resolved_uuid = str(customer.get("uuid") or "")
             logger.debug("SERVICEID MODULE - Resolved customer_id=%s to uuid=%s", normalized_customer_id, resolved_uuid)
             return resolved_uuid
+
     logger.warning("SERVICEID MODULE - Unable to resolve customer_id=%s to customer_uuid", normalized_customer_id)
     return ""
+
 
 def _sync_customer_service_links(service_record: dict, previous_customer_uuid: str | None = None) -> None:
     """Keep the linked customer record aligned with the APPID list."""

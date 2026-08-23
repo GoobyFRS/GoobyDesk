@@ -3,6 +3,15 @@ import os
 import tempfile
 import unittest
 
+import blueprints.api_module as api_module
+import blueprints.changes_module as changes_module
+import blueprints.crm_module as crm_module
+import blueprints.hr_module as hr_module
+import blueprints.itsm_module as itsm_module
+import blueprints.media_request_module as media_request_module
+import blueprints.reports_module as reports_module
+import blueprints.serviceid_module as serviceid_module
+
 from app import app
 
 
@@ -48,6 +57,23 @@ class BlueprintRouteTests(unittest.TestCase):
         with self.client.session_transaction() as session:
             session["technician"] = username
             session["roles"] = roles or ["itsm_technician"]
+
+    def test_blueprint_loggers_are_module_scoped(self):
+        """Every blueprint should declare a module logger for production-safe output."""
+        modules = [
+            api_module,
+            changes_module,
+            crm_module,
+            hr_module,
+            itsm_module,
+            media_request_module,
+            reports_module,
+            serviceid_module,
+        ]
+
+        for module in modules:
+            self.assertTrue(hasattr(module, "logger"))
+            self.assertEqual(module.logger.name, module.__name__)
 
 
 class ApiBlueprintTests(BlueprintRouteTests):

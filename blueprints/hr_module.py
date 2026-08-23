@@ -304,6 +304,7 @@ def _provision_employee_login_access(
     return auth_record, temporary_password
 
 hr_module_bp = Blueprint("hr_module", __name__, url_prefix="/hr")
+logger = logging.getLogger(__name__)
 
 CERT_EXPIRY_WARNING_DAYS = 90  # Certifications expiring within this window are flagged.
 
@@ -336,7 +337,7 @@ def _is_cert_expiring(expires: str | None, within_days: int) -> bool:
     try:
         expiry_date = datetime.strptime(expires, "%Y-%m-%d")
     except ValueError:
-        logging.warning("Unparseable certification expiry date provided; parsing failed.")
+        logger.warning("HR MODULE - Unparseable certification expiry date provided; expires=%s", expires)
         return False
     return datetime.now() <= expiry_date <= datetime.now() + timedelta(days=within_days)
 
@@ -460,7 +461,7 @@ def reset_employee_password(uuid: str):
 
     store.save_all(employees)
     actor = _pseudonymize_actor(resolve_preferred_name(session.get("technician")))
-    logging.warning(
+    logger.warning(
         "HR MODULE - Password reset performed; actor=%s target_employee_id=%s",
         actor, employee.get("employee_id"))
 
@@ -556,7 +557,7 @@ def new_employee():
             new_record["access"]["provisioning_status"] = "complete"
             hr_store.save_all(employees)
         except Exception:
-            logging.exception("HR MODULE - Login provisioning failed; rolling back HR record.")
+            logger.exception("HR MODULE - Login provisioning failed; rolling back HR record.")
             employees = [employee for employee in employees if employee.get("uuid") != new_record["uuid"]]
             hr_store.save_all(employees)
             return render_template("hr/submit_new.html", error="Employee created, but login provisioning failed.", loggedInTech=resolve_preferred_name(session.get("technician"))), 500

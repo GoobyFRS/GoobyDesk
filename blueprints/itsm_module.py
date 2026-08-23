@@ -26,6 +26,7 @@ def _get_ticket_store():
     return TicketStore(cfg["core"]["tickets_file"])
 
 itsm_module_bp = Blueprint('itsm', __name__, url_prefix='/itsm')
+logger = logging.getLogger(__name__)
 
 def _apply_ticket_status_update(record: dict, canonical_status: str, logged_in_tech: str) -> dict:
     """Apply a normalized status update and keep close timestamps consistent."""
@@ -71,7 +72,7 @@ def save_tickets(tickets):
     """Write the given tickets back to the ticket JSON database."""
     store = _get_ticket_store()
     store.save_all(tickets)
-    logging.debug("The Ticket JSON Database file was modified.")
+    logger.debug("ITSM MODULE - The Ticket JSON Database file was modified.")
 
 @itsm_module_bp.route("/", methods=["GET"])
 @role_required(ROLE_ITSM_TECH)
@@ -152,7 +153,7 @@ def update_ticket_status(ticket_number, ticket_status):
     Returns:
         JSON confirmation on success, or 400/404 on invalid input.
     """
-    logging.info("Ticket %s status change requested: %s", ticket_number, ticket_status)
+    logger.info("ITSM MODULE - Ticket %s status change requested: %s", ticket_number, ticket_status)
 
     valid_statuses = ["Open", "In-Progress", "Closed"]
     # Normalize incoming status to a canonical value (case-insensitive match).
@@ -182,7 +183,7 @@ def update_ticket_status(ticket_number, ticket_status):
     )
     ticket_subject = ticket.get("ticket_subject", "No Subject Provided") if ticket else "No Subject Provided"
 
-    logging.info("Ticket %s status updated to %s by %s", ticket_number, ticket_status, _pseudonymize_actor(logged_in_tech))
+    logger.info("ITSM MODULE - Ticket %s status updated to %s by %s", ticket_number, ticket_status, _pseudonymize_actor(logged_in_tech))
 
     try:
         local_webhook_handler.notify_ticket_event(
@@ -190,10 +191,9 @@ def update_ticket_status(ticket_number, ticket_status):
             ticket_status=canonical_status,
             ticket_subject=ticket_subject,
         )
-        logging.info(f"Ticket {ticket_number} status update notifications sent successfully.")
-    except Exception as exc:
-        logging.error("Failed to send ticket status notifications for %s", ticket_number)
-        logging.debug("Ticket notification error for %s: %s", ticket_number, str(exc))
+        logger.info("ITSM MODULE - Ticket %s status update notifications sent successfully.", ticket_number)
+    except Exception:
+        logger.exception("ITSM MODULE - Failed to send ticket status notifications for %s", ticket_number)
 
     return jsonify({"message": f"Ticket {ticket_number} updated to {canonical_status}."})
 
@@ -228,7 +228,7 @@ def add_ticket_note(ticket_number):
     if not changed:
         return jsonify({"message": "Ticket not found."}), 404
 
-    logging.info("Note appended to %s by %s.", ticket_number, _pseudonymize_actor(note_record["author"]))
+    logger.info("ITSM MODULE - Note appended to %s by %s.", ticket_number, _pseudonymize_actor(note_record["author"]))
     return jsonify({"message": "Note added successfully.", "note": note_record}), 200
 
 
@@ -255,5 +255,5 @@ def assign_ticket_to_me(ticket_number):
     if not changed:
         return jsonify({"message": "Ticket not found."}), 404
 
-    logging.info("Ticket %s assigned to %s.", ticket_number, _pseudonymize_actor(logged_in_tech))
+    logger.info("ITSM MODULE - Ticket %s assigned to %s.", ticket_number, _pseudonymize_actor(logged_in_tech))
     return jsonify({"message": f"Ticket {ticket_number} assigned to {logged_in_tech}."})
