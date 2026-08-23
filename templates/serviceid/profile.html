@@ -90,7 +90,13 @@
                 <div class="card-body ticket-details">
                     <p><strong>Service Name:</strong> {{ service.get('service_name') or '—' }}</p>
                     <p><strong>Service SKU:</strong> {{ service.get('service_sku') or '—' }}</p>
-                    <p><strong>Customer ID:</strong> {{ service.get('customer_id') or '—' }}</p>
+                    <p><strong>Customer ID:</strong>
+                        {% if service.get('customer_uuid') %}
+                            <a href="{{ url_for('crm_module.customer_profile', uuid=service.get('customer_uuid')) }}">{{ service.get('customer_id') or '—' }}</a>
+                        {% else %}
+                            {{ service.get('customer_id') or '—' }}
+                        {% endif %}
+                    </p>
                     <p><strong>Customer UUID:</strong> {{ service.get('customer_uuid') or '—' }}</p>
                 </div>
             </div>
