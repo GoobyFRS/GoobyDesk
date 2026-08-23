@@ -160,8 +160,7 @@ def submit_new() -> str:
         return render_template(
             "changes/submit_new.html",error=" ".join(errors),
             loggedInTech=resolve_preferred_name(session.get("technician")),
-            form_values=request.form,
-        ), 400
+            form_values=request.form,), 400
 
     new_change = _build_change_record(request.form)
     store = _get_changes_store()

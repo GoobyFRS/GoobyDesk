@@ -8,9 +8,12 @@ import re
 import uuid
 import hashlib
 import os
+import csv
+import io
+import json
 from datetime import datetime, timedelta
 
-from flask import Blueprint, current_app, flash, redirect, render_template, request, session, url_for
+from flask import Blueprint, Response, current_app, flash, redirect, render_template, request, session, url_for
 
 from local_handlers.auth_decorators import ROLE_ADMIN, ROLE_HR_TECH, role_required
 from local_handlers.local_config_loader import load_core_config
@@ -369,6 +372,14 @@ def _pseudonymize_actor(name: str) -> str:
     short_hash = hashlib.sha256((str(name) + salt).encode()).hexdigest()[:8]
     return f"actor_{short_hash}"
 
+def _serialize_employee_value(value):
+    """Convert nested employee data to CSV-safe values."""
+    if value is None:
+        return ""
+    if isinstance(value, (dict, list)):
+        return json.dumps(value, ensure_ascii=False, sort_keys=True)
+    return value
+
 # Dashboard Route
 @hr_module_bp.route("/", methods=["GET"])
 @role_required(ROLE_HR_TECH)
@@ -573,6 +584,60 @@ def new_employee():
         loggedInTech=resolve_preferred_name(session.get("technician")),
     )
 
-# Export Employee Data Route
-# TODO: implement export_employees() (CSV/JSON), technician_required.
-# Export Employee Data Route
+@hr_module_bp.route("/export/csv", methods=["GET"])
+@role_required(ROLE_HR_TECH)
+def export_employees_csv():
+    """Export all employee records to a timestamped CSV file."""
+    employees = load_hr_employees()
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    filename = f"employees_{timestamp}.csv"
+
+    fieldnames = [
+        "employee_id",
+        "uuid",
+        "first_name",
+        "last_name",
+        "preferred_name",
+        "email",
+        "phone",
+        "timezone",
+        "created",
+        "updated",
+    ]
+
+    for employee in employees:
+        for key, value in employee.items():
+            if isinstance(value, dict):
+                for nested_key in value.keys():
+                    nested_name = f"{key}.{nested_key}"
+                    if nested_name not in fieldnames:
+                        fieldnames.append(nested_name)
+            elif key not in fieldnames:
+                fieldnames.append(key)
+
+    output = io.StringIO()
+    writer = csv.DictWriter(output, fieldnames=fieldnames)
+    writer.writeheader()
+
+    for employee in employees:
+        row = {}
+        for key, value in employee.items():
+            if isinstance(value, dict):
+                for nested_key, nested_value in value.items():
+                    row[f"{key}.{nested_key}"] = _serialize_employee_value(nested_value)
+            else:
+                row[key] = _serialize_employee_value(value)
+        writer.writerow({field: row.get(field, "") for field in fieldnames})
+
+    output.seek(0)
+    logger.info(
+        "HR MODULE - Exported %s employee records to CSV actor=%s",
+        len(employees),
+        _pseudonymize_actor(resolve_preferred_name(session.get("technician"))),
+    )
+
+    return Response(
+        output.getvalue(),
+        mimetype="text/csv",
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )

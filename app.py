@@ -87,6 +87,8 @@ if not LOG_CFG:
         }
         LOG_CFG["root"]["handlers"].append("file")
 
+    LOG_CFG.setdefault("disable_existing_loggers", False)
+
 try:
     logging.config.dictConfig(LOG_CFG)
 except Exception:

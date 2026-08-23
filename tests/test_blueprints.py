@@ -162,7 +162,7 @@ class CrmBlueprintTests(BlueprintRouteTests):
         create_response = self.client.post(
             "/crm/submit-new",
             data={
-                "first_name": "Alice",
+                "first_name": "Steve",
                 "last_name": "Customer",
                 "email": "alice@example.com",
                 "status": "active",
@@ -175,7 +175,7 @@ class CrmBlueprintTests(BlueprintRouteTests):
         with open(customer_file, "r", encoding="utf-8") as handle:
             customers = json.load(handle)
         self.assertEqual(len(customers), 1)
-        self.assertEqual(customers[0]["first_name"], "Alice")
+        self.assertEqual(customers[0]["first_name"], "Steve")
         self.assertEqual(customers[0]["last_name"], "Customer")
 
     def test_crm_export_csv(self):
@@ -186,9 +186,9 @@ class CrmBlueprintTests(BlueprintRouteTests):
             [
                 {
                     "customer_id": "CID-2026-0001",
-                    "first_name": "Alice",
+                    "first_name": "Steve",
                     "last_name": "Customer",
-                    "email": "alice@example.com",
+                    "email": "steve@example.com",
                     "status": "active",
                     "country": "United States",
                     "timezone": "UTC",
@@ -229,9 +229,9 @@ class HrBlueprintTests(BlueprintRouteTests):
         create_response = self.client.post(
             "/hr/employee/submit-new",
             data={
-                "first_name": "Dana",
+                "first_name": "Bob",
                 "last_name": "Employee",
-                "email": "dana@example.com",
+                "email": "bob@example.org",
                 "title": "Systems Engineer",
                 "department": "IT",
                 "role": "itsm_technician",
@@ -243,7 +243,40 @@ class HrBlueprintTests(BlueprintRouteTests):
         with open(hr_file, "r", encoding="utf-8") as handle:
             employees = json.load(handle)
         self.assertEqual(len(employees), 1)
-        self.assertEqual(employees[0]["first_name"], "Dana")
+        self.assertEqual(employees[0]["first_name"], "Bob")
+
+    def test_hr_export_csv(self):
+        """The HR export endpoint should return a CSV download for all employees."""
+        hr_file = os.path.join(self.temp_dir.name, "hr.json")
+        auth_file = os.path.join(self.temp_dir.name, "employees.json")
+        self._write_json(
+            hr_file,
+            [
+                {
+                    "employee_id": "EMP-2026-1234",
+                    "uuid": "employee-123",
+                    "first_name": "Bob",
+                    "last_name": "Employee",
+                    "email": "bob@example.org",
+                    "employment": {"status": "active"},
+                }
+            ],
+        )
+        self._write_json(auth_file, [])
+        self.app.config["LOADED_CONFIG"] = {
+            "core": {
+                "hr_file": hr_file,
+                "employee_auth_file": auth_file,
+            }
+        }
+        self._set_auth_session(username="hradmin", roles=["hr_technician"])
+
+        response = self.client.get("/hr/export/csv")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("text/csv", response.headers.get("Content-Type", ""))
+        self.assertIn("attachment; filename=employees_", response.headers.get("Content-Disposition", ""))
+        self.assertIn("Dana", response.get_data(as_text=True))
 
 
 class ItsmBlueprintTests(BlueprintRouteTests):

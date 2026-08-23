@@ -22,18 +22,15 @@ def _get_reports_store():
     cfg = _get_config()
     return TicketStore(cfg["core"]["tickets_file"])
 
-
 def _get_changes_store():
     """Return a ChangesStore for reports using loaded config."""
     cfg = _get_config()
     return ChangesStore(cfg["core"]["changes_file"])
 
-
 def _load_changes():
     """Load change records for reports."""
     store = _get_changes_store()
     return [record for record in store.load_all() if isinstance(record, dict)]
-
 
 def _summarize_changes(changes: list[dict]) -> tuple[int, int, dict[str,int], dict[str,int]]:
     """Summarize change counts by status and risk."""
@@ -59,7 +56,6 @@ def _summarize_changes(changes: list[dict]) -> tuple[int, int, dict[str,int], di
         risk_counts.setdefault(default_risk, 0)
 
     return total_changes, active_changes, status_counts, risk_counts
-
 
 def _summarize_resolution_times(tickets: list[dict]) -> dict[str, float]:
     """Compute average/min/max resolution hours for closed tickets."""
@@ -88,7 +84,6 @@ def _summarize_resolution_times(tickets: list[dict]) -> dict[str, float]:
         "max_resolution_hours": max(resolution_hours),
     }
 
-
 def _summarize_source_counts(tickets: list[dict]) -> dict[str, int]:
     """Summarize ticket counts grouped by ticket source channel."""
     source_counts: dict[str, int] = {}
@@ -96,7 +91,6 @@ def _summarize_source_counts(tickets: list[dict]) -> dict[str, int]:
         source = str(ticket.get("ticket_source", "") or "unknown").strip() or "unknown"
         source_counts[source] = source_counts.get(source, 0) + 1
     return source_counts
-
 
 VALID_TICKET_QUEUES = {"support", "escalation", "billing"}
 
