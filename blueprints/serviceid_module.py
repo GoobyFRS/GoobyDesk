@@ -233,9 +233,12 @@ def edit_service(uuid):
         "cluster_id": (form.get("cluster_id") or "").strip(),
         "customer_id": selected_customer_id or service.get("customer_id"),
         "customer_uuid": selected_customer_uuid or service.get("customer_uuid"),
+        "homepage_url": (form.get("homepage_url") or "").strip(),
+        "management_url": (form.get("management_url") or "").strip(),
         "minecraft_version": (form.get("minecraft_version") or "").strip(),
         "modpack_name": (form.get("modpack_name") or "").strip(),
         "node_id": (form.get("node_id") or "").strip(),
+        "platform": (form.get("platform") or "").strip(),
         "player_limit": int(form.get("player_limit") or 0),
         "provisioning_status": (form.get("provisioning_status") or "pending").strip(),
         "region": (form.get("region") or "").strip(),
@@ -251,6 +254,7 @@ def edit_service(uuid):
         "service_terminated_timestamp": service_terminated_timestamp,
         "service_type": (form.get("service_type") or "").strip(),
         "service_updated_timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
+        "web_server_engine": (form.get("web_server_engine") or "").strip(),
     })
 
     store = _get_service_appid_store()
@@ -328,9 +332,12 @@ def new_service():
         "cluster_id": (form.get("cluster_id") or "").strip(),
         "customer_id": customer_id,
         "customer_uuid": customer_uuid,
+        "homepage_url": (form.get("homepage_url") or "").strip(),
+        "management_url": (form.get("management_url") or "").strip(),
         "minecraft_version": (form.get("minecraft_version") or "").strip(),
         "modpack_name": (form.get("modpack_name") or "").strip(),
         "node_id": (form.get("node_id") or "").strip(),
+        "platform": (form.get("platform") or "").strip(),
         "player_limit": int(form.get("player_limit") or 0),
         "provisioning_status": (form.get("provisioning_status") or "pending").strip(),
         "region": (form.get("region") or "").strip(),
@@ -348,6 +355,7 @@ def new_service():
         "service_terminated_timestamp": service_terminated_timestamp,
         "service_type": (form.get("service_type") or "").strip(),
         "service_updated_timestamp": form.get("service_updated_timestamp") or now,
+        "web_server_engine": (form.get("web_server_engine") or "").strip(),
     }
 
     services.append(new_record)

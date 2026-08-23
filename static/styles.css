@@ -274,6 +274,10 @@
     color: var(--color-accent-fg);
 }
 
+form > .card + .card {
+    margin-top: 1.5rem;
+}
+
 .grid {
     display: grid;
     gap: 1.5rem;
