@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
-import logging
-import uuid
+import csv
 import hashlib
+import io
+import json
+import logging
 import os
+import uuid
 
 from datetime import datetime
 from functools import wraps
@@ -327,4 +330,69 @@ def edit_customer(uuid):
     logging.info("CRM MODULE - Customer %s edited actor=%s", customer.get('customer_id'), actor)
     return redirect(url_for("crm_module.customer_profile", uuid=customer["uuid"]))
 
-# Export Customer Data Route
+
+def _serialize_customer_value(value):
+    """Convert nested customer data to CSV-safe values."""
+    if value is None:
+        return ""
+    if isinstance(value, (dict, list)):
+        return json.dumps(value, ensure_ascii=False, sort_keys=True)
+    return value
+
+
+@crm_module_bp.route("/export/csv", methods=["GET"])
+@role_required(ROLE_ITSM_TECH)
+def export_customers_csv():
+    """Export all customer records to a timestamped CSV file."""
+    customers = load_customers_file()
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    filename = f"customers_{timestamp}.csv"
+
+    fieldnames = [
+        "customer_id",
+        "uuid",
+        "first_name",
+        "last_name",
+        "preferred_name",
+        "company",
+        "job_title",
+        "email",
+        "phone",
+        "status",
+        "country",
+        "timezone",
+        "created",
+        "updated",
+    ]
+
+    for customer in customers:
+        for key, value in customer.items():
+            if isinstance(value, dict):
+                for nested_key in value.keys():
+                    nested_name = f"{key}.{nested_key}"
+                    if nested_name not in fieldnames:
+                        fieldnames.append(nested_name)
+            elif key not in fieldnames:
+                fieldnames.append(key)
+
+    output = io.StringIO()
+    writer = csv.DictWriter(output, fieldnames=fieldnames)
+    writer.writeheader()
+
+    for customer in customers:
+        row = {}
+        for key, value in customer.items():
+            if isinstance(value, dict):
+                for nested_key, nested_value in value.items():
+                    row[f"{key}.{nested_key}"] = _serialize_customer_value(nested_value)
+            else:
+                row[key] = _serialize_customer_value(value)
+        writer.writerow({field: row.get(field, "") for field in fieldnames})
+
+    output.seek(0)
+    logging.info("CRM MODULE - Exported %s customer records to CSV", len(customers))
+    return Response(
+        output.getvalue(),
+        mimetype="text/csv",
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )

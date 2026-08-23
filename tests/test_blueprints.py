@@ -152,6 +152,33 @@ class CrmBlueprintTests(BlueprintRouteTests):
         self.assertEqual(customers[0]["first_name"], "Alice")
         self.assertEqual(customers[0]["last_name"], "Customer")
 
+    def test_crm_export_csv(self):
+        """The CRM export endpoint should return a CSV download for all customers."""
+        customer_file = os.path.join(self.temp_dir.name, "customers.json")
+        self._write_json(
+            customer_file,
+            [
+                {
+                    "customer_id": "CID-2026-0001",
+                    "first_name": "Alice",
+                    "last_name": "Customer",
+                    "email": "alice@example.com",
+                    "status": "active",
+                    "country": "United States",
+                    "timezone": "UTC",
+                }
+            ],
+        )
+        self.app.config["LOADED_CONFIG"] = {"core": {"customers_file": customer_file}}
+        self._set_auth_session()
+
+        response = self.client.get("/crm/export/csv")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("text/csv", response.headers.get("Content-Type", ""))
+        self.assertIn("attachment; filename=customers_", response.headers.get("Content-Disposition", ""))
+        self.assertIn("Alice", response.get_data(as_text=True))
+
 
 class HrBlueprintTests(BlueprintRouteTests):
     """Validate HR employee dashboard and new-employee provisioning."""
