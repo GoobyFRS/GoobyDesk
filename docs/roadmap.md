@@ -11,5 +11,12 @@
 - Implement Password Reset function
 - Implement Billable Hours text box.
 - Pick `closure_date` or `ticket_resolved_timestamp`
-- Develop a test suite.
-- crm export route
+- Create APPID Module
+- Move some APPID fields from ServiceID
+- Update ServiceID input data
+- Add method of changing a tickets queue
+- Add a method of escalation
+- Implement login MFA
+- Link Customer ID to Tickets
+- Link Service ID to CHG
+- Link APPID to CHG
