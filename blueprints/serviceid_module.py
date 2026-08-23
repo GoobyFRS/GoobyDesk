@@ -36,10 +36,11 @@ def _get_config():
     return cfg
 
 def _get_service_appid_store():
-    """Return a ServiceAppIdStore instance from loaded config."""
+    """Return the configured service store instance with legacy compatibility."""
     cfg = _get_config()
-    service_file = cfg["core"]["serviceid_appid_file"]
-    logger.debug("SERVICEID MODULE - Opening service APPID store file=%s", service_file)
+    core_cfg = cfg.get("core", {})
+    service_file = core_cfg.get("serviceid_file") or core_cfg.get("serviceid_appid_file")
+    logger.debug("SERVICEID MODULE - Opening service store file=%s", service_file)
     return ServiceAppIdStore(service_file)
 
 
@@ -63,7 +64,7 @@ def _resolve_customer_uuid_from_id(normalized_customer_id: str) -> str:
 
 
 def _sync_customer_service_links(service_record: dict, previous_customer_uuid: str | None = None) -> None:
-    """Keep the linked customer record aligned with the APPID list."""
+    """Keep the linked customer record aligned with the service list."""
     from blueprints.crm_module import load_customers_file, save_customers_file
 
     service_id = str(service_record.get("service_id") or "").strip()
@@ -94,20 +95,24 @@ serviceid_module_bp = Blueprint("serviceid_module", __name__, url_prefix="/servi
 
 # use @role_required(ROLE_ITSM_TECH)
 def load_service_appids():
-    """Load and return configured service APPIDs."""
+    """Load and return configured service records."""
     store = _get_service_appid_store()
     services = store.load_all()
-    logger.debug("SERVICEID MODULE - Loaded %s service APPID records", len(services))
+    logger.debug("SERVICEID MODULE - Loaded %s service records", len(services))
     return services
 
 def generate_service_id(services):
-    """Return the next service identifier in the APP-YYYY-#### format."""
+    """Return the next service identifier in the SRV-YYYY-#### format."""
     current_year = datetime.now().strftime("%Y")
     highest_number = 0
 
     for service in services:
         service_id = str(service.get("service_id") or "")
-        if not service_id.startswith("APP-"):
+        if not service_id:
+            continue
+
+        prefix = "SRV-" if service_id.startswith("SRV-") else "APP-" if service_id.startswith("APP-") else ""
+        if not prefix:
             continue
 
         parts = service_id.split("-")
@@ -121,7 +126,7 @@ def generate_service_id(services):
 
         highest_number = max(highest_number, candidate)
 
-    next_service_id = f"APP-{current_year}-{highest_number + 1:04d}"
+    next_service_id = f"SRV-{current_year}-{highest_number + 1:04d}"
     logger.debug("SERVICEID MODULE - Generated service identifier=%s", next_service_id)
     return next_service_id
 
@@ -139,7 +144,7 @@ def _is_terminated_service(service: dict) -> bool:
 @serviceid_module_bp.route("/", methods=["GET"])
 @role_required(ROLE_ITSM_TECH)
 def serviceid_dashboard():
-    """Render service APPID dashboard view."""
+    """Render the service dashboard view."""
     actor = resolve_preferred_name(session.get("technician"))
     show_all = request.args.get("show_all") == "1"
     services = load_service_appids()

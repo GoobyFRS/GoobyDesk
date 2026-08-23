@@ -368,7 +368,7 @@ class ReportsBlueprintTests(BlueprintRouteTests):
 
 
 class ServiceIdBlueprintTests(BlueprintRouteTests):
-    """Validate the service APPID dashboard and creation flow."""
+    """Validate the service dashboard and creation flow."""
 
     def test_service_dashboard_and_creation(self):
         """The service dashboard loads and a valid service record is saved."""
@@ -395,6 +395,7 @@ class ServiceIdBlueprintTests(BlueprintRouteTests):
 
         dashboard_response = self.client.get("/serviceid/")
         self.assertEqual(dashboard_response.status_code, 200)
+        self.assertNotIn("APPID", dashboard_response.get_data(as_text=True).upper())
 
         create_response = self.client.post(
             "/serviceid/submit-new",
