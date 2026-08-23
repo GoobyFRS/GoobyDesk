@@ -1,11 +1,35 @@
 #!/usr/bin/env python3
 import logging
-from flask import Blueprint, render_template
+from flask import Blueprint, current_app, render_template, request, session
 from local_handlers.auth_decorators import ROLE_ITSM_TECH, role_required
+from local_handlers.utils import resolve_preferred_name
+from storage.service_appid_store import ServiceAppIdStore
 
 appid_module_bp = Blueprint('appid_module', __name__, url_prefix='/appid')
 
 logger = logging.getLogger(__name__)
+
+
+def _get_appid_store() -> ServiceAppIdStore:
+	"""Return the configured shared ServiceID/AppID store."""
+	config = current_app.config["LOADED_CONFIG"]
+	core_config = config["core"]
+	store_path = core_config.get("serviceid_appid_file") or core_config["serviceid_file"]
+	return ServiceAppIdStore(store_path)
+
+
+def _is_appid_record(record: dict) -> bool:
+	"""Return whether a shared store record represents an application."""
+	app_id = str(record.get("app_id") or record.get("application_id") or "")
+	record_type = str(record.get("record_type") or record.get("type") or "").lower()
+	return app_id.startswith("APP-") or record_type in {"appid", "application"}
+
+
+def _is_retired_appid(record: dict) -> bool:
+	"""Return whether an application record should be hidden by default."""
+	status = str(record.get("app_status") or record.get("status") or "").lower()
+	return status in {"retired", "terminated", "decommissioned"}
+
 
 def _render_not_implemented():
 	"""Render the placeholder until the AppID record workflows exist."""
@@ -15,9 +39,27 @@ def _render_not_implemented():
 @appid_module_bp.route("/", methods=["GET"])
 @role_required(ROLE_ITSM_TECH)
 def appid_dashboard():
-	"""Render the AppID dashboard placeholder."""
-	# TODO: Implement the AppID dashboard.
-	return _render_not_implemented()
+	"""Render the AppID dashboard."""
+	show_all = request.args.get("show_all") == "1"
+	appids = [
+		record for record in _get_appid_store().load_all()
+		if _is_appid_record(record)
+	]
+	displayed_appids = appids if show_all else [
+		record for record in appids if not _is_retired_appid(record)
+	]
+	logger.info(
+		"APPID MODULE - Dashboard loaded total_appids=%s visible_appids=%s show_all=%s",
+		len(appids),
+		len(displayed_appids),
+		show_all,
+	)
+	return render_template(
+		"appid/appid_dashboard.html",
+		appids=displayed_appids,
+		loggedInTech=resolve_preferred_name(session.get("technician")),
+		show_all=show_all,
+	)
 
 
 @appid_module_bp.route("/submit-new", methods=["GET", "POST"])
