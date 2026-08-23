@@ -23,6 +23,12 @@
     --danger: #da3633;
     --danger-hover: #f85149;
 
+    --warning: #d29922;
+    --warning-hover: #e3b341;
+
+    --secondary: #30363d;
+    --secondary-hover: #484f58;
+
     --link: #58a6ff;
     --link-hover: #79c0ff;
 
@@ -209,6 +215,14 @@
     margin-top: 0;
 }
 
+.header-row--flush {
+    margin-bottom: 0;
+}
+
+.inline-form--flush {
+    margin: 0;
+}
+
 .login-btn,
 .index-btn {
     width: auto;
@@ -241,6 +255,7 @@
     background: var(--color-canvas-subtle);
     border: 1px solid var(--color-border-default);
     border-radius: 10px;
+    text-align: left;
 }
 
 .stat-card {
@@ -302,11 +317,6 @@
 
 /* .container below has text-align:center for the centered marketing-page
    look elsewhere on the site. These dashboard pieces read better left-aligned. */
-.stat-card,
-.card {
-    text-align: left;
-}
-
 .section-title {
     margin-top: 2.5rem;
     margin-bottom: 1rem;
@@ -480,7 +490,10 @@ button:focus-visible,
 .submit-btn:focus-visible,
 .addNote-btn:focus-visible,
 .status-btn:focus-visible,
-.close-tkt-btn:focus-visible {
+.close-tkt-btn:focus-visible,
+.assign-btn:focus-visible,
+.warning-btn:focus-visible,
+.secondary-btn:focus-visible {
     outline: 3px solid var(--link);
     outline-offset: 2px;
 }
@@ -513,6 +526,48 @@ textarea {
     width: auto;
 }
 
+.queue-ticket-list {
+    margin-top: 16px;
+}
+
+.queue-ticket-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+}
+
+.queue-ticket-select {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+}
+
+.queue-ticket-select input {
+    width: auto;
+    margin: 0;
+    accent-color: var(--warning);
+}
+
+.queue-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.queue-actions .assign-btn,
+.queue-actions .submit-btn {
+    width: auto;
+    margin-top: 0;
+}
+
+.logout-form {
+    margin: 0;
+}
+
 /* ==========================================================
    Buttons
    ========================================================== */
@@ -520,7 +575,8 @@ textarea {
 .submit-btn,
 .addNote-btn,
 .status-btn,
-.close-tkt-btn {
+.close-tkt-btn,
+.assign-btn {
     width: 100%;
 
     margin-top: 15px;
@@ -565,16 +621,62 @@ textarea {
     background: var(--success-hover);
 }
 
-    .close-tkt-btn {
-        background: var(--danger);
-        border-color: var(--danger);
-    }
+.close-tkt-btn {
+    background: var(--danger);
+    border-color: var(--danger);
+}
 
-    .close-tkt-btn:hover {
-        background: var(--danger-hover);
-    }
+.close-tkt-btn:hover {
+    background: var(--danger-hover);
+}
 
-    }
+.assign-btn {
+    background: var(--warning);
+    border-color: var(--warning);
+}
+
+.assign-btn:hover {
+    background: var(--warning-hover);
+    border-color: var(--warning-hover);
+}
+
+.warning-btn,
+.secondary-btn {
+    width: 100%;
+
+    margin-top: 15px;
+    padding: 10px;
+
+    color: white;
+
+    border: 1px solid transparent;
+    border-radius: 6px;
+
+    font-size: 16px;
+    font-weight: 500;
+
+    cursor: pointer;
+
+    transition: .2s;
+}
+
+.warning-btn {
+    background: var(--warning);
+    border-color: var(--warning);
+}
+
+.warning-btn:hover {
+    background: var(--warning-hover);
+}
+
+.secondary-btn {
+    background: var(--secondary);
+    border-color: var(--secondary);
+}
+
+.secondary-btn:hover {
+    background: var(--secondary-hover);
+}
 
 /* ==========================================================
    Alerts and Flash Messages
@@ -638,22 +740,6 @@ a:hover {
    Dashboard
    ========================================================== */
 
-.ticket-list {
-    list-style: none;
-    padding: 0;
-    text-align: left;
-}
-
-.ticket-list li {
-    background: var(--panel-alt);
-
-    margin: 8px 0;
-    padding: 12px;
-
-    border: 1px solid var(--border);
-    border-radius: 6px;
-}
-
 .ticket-details {
     margin-top: 15px;
 
@@ -666,6 +752,20 @@ a:hover {
 }
 
 /* Three-column record view for profiles */
+.three-col-record {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 0.75rem 1.25rem;
+    padding: 0.5rem 0;
+    align-items: start;
+}
+
+.three-col-record > p {
+    margin: 0;
+    padding: 0.35rem 0;
+    line-height: 1.6;
+}
+
 .three-col-record > .ticket-details {
     column-count: 3;
     column-gap: 1.5rem;

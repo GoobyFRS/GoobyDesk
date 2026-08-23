@@ -22,18 +22,15 @@ def _get_reports_store():
     cfg = _get_config()
     return TicketStore(cfg["core"]["tickets_file"])
 
-
 def _get_changes_store():
     """Return a ChangesStore for reports using loaded config."""
     cfg = _get_config()
     return ChangesStore(cfg["core"]["changes_file"])
 
-
 def _load_changes():
     """Load change records for reports."""
     store = _get_changes_store()
     return [record for record in store.load_all() if isinstance(record, dict)]
-
 
 def _summarize_changes(changes: list[dict]) -> tuple[int, int, dict[str,int], dict[str,int]]:
     """Summarize change counts by status and risk."""
@@ -60,7 +57,6 @@ def _summarize_changes(changes: list[dict]) -> tuple[int, int, dict[str,int], di
 
     return total_changes, active_changes, status_counts, risk_counts
 
-
 def _summarize_resolution_times(tickets: list[dict]) -> dict[str, float]:
     """Compute average/min/max resolution hours for closed tickets."""
     resolution_hours = []
@@ -71,7 +67,10 @@ def _summarize_resolution_times(tickets: list[dict]) -> dict[str, float]:
             submitted_at = datetime.strptime(ticket["submission_date"], "%Y-%m-%d %H:%M:%S")
             closed_at = datetime.strptime(ticket["closure_date"], "%Y-%m-%d %H:%M:%S")
         except (KeyError, ValueError):
-            logging.warning("REPORTING - Missing or invalid submission/closure date on ticket")
+            logger.warning(
+                "REPORTING - Missing or invalid submission/closure date on ticket ticket=%s",
+                ticket.get("ticket_number", "unknown"),
+            )
             continue
         resolution_hours.append((closed_at - submitted_at).total_seconds() / 3600)
 
@@ -85,7 +84,6 @@ def _summarize_resolution_times(tickets: list[dict]) -> dict[str, float]:
         "max_resolution_hours": max(resolution_hours),
     }
 
-
 def _summarize_source_counts(tickets: list[dict]) -> dict[str, int]:
     """Summarize ticket counts grouped by ticket source channel."""
     source_counts: dict[str, int] = {}
@@ -93,7 +91,6 @@ def _summarize_source_counts(tickets: list[dict]) -> dict[str, int]:
         source = str(ticket.get("ticket_source", "") or "unknown").strip() or "unknown"
         source_counts[source] = source_counts.get(source, 0) + 1
     return source_counts
-
 
 VALID_TICKET_QUEUES = {"support", "escalation", "billing"}
 
@@ -103,13 +100,14 @@ def _summarize_queue_counts(tickets: list[dict]) -> dict[str, int]:
     for ticket in tickets:
         if (ticket.get("ticket_status", "") or "").lower() == "closed":
             continue
-        queue = str(ticket.get("request_type", "") or "").strip()
+        queue = str(ticket.get("ticket_queue", "") or "").strip()
         if queue.lower() not in VALID_TICKET_QUEUES:
             continue
         queue_counts[queue] = queue_counts.get(queue, 0) + 1
     return queue_counts
 
 reports_module_bp = Blueprint('reports_module', __name__, url_prefix='/reports')
+logger = logging.getLogger(__name__)
 
 @reports_module_bp.route("/dashboard", methods=["GET"])
 @role_required("*")
@@ -155,7 +153,10 @@ def reports_home():
                 time_buckets["last_7_days"] += 1
         
         except (KeyError, ValueError):
-            logging.warning("REPORTING - Invalid submission_date on ticket")
+            logger.warning(
+                "REPORTING - Invalid submission_date on ticket ticket=%s",
+                ticket.get("ticket_number", "unknown"),
+            )
 
     changes = _load_changes()
     total_changes, active_changes, change_status_counts, change_risk_counts = _summarize_changes(changes)

@@ -49,6 +49,76 @@ async function updateTicketStatus(ticketId, newStatus) {
 }
 
 /**
+ * Assigns a ticket to the currently logged-in technician
+ * @param {string} ticketNumber - The ticket number to assign
+ * @returns {Promise<void>}
+ */
+async function assignTicketToMe(ticketNumber) {
+    try {
+        let response = await fetch(`/itsm/ticket/${ticketNumber}/assign_to_me`, {
+            method: "POST",
+            headers: { "Accept": "application/json" }
+        });
+
+        let data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.message || "Unknown error");
+        }
+
+        alert(data.message);
+        location.reload();
+    } catch (error) {
+        console.error("Error:", error);
+        alert("An error occurred while assigning the ticket. Please try again.");
+    }
+}
+
+/**
+ * Assigns all selected queue tickets to the currently logged-in technician.
+ * @returns {Promise<void>}
+ */
+async function assignSelectedTicketsToMe() {
+    const selectedTickets = Array.from(document.querySelectorAll('input[name="ticket_numbers"]:checked'))
+        .map((checkbox) => checkbox.value)
+        .filter(Boolean);
+
+    if (!selectedTickets.length) {
+        alert("Select at least one ticket to assign.");
+        return;
+    }
+
+    let assignedCount = 0;
+
+    for (const ticketNumber of selectedTickets) {
+        try {
+            let response = await fetch(`/itsm/ticket/${ticketNumber}/assign_to_me`, {
+                method: "POST",
+                headers: { "Accept": "application/json" }
+            });
+
+            let data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.message || "Unknown error");
+            }
+
+            assignedCount += 1;
+        } catch (error) {
+            console.error("Error:", error);
+        }
+    }
+
+    if (assignedCount > 0) {
+        alert(`${assignedCount} ticket(s) assigned to you.`);
+        location.reload();
+        return;
+    }
+
+    alert("An error occurred while assigning the selected tickets. Please try again.");
+}
+
+/**
  * Closes a ticket by reading the ticket ID from the dashboard input field
  * This function is typically called from the dashboard view
  * @returns {void}

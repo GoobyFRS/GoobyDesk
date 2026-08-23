@@ -13,6 +13,7 @@ from storage.changes_store import ChangesStore
 
 # Blueprint
 changes_module_bp = Blueprint("changes_module", __name__, url_prefix="/changes")
+logger = logging.getLogger(__name__)
 
 def _get_config():
     """Return loaded app config or fallback loader."""
@@ -31,6 +32,10 @@ def load_changes():
     """Return change records sorted by newest first."""
     store = _get_changes_store()
     return sorted(store.load_all(), key=_change_sort_key, reverse=True)
+
+def get_change_by_number(change_number: str) -> dict | None:
+    """Return the matching change record or None if it does not exist."""
+    return _get_changes_store().get_by_change_number(change_number)
 
 def _change_sort_key(change: dict) -> datetime:
     timestamp = change.get("change_created_timestamp")
@@ -105,6 +110,19 @@ def changes_home():
     changes = load_changes()
     return render_template("changes/changes_dashboard.html", changes=changes, loggedInTech=resolve_preferred_name(session.get("technician")))
 
+@changes_module_bp.route("/<change_number>", methods=["GET"])
+@role_required(ROLE_ITSM_TECH)
+def change_detail(change_number: str):
+    """Render the change record detail page."""
+    change = get_change_by_number(change_number)
+    if change is None:
+        return render_template("errors/404.html"), 404
+    return render_template(
+        "changes/change_detail.html",
+        change=change,
+        loggedInTech=resolve_preferred_name(session.get("technician")),
+    )
+
 # Submit New Change Route
 @changes_module_bp.route("/submit-new", methods=["GET", "POST"])
 @role_required(ROLE_ITSM_TECH)
@@ -142,14 +160,13 @@ def submit_new() -> str:
         return render_template(
             "changes/submit_new.html",error=" ".join(errors),
             loggedInTech=resolve_preferred_name(session.get("technician")),
-            form_values=request.form,
-        ), 400
+            form_values=request.form,), 400
 
     new_change = _build_change_record(request.form)
     store = _get_changes_store()
     store.append(new_change)
     actor = _pseudonymize_actor(resolve_preferred_name(session.get("technician")))
-    logging.info(
+    logger.info(
         "CHANGES MODULE - Created change %s actor=%s",
         new_change["change_number"],
         actor,
@@ -190,7 +207,7 @@ def export_changes_csv():
 
     output.seek(0)
 
-    logging.info(
+    logger.info(
         "CHANGES MODULE - Exported %s change tickets to CSV",
         len(open_changes),
     )

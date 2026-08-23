@@ -50,8 +50,16 @@
                     <tbody>
                         {% for change in changes %}
                         <tr>
-                            <td>{{ change.get('change_number', '—') }}</td>
-                            <td>{{ change.get('change_short_description', '—') }}</td>
+                            <td>
+                                <a href="{{ url_for('changes_module.change_detail', change_number=change.get('change_number')) }}">
+                                    {{ change.get('change_number', '—') }}
+                                </a>
+                            </td>
+                            <td>
+                                <a href="{{ url_for('changes_module.change_detail', change_number=change.get('change_number')) }}">
+                                    {{ change.get('change_short_description', '—') }}
+                                </a>
+                            </td>
                             <td>
                                 <span class="badge badge-secondary">{{ change.get('change_status', 'pending') }}</span>
                             </td>

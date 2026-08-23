@@ -26,6 +26,24 @@ def _get_ticket_store():
     return TicketStore(cfg["core"]["tickets_file"])
 
 itsm_module_bp = Blueprint('itsm', __name__, url_prefix='/itsm')
+logger = logging.getLogger(__name__)
+
+def _apply_ticket_status_update(record: dict, canonical_status: str, logged_in_tech: str) -> dict:
+    """Apply a normalized status update and keep close timestamps consistent."""
+    record.setdefault("ticket_subject", "No Subject Provided")
+    record["ticket_status"] = canonical_status
+
+    if canonical_status == "Closed":
+        resolved_timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        record["closed_by"] = logged_in_tech
+        record["closure_date"] = resolved_timestamp
+        record["ticket_resolved_timestamp"] = resolved_timestamp
+        return record
+
+    record.pop("closed_by", None)
+    record["closure_date"] = None
+    record["ticket_resolved_timestamp"] = None
+    return record
 
 def _pseudonymize_actor(name: str) -> str:
     if not name:
@@ -33,6 +51,17 @@ def _pseudonymize_actor(name: str) -> str:
     salt = os.getenv("LOG_SALT", "")
     short_hash = hashlib.sha256((str(name) + salt).encode()).hexdigest()[:8]
     return f"actor_{short_hash}"
+
+VALID_QUEUES = ("support", "escalation", "billing")
+
+def _filter_by_queue(tickets: list[dict], queue_name: str) -> list[dict]:
+    """Return open tickets belonging to the given queue."""
+    return [
+        ticket_record
+        for ticket_record in tickets
+        if (ticket_record.get("ticket_queue", "support") or "support").lower() == queue_name
+        and (ticket_record.get("ticket_status", "") or "").lower() != "closed"
+    ]
 
 def load_tickets():
     """Read/load the ticket JSON database into memory."""
@@ -43,22 +72,72 @@ def save_tickets(tickets):
     """Write the given tickets back to the ticket JSON database."""
     store = _get_ticket_store()
     store.save_all(tickets)
-    logging.debug("The Ticket JSON Database file was modified.")
+    logger.debug("ITSM MODULE - The Ticket JSON Database file was modified.")
 
 @itsm_module_bp.route("/", methods=["GET"])
 @role_required(ROLE_ITSM_TECH)
 def dashboard():
-    """Render ITSM dashboard with open tickets."""
+    """Render ITSM dashboard with tickets assigned to the current technician."""
+    logged_in_tech = resolve_preferred_name(session.get("technician"))
     tickets = load_tickets()
-    open_tickets = [t for t in tickets if (t.get("ticket_status", "") or "").lower() != "closed"]
-    return render_template("itsm/dashboard.html", tickets=open_tickets, loggedInTech=resolve_preferred_name(session.get("technician")))
+    my_tickets = [
+        ticket_record
+        for ticket_record in tickets
+        if (ticket_record.get("ticket_status", "") or "").lower() != "closed"
+        and ticket_record.get("assigned_to") == session.get("technician")
+    ]
+    return render_template(
+        "itsm/dashboard.html",
+        tickets=my_tickets,
+        loggedInTech=logged_in_tech,
+    )
+
+@itsm_module_bp.route("/queue", methods=["GET"])
+@itsm_module_bp.route("/queue/support", methods=["GET"])
+@role_required(ROLE_ITSM_TECH)
+def queue_support():
+    """Render the Support queue."""
+    tickets = load_tickets()
+    return render_template(
+        "itsm/queue.html",
+        tickets=_filter_by_queue(tickets, "support"),
+        queue_name="Support",
+        loggedInTech=resolve_preferred_name(session.get("technician")),
+    )
+
+@itsm_module_bp.route("/queue/escalation", methods=["GET"])
+@role_required(ROLE_ITSM_TECH)
+def queue_escalation():
+    """Render the Escalation queue."""
+    tickets = load_tickets()
+    return render_template(
+        "itsm/queue.html",
+        tickets=_filter_by_queue(tickets, "escalation"),
+        queue_name="Escalation",
+        loggedInTech=resolve_preferred_name(session.get("technician")),
+    )
+
+@itsm_module_bp.route("/queue/billing", methods=["GET"])
+@role_required(ROLE_ITSM_TECH)
+def queue_billing():
+    """Render the Billing queue."""
+    tickets = load_tickets()
+    return render_template(
+        "itsm/queue.html",
+        tickets=_filter_by_queue(tickets, "billing"),
+        queue_name="Billing",
+        loggedInTech=resolve_preferred_name(session.get("technician")),
+    )
 
 @itsm_module_bp.route("/ticket/<ticket_number>")
 @role_required(ROLE_ITSM_TECH)
 def ticket_detail(ticket_number):
     """Show ticket console for a given ticket number."""
     tickets = load_tickets()
-    ticket = next((t for t in tickets if t["ticket_number"] == ticket_number), None)
+    ticket = next(
+        (ticket_record for ticket_record in tickets if ticket_record["ticket_number"] == ticket_number),
+        None,
+    )
     if ticket:
         return render_template("itsm/console.html", ticket=ticket, loggedInTech=resolve_preferred_name(session.get("technician")))
     return render_template("errors/404.html"), 404
@@ -74,7 +153,7 @@ def update_ticket_status(ticket_number, ticket_status):
     Returns:
         JSON confirmation on success, or 400/404 on invalid input.
     """
-    logging.info("Ticket %s status change requested: %s", ticket_number, ticket_status)
+    logger.info("ITSM MODULE - Ticket %s status change requested: %s", ticket_number, ticket_status)
 
     valid_statuses = ["Open", "In-Progress", "Closed"]
     # Normalize incoming status to a canonical value (case-insensitive match).
@@ -90,12 +169,7 @@ def update_ticket_status(ticket_number, ticket_status):
     store = _get_ticket_store()
 
     def _updater(record: dict):
-        record.setdefault("ticket_subject", "No Subject Provided")
-        record["ticket_status"] = canonical_status
-        if canonical_status == "Closed":
-            record["closed_by"] = logged_in_tech
-            record["closure_date"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        return record
+        return _apply_ticket_status_update(record, canonical_status, logged_in_tech)
 
     changed = store.update(lambda record: record.get("ticket_number") == ticket_number, _updater)
     if not changed:
@@ -103,10 +177,13 @@ def update_ticket_status(ticket_number, ticket_status):
 
     # Load updated ticket to get subject for notifications
     tickets = load_tickets()
-    ticket = next((t for t in tickets if t.get("ticket_number") == ticket_number), None)
+    ticket = next(
+        (ticket_record for ticket_record in tickets if ticket_record.get("ticket_number") == ticket_number),
+        None,
+    )
     ticket_subject = ticket.get("ticket_subject", "No Subject Provided") if ticket else "No Subject Provided"
 
-    logging.info("Ticket %s status updated to %s by %s", ticket_number, ticket_status, _pseudonymize_actor(logged_in_tech))
+    logger.info("ITSM MODULE - Ticket %s status updated to %s by %s", ticket_number, ticket_status, _pseudonymize_actor(logged_in_tech))
 
     try:
         local_webhook_handler.notify_ticket_event(
@@ -114,10 +191,9 @@ def update_ticket_status(ticket_number, ticket_status):
             ticket_status=canonical_status,
             ticket_subject=ticket_subject,
         )
-        logging.info(f"Ticket {ticket_number} status update notifications sent successfully.")
-    except Exception as exc:
-        logging.error("Failed to send ticket status notifications for %s", ticket_number)
-        logging.debug("Ticket notification error for %s: %s", ticket_number, str(exc))
+        logger.info("ITSM MODULE - Ticket %s status update notifications sent successfully.", ticket_number)
+    except Exception:
+        logger.exception("ITSM MODULE - Failed to send ticket status notifications for %s", ticket_number)
 
     return jsonify({"message": f"Ticket {ticket_number} updated to {canonical_status}."})
 
@@ -152,13 +228,32 @@ def add_ticket_note(ticket_number):
     if not changed:
         return jsonify({"message": "Ticket not found."}), 404
 
-    logging.info("Note appended to %s by %s.", ticket_number, _pseudonymize_actor(note_record["author"]))
+    logger.info("ITSM MODULE - Note appended to %s by %s.", ticket_number, _pseudonymize_actor(note_record["author"]))
     return jsonify({"message": "Note added successfully.", "note": note_record}), 200
 
-"""
-@itsm_module_bp.route("/queue/support", methods=["POST"])
 
-@itsm_module_bp.route("/queue/escalation", methods=["POST"])
+@itsm_module_bp.route("/ticket/<ticket_number>/assign_to_me", methods=["POST"])
+@role_required(ROLE_ITSM_TECH)
+def assign_ticket_to_me(ticket_number):
+    """Assign a ticket to the logged-in technician and timestamp acknowledgement.
+    Args:
+        ticket_number (str): The ticket number to assign.
+    Returns:
+        JSON confirmation on success, or 404 if the ticket does not exist.
+    """
+    technician_username = session.get("technician")
+    logged_in_tech = resolve_preferred_name(technician_username)
+    store = _get_ticket_store()
 
-@itsm_module_bp.route("/queue/billing", methods=["POST"])
-"""
+    def _updater(record: dict):
+        record["assigned_to"] = technician_username
+        if not record.get("ticket_acknowledged_timestamp"):
+            record["ticket_acknowledged_timestamp"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        return record
+
+    changed = store.update(lambda record: record.get("ticket_number") == ticket_number, _updater)
+    if not changed:
+        return jsonify({"message": "Ticket not found."}), 404
+
+    logger.info("ITSM MODULE - Ticket %s assigned to %s.", ticket_number, _pseudonymize_actor(logged_in_tech))
+    return jsonify({"message": f"Ticket {ticket_number} assigned to {logged_in_tech}."})

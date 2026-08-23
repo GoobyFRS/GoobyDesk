@@ -8,9 +8,12 @@ import re
 import uuid
 import hashlib
 import os
+import csv
+import io
+import json
 from datetime import datetime, timedelta
 
-from flask import Blueprint, current_app, flash, redirect, render_template, request, session, url_for
+from flask import Blueprint, Response, current_app, flash, redirect, render_template, request, session, url_for
 
 from local_handlers.auth_decorators import ROLE_ADMIN, ROLE_HR_TECH, role_required
 from local_handlers.local_config_loader import load_core_config
@@ -217,8 +220,7 @@ def _append_initial_compensation_history(employee_record: dict, form: dict, crea
     initial_bonus = form.get("initial_bonus")
     if initial_bonus:
         employee_record["employment"]["bonus_history"].append(
-            {"date": created_date, "note": initial_bonus}
-        )
+            {"date": created_date, "note": initial_bonus})
 
     initial_raise = form.get("initial_raise")
     if initial_raise:
@@ -305,6 +307,7 @@ def _provision_employee_login_access(
     return auth_record, temporary_password
 
 hr_module_bp = Blueprint("hr_module", __name__, url_prefix="/hr")
+logger = logging.getLogger(__name__)
 
 CERT_EXPIRY_WARNING_DAYS = 90  # Certifications expiring within this window are flagged.
 
@@ -337,7 +340,7 @@ def _is_cert_expiring(expires: str | None, within_days: int) -> bool:
     try:
         expiry_date = datetime.strptime(expires, "%Y-%m-%d")
     except ValueError:
-        logging.warning("Unparseable certification expiry date provided; parsing failed.")
+        logger.warning("HR MODULE - Unparseable certification expiry date provided; expires=%s", expires)
         return False
     return datetime.now() <= expiry_date <= datetime.now() + timedelta(days=within_days)
 
@@ -368,6 +371,15 @@ def _pseudonymize_actor(name: str) -> str:
     salt = os.getenv("LOG_SALT", "")
     short_hash = hashlib.sha256((str(name) + salt).encode()).hexdigest()[:8]
     return f"actor_{short_hash}"
+
+def _serialize_employee_value(value):
+    """Convert nested employee data to CSV-safe values."""
+    if value is None:
+        return ""
+    if isinstance(value, (dict, list)):
+        return json.dumps(value, ensure_ascii=False, sort_keys=True)
+    return value
+
 # Dashboard Route
 @hr_module_bp.route("/", methods=["GET"])
 @role_required(ROLE_HR_TECH)
@@ -389,8 +401,7 @@ def hr_dashboard():
         employees=displayed_employees,
         stats=stats,
         loggedInTech=resolve_preferred_name(session.get("technician")),
-        show_all=show_all,
-    )
+        show_all=show_all,)
 
 # View Employee Details Route
 @hr_module_bp.route("/employee/<uuid>", methods=["GET"])
@@ -461,13 +472,14 @@ def reset_employee_password(uuid: str):
 
     store.save_all(employees)
     actor = _pseudonymize_actor(resolve_preferred_name(session.get("technician")))
-    logging.warning(
+    logger.warning(
         "HR MODULE - Password reset performed; actor=%s target_employee_id=%s",
         actor, employee.get("employee_id"))
 
     # Show password once to admin via template variable and flash
     flash("Password reset successful - show it once below.", "success")
-    return render_template("hr/profile.html", employee=employee, reset_password=new_password, loggedInTech=resolve_preferred_name(session.get("technician")))
+    return render_template("hr/profile.html", employee=employee, reset_password=new_password, 
+                           loggedInTech=resolve_preferred_name(session.get("technician")))
 
 @hr_module_bp.route("/employee/<uuid>/append_note", methods=["POST"])
 @role_required(ROLE_HR_TECH)
@@ -537,8 +549,7 @@ def new_employee():
             auth_record, temporary_password = _provision_employee_login_access(
                 new_record,
                 auth_employees,
-                auth_username_override,
-            )
+                auth_username_override,)
         except ValueError as exc:
             return render_template("hr/submit_new.html", error=str(exc), loggedInTech=resolve_preferred_name(session.get("technician"))), 400
     else:
@@ -557,7 +568,7 @@ def new_employee():
             new_record["access"]["provisioning_status"] = "complete"
             hr_store.save_all(employees)
         except Exception:
-            logging.exception("HR MODULE - Login provisioning failed; rolling back HR record.")
+            logger.exception("HR MODULE - Login provisioning failed; rolling back HR record.")
             employees = [employee for employee in employees if employee.get("uuid") != new_record["uuid"]]
             hr_store.save_all(employees)
             return render_template("hr/submit_new.html", error="Employee created, but login provisioning failed.", loggedInTech=resolve_preferred_name(session.get("technician"))), 500
@@ -573,6 +584,60 @@ def new_employee():
         loggedInTech=resolve_preferred_name(session.get("technician")),
     )
 
-# Export Employee Data Route
-# TODO: implement export_employees() (CSV/JSON), technician_required.
-# Export Employee Data Route
+@hr_module_bp.route("/export/csv", methods=["GET"])
+@role_required(ROLE_HR_TECH)
+def export_employees_csv():
+    """Export all employee records to a timestamped CSV file."""
+    employees = load_hr_employees()
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    filename = f"employees_{timestamp}.csv"
+
+    fieldnames = [
+        "employee_id",
+        "uuid",
+        "first_name",
+        "last_name",
+        "preferred_name",
+        "email",
+        "phone",
+        "timezone",
+        "created",
+        "updated",
+    ]
+
+    for employee in employees:
+        for key, value in employee.items():
+            if isinstance(value, dict):
+                for nested_key in value.keys():
+                    nested_name = f"{key}.{nested_key}"
+                    if nested_name not in fieldnames:
+                        fieldnames.append(nested_name)
+            elif key not in fieldnames:
+                fieldnames.append(key)
+
+    output = io.StringIO()
+    writer = csv.DictWriter(output, fieldnames=fieldnames)
+    writer.writeheader()
+
+    for employee in employees:
+        row = {}
+        for key, value in employee.items():
+            if isinstance(value, dict):
+                for nested_key, nested_value in value.items():
+                    row[f"{key}.{nested_key}"] = _serialize_employee_value(nested_value)
+            else:
+                row[key] = _serialize_employee_value(value)
+        writer.writerow({field: row.get(field, "") for field in fieldnames})
+
+    output.seek(0)
+    logger.info(
+        "HR MODULE - Exported %s employee records to CSV actor=%s",
+        len(employees),
+        _pseudonymize_actor(resolve_preferred_name(session.get("technician"))),
+    )
+
+    return Response(
+        output.getvalue(),
+        mimetype="text/csv",
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )

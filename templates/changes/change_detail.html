@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='img/favicon.ico') }}"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="Matt Faulkner">
+    <meta name="description" content="GoobyDesk Change Record View">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="theme-color" content="#284389">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <link rel="preconnect" href="https://fonts.bunny.net/css">
+    <link rel="preconnect" href="https://fonts.bunny.net/css" crossorigin>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <script src="{{ url_for('static', filename='main.js') }}"></script>
+    <title>Change Record - GoobyDesk</title>
+</head>
+<body>
+    <main class="container">
+        <div class="logo">
+            <img src="{{ url_for('static', filename='/img/logo_white.webp') }}" alt="GoobyDesk Logo">
+        </div>
+        <h2>Change Record</h2>
+
+        <div class="ticket-details">
+            <p><strong>Change Number:</strong> {{ change.get('change_number', '—') }}</p>
+            <p><strong>Short Description:</strong> {{ change.get('change_short_description', '—') }}</p>
+            <p><strong>Status:</strong> {{ change.get('change_status', 'pending') }}</p>
+            <p><strong>Risk:</strong> {{ change.get('change_risk', 'medium') }}</p>
+            <p><strong>Requestor:</strong> {{ change.get('requestor_id', '—') }}</p>
+            <p><strong>Planned Start:</strong> {{ change.get('planned_start_timestamp', '—') }}</p>
+            <p><strong>Planned End:</strong> {{ change.get('planned_end_timestamp', '—') }}</p>
+            <p><strong>Created:</strong> {{ change.get('change_created_timestamp', '—') }}</p>
+            <p><strong>Updated:</strong> {{ change.get('change_updated_timestamp', '—') }}</p>
+            <p><strong>Detailed Description:</strong> {{ change.get('change_description', '—') }}</p>
+            <p><strong>Implementation Plan:</strong> {{ change.get('implement_plan', '—') }}</p>
+            <p><strong>Test / Acceptance Plan:</strong> {{ change.get('test_accept_plan', '—') }}</p>
+            <p><strong>Rollback Plan:</strong> {{ change.get('rollback_plan', '—') }}</p>
+        </div>
+
+        <p class="footer-text">©2025 GoobyDesk, FOSS created by GoobyFRS | Logged In as: {{ loggedInTech }} |
+            <br>
+            <a href="{{ url_for('itsm.dashboard') }}">Queues</a> | <a href="{{ url_for('changes_module.changes_home') }}">Changes</a> | <a href="{{ url_for('crm_module.crm_dashboard') }}">CRM</a> | <a href="{{ url_for('hr_module.hr_dashboard') }}">HR</a> | <a href="{{ url_for('serviceid_module.serviceid_dashboard') }}">ServiceID</a> | <a href="{{ url_for('reports_module.reports_home') }}">Reports</a>
+        </p>
+    </main>
+</body>
+</html>

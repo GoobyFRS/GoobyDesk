@@ -80,7 +80,7 @@
             </div>
             <div class="page-header-actions">
                 <a href="{{ url_for('serviceid_module.edit_service', uuid=service.get('uuid')) }}" class="submit-btn warning-btn">Edit Service</a>
-                <a href="{{ url_for('serviceid_module.serviceid_dashboard') }}" class="submit-btn status-btn">&larr; Back to Dashboard</a>
+                <a href="{{ url_for('serviceid_module.serviceid_dashboard') }}" class="submit-btn secondary-btn">&larr; Back to Dashboard</a>
             </div>
         </div>
 
@@ -99,7 +99,8 @@
             </div>
             <div class="stat-card">
                 <div class="stat-card-title">Created</div>
-                <div class="stat-card-value stat-card-value--compact">{{ service.get('service_created_timestamp') or service.get('created') or '—' }}</div>
+                {% set _created = service.get('service_created_timestamp') or service.get('created') %}
+                <div class="stat-card-value stat-card-value--compact">{{ _created[:10] if _created else '—' }}</div>
             </div>
         </div>
 

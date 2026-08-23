@@ -22,7 +22,7 @@ from storage.employee_store import EmployeeStore
 from storage.changes_store import ChangesStore
 from storage.ticket_store import TicketStore
 
-BUILDID=str("1.0.0")
+BUILDID=str("1.0.3")
 
 def _pseudonymize_actor(name: str) -> str:
     """Return a stable, opaque actor id for logging (no raw usernames).
@@ -86,6 +86,8 @@ if not LOG_CFG:
             "formatter": "default",
         }
         LOG_CFG["root"]["handlers"].append("file")
+
+    LOG_CFG.setdefault("disable_existing_loggers", False)
 
 try:
     logging.config.dictConfig(LOG_CFG)
@@ -235,7 +237,6 @@ def generate_change_request_number():
     """
     return change_store.next_change_number(datetime.now().year)
 
-
 def _verify_turnstile():
     """Validate Cloudflare Turnstile token when enabled.
     Returns: bool: True when CAPTCHA is disabled or verification succeeds.
@@ -327,8 +328,7 @@ def home():
                     new_ticket.get("requestor_email"),
                     f"{ticket_number} - {new_ticket.get('ticket_subject')}",
                     email_body,
-                    html=True,
-                )
+                    html=True,)
                 logging.info("Confirmation email for %s sent.", ticket_number)
             except Exception as e:
                 logging.error("Failed to send confirmation email for %s", ticket_number)

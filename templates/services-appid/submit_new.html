@@ -118,7 +118,13 @@
                 </div>
                 <div>
                     <label for="server_type">Server Type</label>
-                    <input type="text" id="server_type" name="server_type" value="{{ service.get('server_type', '') if service else '' }}">
+                    <select id="server_type" name="server_type">
+                        <option value="virtual_machine" {% if not service or service.get('server_type', 'virtual_machine') in ['virtual_machine', 'Virtual Machine'] %}selected{% endif %}>Virtual Machine</option>
+                        <option value="container" {% if service and service.get('server_type') in ['container', 'Container'] %}selected{% endif %}>Container</option>
+                        <option value="bare_metal" {% if service and service.get('server_type') in ['bare_metal', 'Bare Metal'] %}selected{% endif %}>Bare Metal</option>
+                        <option value="instance" {% if service and service.get('server_type') in ['instance', 'Instance'] %}selected{% endif %}>Instance</option>
+                        <option value="other" {% if service and service.get('server_type') in ['other', 'Other'] %}selected{% endif %}>Other</option>
+                    </select>
                 </div>
             </div>
 

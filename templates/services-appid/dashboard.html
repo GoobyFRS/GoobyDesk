@@ -22,7 +22,7 @@
                 <img src="{{ url_for('static', filename='/img/logo_white.webp') }}" alt="GoobyDesk Logo">
             </div>
             <div>
-                <h2>ServiceID / APPID Dashboard</h2>
+                <h2>Service Dashboard</h2>
                 <p class="text-muted">Welcome back, {{ loggedInTech }}</p>
             </div>
             <div class="page-header-actions">
@@ -32,13 +32,21 @@
 
         <div class="card">
             <div class="card-header">
-                <h3 class="card-title">Services</h3>
+                <div class="header-row header-row--flush">
+                    <h3 class="card-title">Services</h3>
+                    <form method="get" class="inline-form inline-form--flush">
+                        <label class="checkbox-label" for="show_all">
+                            <input type="checkbox" id="show_all" name="show_all" value="1" {% if show_all %}checked{% endif %} onchange="this.form.submit()">
+                            Show All
+                        </label>
+                    </form>
+                </div>
             </div>
             <div class="card-body">
                 <table class="table">
                     <thead>
                         <tr>
-                            <th scope="col">APPID</th>
+                            <th scope="col">Service ID</th>
                             <th scope="col">Service Name</th>
                             <th scope="col">Type</th>
                             <th scope="col">Status</th>
