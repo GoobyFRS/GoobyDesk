@@ -20,3 +20,15 @@
 - Link Customer ID to Tickets
 - Link Service ID to CHG
 - Link APPID to CHG
+
+New Schema
+
+- Dashboard Route
+- Submit New
+- View
+- Edit
+- Delete
+- Export
+- Import
+- Search
+- Bulk Update

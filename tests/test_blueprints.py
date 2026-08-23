@@ -4,6 +4,7 @@ import tempfile
 import unittest
 
 import blueprints.api_module as api_module
+import blueprints.appid_module as appid_module
 import blueprints.changes_module as changes_module
 import blueprints.crm_module as crm_module
 import blueprints.hr_module as hr_module
@@ -61,6 +62,7 @@ class BlueprintRouteTests(unittest.TestCase):
         """Every blueprint should declare a module logger for production-safe output."""
         modules = [
             api_module,
+            appid_module,
             changes_module,
             crm_module,
             hr_module,
@@ -73,6 +75,19 @@ class BlueprintRouteTests(unittest.TestCase):
         for module in modules:
             self.assertTrue(hasattr(module, "logger"))
             self.assertEqual(module.logger.name, module.__name__)
+
+    def test_appid_blueprint_has_standard_route_schema(self):
+        """The AppID blueprint should expose the same CRUD-style route layout used across modules."""
+        self.assertTrue(hasattr(appid_module, "appid_dashboard"))
+        self.assertTrue(hasattr(appid_module, "submit_new"))
+        self.assertTrue(hasattr(appid_module, "view_appid"))
+        self.assertTrue(hasattr(appid_module, "edit_appid"))
+        self.assertTrue(hasattr(appid_module, "delete_appid"))
+        self.assertTrue(hasattr(appid_module, "export_appids"))
+        self.assertTrue(hasattr(appid_module, "import_appids"))
+        self.assertTrue(hasattr(appid_module, "search_appids"))
+        self.assertTrue(hasattr(appid_module, "bulk_update_appids"))
+        self.assertIn("/appid/", str(self.app.url_map))
 
 class ApiBlueprintTests(BlueprintRouteTests):
     """Validate the public API ingress endpoints."""
