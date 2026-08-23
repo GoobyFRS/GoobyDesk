@@ -64,7 +64,7 @@
     <title>{{ service.get('service_name', 'Service') }} - GoobyDesk ServiceID</title>
 </head>
 <body>
-    <main class="container container--wide">
+    <main class="container container--narrow">
         <div class="page-header">
             <div>
                 <div class="profile-name">
@@ -84,74 +84,102 @@
             </div>
         </div>
 
-        <div class="grid grid-2">
-            <div class="card">
-                <div class="card-header"><h3 class="card-title">Ownership</h3></div>
-                <div class="card-body ticket-details">
+        <div class="card">
+            <div class="card-header"><h3 class="card-title">Ownership</h3></div>
+            <div class="card-body">
+                <div class="form-row">
                     <p><strong>Service Name:</strong> {{ service.get('service_name') or '—' }}</p>
-                    <p><strong>Customer ID:</strong> {{ service.get('customer_id') or '—' }}</p>
-                    <p><strong>Customer UUID:</strong> {{ service.get('customer_uuid') or '—' }}</p>
                     <p><strong>Service SKU:</strong> {{ service.get('service_sku') or '—' }}</p>
                 </div>
-            </div>
-
-            <div class="card">
-                <div class="card-header"><h3 class="card-title">System Details</h3></div>
-                <div class="card-body ticket-details">
-                    <p><strong>Server Type:</strong> {{ service.get('server_type') or '—' }}</p>
-                    <p><strong>Service Type:</strong> {{ service.get('service_type') or service.get('type') or '—' }}</p>
-                    <p><strong>Service Status:</strong> {{ service.get('service_status') or service.get('status') or '—' }}</p>
-                    <p><strong>Platform:</strong> {{ service.get('platform') or '—' }}</p>
-                    <p><strong>Region ID:</strong> {{ service.get('region') or '—' }}</p>
-                    <p><strong>Cluster ID:</strong> {{ service.get('cluster_id') or '—' }}</p>
-                    <p><strong>Node ID:</strong> {{ service.get('node_id') or '—' }}</p>
-                    <p><strong>Service IP:</strong> {{ service.get('service_ip') or '—' }}</p>
-                    <p><strong>Service Subdomain:</strong> {{ service.get('service_subdomain') or '—' }}</p>
-                    <p><strong>Allocated CPU Cores:</strong> {{ service.get('allocated_cpu_cores') or 0 }}</p>
-                    <p><strong>Allocated RAM (MB):</strong> {{ service.get('allocated_ram_mb') or 0 }}</p>
-                    <p><strong>Allocated Disk (GB):</strong> {{ service.get('allocated_disk_gb') or 0 }}</p>
-                    <p><strong>Allocated Ports:</strong> {{ service.get('allocated_ports') | join(', ') if service.get('allocated_ports') else '—' }}</p>
+                <div class="form-row">
+                    <p><strong>Customer ID:</strong> {{ service.get('customer_id') or '—' }}</p>
+                    <p><strong>Customer UUID:</strong> {{ service.get('customer_uuid') or '—' }}</p>
                 </div>
             </div>
         </div>
 
-        <div class="grid grid-2">
-            <div class="card">
-                <div class="card-header"><h3 class="card-title">Minecraft Details</h3></div>
-                <div class="card-body ticket-details">
+        <div class="card">
+            <div class="card-header"><h3 class="card-title">System Details</h3></div>
+            <div class="card-body">
+                <div class="form-row">
+                    <p><strong>Server Type:</strong> {{ service.get('server_type') or '—' }}</p>
+                    <p><strong>Service Type:</strong> {{ service.get('service_type') or service.get('type') or '—' }}</p>
+                </div>
+                <div class="form-row">
+                    <p><strong>Service Status:</strong> {{ service.get('service_status') or service.get('status') or '—' }}</p>
+                    <p><strong>Platform:</strong> {{ service.get('platform') or '—' }}</p>
+                </div>
+                <div class="form-row">
+                    <p><strong>Region ID:</strong> {{ service.get('region') or '—' }}</p>
+                    <p><strong>Cluster ID:</strong> {{ service.get('cluster_id') or '—' }}</p>
+                </div>
+                <div class="form-row">
+                    <p><strong>Node ID:</strong> {{ service.get('node_id') or '—' }}</p>
+                    <p><strong>Service IP:</strong> {{ service.get('service_ip') or '—' }}</p>
+                </div>
+                <div class="form-row">
+                    <p><strong>Service Subdomain:</strong> {{ service.get('service_subdomain') or '—' }}</p>
+                    <p><strong>Allocated Ports:</strong> {{ service.get('allocated_ports') | join(', ') if service.get('allocated_ports') else '—' }}</p>
+                </div>
+                <div class="form-row">
+                    <p><strong>Allocated CPU Cores:</strong> {{ service.get('allocated_cpu_cores') or 0 }}</p>
+                    <p><strong>Allocated RAM (MB):</strong> {{ service.get('allocated_ram_mb') or 0 }}</p>
+                </div>
+                <div class="form-row">
+                    <p><strong>Allocated Disk (GB):</strong> {{ service.get('allocated_disk_gb') or 0 }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header"><h3 class="card-title">Minecraft Details</h3></div>
+            <div class="card-body">
+                <div class="form-row">
                     <p><strong>Minecraft Version:</strong> {{ service.get('minecraft_version') or '—' }}</p>
                     <p><strong>RCON Port:</strong> {{ service.get('service_rcon_port') or '—' }}</p>
+                </div>
+                <div class="form-row">
                     <p><strong>RCON Password:</strong> {{ service.get('service_rcon_pwd') or '—' }}</p>
                     <p><strong>Player Limit:</strong> {{ service.get('player_limit') or 0 }}</p>
+                </div>
+                <div class="form-row">
                     <p><strong>Modpack Name:</strong> {{ service.get('modpack_name') or '—' }}</p>
                 </div>
             </div>
+        </div>
 
-            <div class="card">
-                <div class="card-header"><h3 class="card-title">Mumble Details</h3></div>
-                <div class="card-body ticket-details">
-                    <p class="text-muted">Placeholder</p>
-                </div>
+        <div class="card">
+            <div class="card-header"><h3 class="card-title">Mumble Details</h3></div>
+            <div class="card-body">
+                <p class="text-muted">Placeholder</p>
             </div>
         </div>
 
-        <div class="grid grid-2">
-            <div class="card">
-                <div class="card-header"><h3 class="card-title">Web Server Details</h3></div>
-                <div class="card-body ticket-details">
+        <div class="card">
+            <div class="card-header"><h3 class="card-title">Web Server Details</h3></div>
+            <div class="card-body">
+                <div class="form-row">
                     <p><strong>Web Server Engine:</strong> {{ service.get('web_server_engine') or '—' }}</p>
+                </div>
+                <div class="form-row">
                     <p><strong>Homepage URL:</strong> {{ service.get('homepage_url') or '—' }}</p>
                     <p><strong>Management URL:</strong> {{ service.get('management_url') or '—' }}</p>
                 </div>
             </div>
+        </div>
 
-            <div class="card">
-                <div class="card-header"><h3 class="card-title">State and Activities</h3></div>
-                <div class="card-body ticket-details">
+        <div class="card">
+            <div class="card-header"><h3 class="card-title">State and Activities</h3></div>
+            <div class="card-body">
+                <div class="form-row">
                     <p><strong>Provisioning Status:</strong> {{ service.get('provisioning_status') or '—' }}</p>
                     <p><strong>Provision Source:</strong> {{ service.get('service_provision_source') or '—' }}</p>
+                </div>
+                <div class="form-row">
                     <p><strong>Created Timestamp:</strong> {{ service.get('service_created_timestamp') or service.get('created') or '—' }}</p>
                     <p><strong>Updated Timestamp:</strong> {{ service.get('service_updated_timestamp') or service.get('updated') or '—' }}</p>
+                </div>
+                <div class="form-row">
                     <p><strong>Terminated Timestamp:</strong> {{ service.get('service_terminated_timestamp') or service.get('terminated') or '—' }}</p>
                 </div>
             </div>
