@@ -1,4 +1,5 @@
 import json
+import io
 import os
 import tempfile
 import unittest
@@ -432,6 +433,50 @@ class ServiceIdBlueprintTests(BlueprintRouteTests):
             services = json.load(handle)
         self.assertEqual(len(services), 1)
         self.assertEqual(services[0]["service_name"], "Test Service")
+
+    def test_service_csv_import(self):
+        """The CSV import endpoint should create service records from uploaded rows."""
+        customer_file = os.path.join(self.temp_dir.name, "customers.json")
+        service_file = os.path.join(self.temp_dir.name, "serviceid.json")
+        self._write_json(
+            customer_file,
+            [{
+                "uuid": "customer-123",
+                "customer_id": "CID-2026-0001",
+                "first_name": "Alice",
+                "last_name": "Customer",
+                "services": [],
+            }],
+        )
+        self._write_json(service_file, [])
+        self.app.config["LOADED_CONFIG"] = {
+            "core": {
+                "customers_file": customer_file,
+                "serviceid_appid_file": service_file,
+            }
+        }
+        self._set_auth_session()
+
+        csv_payload = io.BytesIO(
+            (
+                "service_name,customer_id,service_type,service_status,provisioning_status,allocated_cpu_cores,allocated_ram_mb,allocated_disk_gb,allocated_ports\n"
+                "Imported Service,CID-2026-0001,web_server,active,provisioned,4,8192,120,\"25565,25575\"\n"
+            ).encode("utf-8")
+        )
+
+        response = self.client.post(
+            "/serviceid/import/csv",
+            data={"csv_file": (csv_payload, "service_import.csv")},
+            content_type="multipart/form-data",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        with open(service_file, "r", encoding="utf-8") as handle:
+            services = json.load(handle)
+        self.assertEqual(len(services), 1)
+        self.assertEqual(services[0]["service_name"], "Imported Service")
+        self.assertEqual(services[0]["customer_uuid"], "customer-123")
+        self.assertEqual(services[0]["allocated_ports"], [25565, 25575])
 
 if __name__ == "__main__":
     unittest.main()
