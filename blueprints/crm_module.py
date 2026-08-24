@@ -117,10 +117,16 @@ def _update_customer_record(customer: dict, form: dict) -> None:
     customer["email"] = email.lower() if email else customer.get("email")
 
     customer["phone"] = _clean_form_value(form, "phone") or customer.get("phone")
-    customer["country"] = _clean_form_value(form, "country") or customer.get("country")
+    country = _clean_form_value(form, "country")
+    customer["country"] = country or customer.get("country")
+    customer.setdefault("address", {})["country"] = country or customer.get("address", {}).get("country")
     customer["timezone"] = _clean_form_value(form, "timezone") or customer.get("timezone") or "UTC"
     customer["status"] = _clean_form_value(form, "status") or customer.get("status")
     customer["preferred_contact"] = _clean_form_value(form, "preferred_contact") or customer.get("preferred_contact")
+    customer["status_reason"] = _clean_form_value(form, "status_reason") or customer.get("status_reason")
+    customer["account_tier"] = _clean_form_value(form, "account_tier") or customer.get("account_tier")
+    customer["customer_type"] = _clean_form_value(form, "customer_type") or customer.get("customer_type")
+    customer["risk_level"] = _clean_form_value(form, "risk_level") or customer.get("risk_level")
 
     # Flags
     customer["vip"] = True if "vip" in form else False
