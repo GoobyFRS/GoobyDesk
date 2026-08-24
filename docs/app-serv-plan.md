@@ -68,6 +68,67 @@ Platform Services DB
 
 ## Customer ID
 
-Core Details
+Remove Language from Customer Profile record.
 
-- Link a Service ID
+"LastModified" and "Updated:" under "Customer Record" are duplicates. Use Last Modified.
+
+**Account Overview**
+- Preferred Name
+- Account Tier
+- VIP Status
+- Customer Since (+ Tenure)
+- Preferred Contact Method
+- Assigned Account Manager
+
+**Security**
+- Account Status
+- Email Verified
+- Account Locked
+- MFA Enabled
+- Last Login
+
+**Contact Details**
+- Full Name
+- Email
+- Phone Number
+- Street Address
+- Street Address 2
+- City
+- State
+- Zip Code
+- Country (USA Default)
+- Timezone
+- Billing Currency (USD Default)
+- Marketing Opt-In
+- Maintenance Notifications
+- Minecraft Username
+- Discord Username
+
+**Support Details**
+- Customer Type
+- Risk Level
+- Lifetime Account Value
+- Support Contract
+    - No (Default)
+    - Yes
+- SLA Contract
+    - None (Default)
+    - Best Effort
+    - 1 Hour Response
+    - Five Nines
+
+**Custom Data**
+- Managed Licenses
+- Domains
+
+**Record Audit**
+- Creation Source
+- Created Timestamp
+- Last Modified Timestamp
+- Last Modified By
+
+**Render Full Customer Record**
+
+**Add Note**
+
+**Customer Profile Notes**

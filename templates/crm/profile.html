@@ -14,7 +14,7 @@
     {% if value is mapping %}
         <div class="ticket-details">
                 {% for key, nested_value in value.items() %}
-                {% if key not in ['crm_worknotes', 'job_title'] and nested_value is not none %}
+                {% if key not in ['crm_worknotes', 'job_title', 'language', 'updated'] and nested_value is not none %}
                     <p><strong>{{ format_label(key) }}:</strong> {{ render_value(nested_value) }}</p>
                 {% endif %}
             {% endfor %}
@@ -40,6 +40,10 @@
     {% else %}
         {{ value }}
     {% endif %}
+{%- endmacro %}
+
+{% macro render_field(label, value) -%}
+    <p><strong>{{ label }}:</strong> {{ render_value(value) }}</p>
 {%- endmacro %}
 
 <!DOCTYPE html>
@@ -117,74 +121,111 @@
         </div>
 
         <div class="grid grid-2">
-
             <div class="card">
-                <div class="card-header"><h3 class="card-title">Contact Info</h3></div>
+                <div class="card-header"><h3 class="card-title">Account Overview</h3></div>
                 <div class="card-body ticket-details">
-                    <p><strong>Email:</strong> {{ customer.get('email', '—') }}
-                        {% if customer.get('email_verified') %}<span class="badge badge-success">Verified</span>{% endif %}
-                    </p>
-                    <p><strong>Phone:</strong> {{ customer.get('phone') or '—' }}</p>
-                    <p><strong>Company:</strong> {{ customer.get('company') or '—' }}</p>
-                    <p><strong>Preferred Contact:</strong> {{ customer.get('preferred_contact', '—') | capitalize }}</p>
-                    <p><strong>Country / Timezone:</strong> {{ customer.get('country') or '—' }} / {{ customer.get('timezone') or '—' }}</p>
-                    <p><strong>Marketing Opt-In:</strong> {{ 'Yes' if customer.get('marketing_opt_in') else 'No' }}</p>
-                    <p><strong>Maintenance Notifications:</strong> {{ 'Yes' if customer.get('maintenance_notifications') else 'No' }}</p>
+                    {{ render_field('Preferred Name', customer.get('preferred_name') or customer.get('first_name')) }}
+                    {{ render_field('Account Tier', customer.get('account_tier', 'basic') | capitalize) }}
+                    {{ render_field('VIP Status', 'Yes' if customer.get('vip') else 'No') }}
+                    <p><strong>Customer Since:</strong> {{ customer.get('created')[:10] if customer.get('created') else '—' }}{% if customer_tenure %} <span class="text-muted">({{ customer_tenure }})</span>{% endif %}</p>
+                    {{ render_field('Preferred Contact Method', customer.get('preferred_contact', '—') | capitalize) }}
+                    {{ render_field('Assigned Account Manager', customer.get('assigned_account_manager') or 'Unassigned') }}
                 </div>
             </div>
 
             <div class="card">
-                <div class="card-header"><h3 class="card-title">Access & Security</h3></div>
+                <div class="card-header"><h3 class="card-title">Security</h3></div>
                 <div class="card-body ticket-details">
-                    <p><strong>Discord:</strong> {{ customer.get('discord', {}).get('username') or '—' }}</p>
-                    <p><strong>Minecraft:</strong> {{ customer.get('minecraft', {}).get('username') or '—' }}</p>
-                    <p><strong>Account Locked:</strong> {{ 'Yes' if customer.get('account_locked') else 'No' }}</p>
-                    <p><strong>MFA Enabled:</strong> {{ 'Yes' if customer.get('mfa_enabled') else 'No' }}</p>
-                    <p><strong>Assigned Account Manager:</strong> {{ customer.get('assigned_account_manager') or 'Unassigned' }}</p>
-                    <p><strong>Last Login:</strong> {{ customer.get('last_login') or 'Never' }}</p>
-                    <p><strong>Last Seen:</strong> {{ customer.get('last_seen') or 'Never' }}</p>
+                    {{ render_field('Account Status', customer.get('status', 'Unknown') | capitalize) }}
+                    {{ render_field('Email Verified', 'Yes' if customer.get('email_verified') else 'No') }}
+                    {{ render_field('Account Locked', 'Yes' if customer.get('account_locked') else 'No') }}
+                    {{ render_field('MFA Enabled', 'Yes' if customer.get('mfa_enabled') else 'No') }}
+                    {{ render_field('Last Login', customer.get('last_login') or 'Never') }}
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-2">
+            <div class="card">
+                <div class="card-header"><h3 class="card-title">Contact Details</h3></div>
+                <div class="card-body ticket-details">
+                    {{ render_field('Full Name', customer.get('preferred_name', customer.get('first_name', '')) ~ ' ' ~ customer.get('last_name', '')) }}
+                    {{ render_field('Email', customer.get('email', '—')) }}
+                    {{ render_field('Phone Number', customer.get('phone') or '—') }}
+                    {{ render_field('Street Address', customer.get('address', {}).get('street') or '—') }}
+                    {{ render_field('Street Address 2', customer.get('address', {}).get('street_2') or customer.get('address', {}).get('street_address_2') or '—') }}
+                    {{ render_field('City', customer.get('address', {}).get('city') or '—') }}
+                    {{ render_field('State', customer.get('address', {}).get('state') or '—') }}
+                    {{ render_field('Zip Code', customer.get('address', {}).get('postal_code') or '—') }}
+                    {{ render_field('Country', customer.get('address', {}).get('country') or 'US') }}
+                    {{ render_field('Timezone', customer.get('timezone') or 'UTC') }}
+                    {{ render_field('Billing Currency', customer.get('billing_currency') or 'USD') }}
+                    {{ render_field('Marketing Opt-In', 'Yes' if customer.get('marketing_opt_in') else 'No') }}
+                    {{ render_field('Maintenance Notifications', 'Yes' if customer.get('maintenance_notifications') else 'No') }}
+                    {{ render_field('Minecraft Username', customer.get('minecraft', {}).get('username') or '—') }}
+                    {{ render_field('Discord Username', customer.get('discord', {}).get('username') or '—') }}
                 </div>
             </div>
 
-        </div>
-
-        <h3 class="section-title">Services</h3>
-        <div class="card">
-            <div class="card-body">
-                {% if linked_services %}
-                    <div class="tag-list">
-                        {% for service in linked_services %}
-                            <a href="{{ url_for('serviceid_module.service_profile', uuid=service.get('uuid')) }}" class="badge badge-info">{{ service.get('service_id', service.get('uuid')) }}</a>
-                        {% endfor %}
-                    </div>
-                {% elif customer.get('services') %}
-                    <div class="tag-list">
-                        {% for service in customer.services %}
-                            <span class="badge badge-info">{{ service }}</span>
-                        {% endfor %}
-                    </div>
-                {% else %}
-                    <p class="text-muted text-muted--flush">No services on file.</p>
-                {% endif %}
+            <div class="card">
+                <div class="card-header"><h3 class="card-title">Support Details</h3></div>
+                <div class="card-body ticket-details">
+                    {{ render_field('Customer Type', customer.get('customer_type', 'individual') | capitalize) }}
+                    {{ render_field('Risk Level', customer.get('risk_level', 'low') | capitalize) }}
+                    {{ render_field('Lifetime Account Value', '$' ~ "{:,.2f}".format(customer.get('lifetime_value', 0)) ~ ' ' ~ customer.get('billing_currency', '')) }}
+                    {{ render_field('Support Contract', 'Yes' if customer.get('support_contract', {}).get('enabled') else 'No') }}
+                    {{ render_field('SLA Contract', customer.get('support_contract', {}).get('sla') or 'None') }}
+                </div>
             </div>
         </div>
 
-        <h3 class="section-title">Account Tags</h3>
-        <div class="card">
-            <div class="card-body">
-                {% if customer.get('account_tags') %}
-                    <div class="tag-list">
-                        {% for tag in customer.account_tags %}
-                            <span class="badge badge-secondary">{{ tag }}</span>
-                        {% endfor %}
-                    </div>
-                {% else %}
-                    <p class="text-muted text-muted--flush">No tags on file.</p>
-                {% endif %}
+        <div class="grid grid-2">
+            <div class="card">
+                <div class="card-header"><h3 class="card-title">Custom Data</h3></div>
+                <div class="card-body ticket-details">
+                    {{ render_field('Managed Licenses', customer.get('licenses', []) if customer.get('licenses') else none) }}
+                    {{ render_field('Domains', customer.get('domains', []) if customer.get('domains') else none) }}
+                    <h4 class="section-title">Services</h4>
+                    {% if linked_services %}
+                        <div class="tag-list">
+                            {% for service in linked_services %}
+                                <a href="{{ url_for('serviceid_module.service_profile', uuid=service.get('uuid')) }}" class="badge badge-info">{{ service.get('service_id', service.get('uuid')) }}</a>
+                            {% endfor %}
+                        </div>
+                    {% elif customer.get('services') %}
+                        <div class="tag-list">
+                            {% for service in customer.services %}
+                                <span class="badge badge-info">{{ service }}</span>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted text-muted--flush">No services on file.</p>
+                    {% endif %}
+                    <h4 class="section-title">Account Tags</h4>
+                    {% if customer.get('account_tags') %}
+                        <div class="tag-list">
+                            {% for tag in customer.account_tags %}
+                                <span class="badge badge-secondary">{{ tag }}</span>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted text-muted--flush">No tags on file.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header"><h3 class="card-title">Record Audit</h3></div>
+                <div class="card-body ticket-details">
+                    {{ render_field('Creation Source', customer.get('audit', {}).get('creation_source') or 'auth_web') }}
+                    {{ render_field('Created Timestamp', customer.get('created') or '—') }}
+                    {{ render_field('Last Modified Timestamp', customer.get('audit', {}).get('last_modified') or customer.get('updated') or '—') }}
+                    {{ render_field('Last Modified By', customer.get('audit', {}).get('last_modified_by') or '—') }}
+                </div>
             </div>
         </div>
 
-        <h3 class="section-title">Customer Record</h3>
+        <h3 class="section-title">Full Customer Record</h3>
         <div class="card">
             <div class="card-body">
                 <div class="three-col-record">{{ render_value(customer) }}</div>

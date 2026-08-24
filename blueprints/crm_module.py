@@ -81,6 +81,30 @@ def _clean_form_value(form: dict, field_name: str):
     cleaned = raw_value.strip()
     return cleaned or None
 
+
+def _format_tenure(created_value):
+    """Return a short tenure label from a created timestamp."""
+    if not created_value:
+        return None
+
+    try:
+        created_at = datetime.strptime(created_value, "%Y-%m-%d %H:%M:%S")
+    except (TypeError, ValueError):
+        return None
+
+    elapsed_days = max((datetime.now() - created_at).days, 0)
+    elapsed_months = elapsed_days // 30
+    years, months = divmod(elapsed_months, 12)
+
+    parts = []
+    if years:
+        parts.append(f"{years} year{'s' if years != 1 else ''}")
+    if months:
+        parts.append(f"{months} month{'s' if months != 1 else ''}")
+    if not parts:
+        return "Less than 1 month"
+    return ", ".join(parts)
+
 def _update_customer_record(customer: dict, form: dict) -> None:
     """Apply cleaned form values onto an existing customer record in-place."""
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -296,6 +320,7 @@ def customer_profile(uuid):
         "crm/profile.html",
         customer=customer,
         linked_services=linked_services,
+        customer_tenure=_format_tenure(customer.get("created")),
         loggedInTech=actor,
     )
 
