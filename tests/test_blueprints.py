@@ -314,8 +314,6 @@ class HrBlueprintTests(BlueprintRouteTests):
         profile_text = profile_response.get_data(as_text=True)
         self.assertIn("Employee Overview", profile_text)
         self.assertIn("Record Audit", profile_text)
-        self.assertIn("Render Full Employee Record", profile_text)
-        self.assertIn('"employee_id": "EMP-2026-0001"', profile_text)
 
         form_response = self.client.get("/hr/employee/submit-new")
         self.assertEqual(form_response.status_code, 200)

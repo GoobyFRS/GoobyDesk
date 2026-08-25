@@ -862,20 +862,6 @@ a:hover {
     margin: 0.25rem 0;
 }
 
-.profile-record-json {
-    margin: 0;
-    padding: 1rem;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    background: var(--panel-alt);
-    color: var(--text);
-    font-size: 0.9rem;
-    line-height: 1.5;
-    white-space: pre-wrap;
-    word-break: break-word;
-    overflow-x: auto;
-}
-
 .ticket-details p strong {
     color: var(--text-muted);
 }
