@@ -78,20 +78,9 @@
         <div class="page-header">
             <div>
                 <h2>GoobyDesk Reporting</h2>
-                <p class="text-muted">Ticket analytics and reporting</p>
+                <p class="text-muted">Ticket Analytics and Platform Reporting</p>
             </div>
-            <div class="page-header-actions">
-                <form action="{{ url_for('itsm.dashboard') }}" method="GET">
-                    <button type="submit" class="submit-btn">Back to Dashboard</button>
-                </form>
-                <form action="{{ url_for('reports_module.export_tickets_csv') }}" method="GET">
-                    <button type="submit" class="submit-btn">Export CSV Report</button>
-                </form>
-                <!--
-                    Once there's a route for it, add another form/button here the same way,
-                    e.g. url_for('reports.export_open_tickets')
-                -->
-            </div>
+            <div class="page-header-actions"></div>
         </div>
 
         <!-- Overview Stats -->

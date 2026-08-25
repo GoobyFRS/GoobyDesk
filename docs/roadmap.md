@@ -1,6 +1,6 @@
 # Project Roadmap
 
-## 1.0.3
+## 1.0.4
 
 ### Small Fixes
 
@@ -20,3 +20,6 @@
 - Link Customer ID to Tickets
 - Link Service ID to CHG
 - Link APPID to CHG
+- Implement User Data Export for Customers
+- Implement User Data Import for Customers
+- Implement User Data Import for Employees

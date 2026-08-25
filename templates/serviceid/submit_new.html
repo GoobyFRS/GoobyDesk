@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="description" content="Create New Service">
+    <link rel="preconnect" href="https://fonts.bunny.net/css">
+    <link rel="preconnect" href="https://fonts.bunny.net/css" crossorigin>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <script src="{{ url_for('static', filename='main.js') }}"></script>
+    <title>{% if service %}Edit Service{% else %}Create New Service{% endif %} — GoobyDesk</title>
+</head>
+<body>
+    <main class="container container--narrow">
+        <div class="logo">
+            <img src="{{ url_for('static', filename='/img/logo_white.webp') }}" alt="GoobyDesk Logo">
+        </div>
+
+        <h2>{% if service %}Edit Service{% else %}New Service{% endif %}</h2>
+        <p class="text-muted">Track the service details that should be persisted for provisioning and operations.</p>
+
+        {% if error %}
+        <div class="alert alert--danger" role="alert">{{ error }}</div>
+        {% endif %}
+
+        <form method="POST" action="{% if service %}{{ url_for('serviceid_module.edit_service', uuid=service.get('uuid')) }}{% else %}{{ url_for('serviceid_module.new_service') }}{% endif %}">
+
+            <div class="card">
+                <div class="card-header"><h3 class="card-title">Ownership</h3></div>
+                <div class="card-body">
+                    <div class="form-row">
+                        <div>
+                            <label for="service_name">Service Name *</label>
+                            <input type="text" id="service_name" name="service_name" value="{{ service.get('service_name', service.get('name', '')) if service else '' }}" required>
+                        </div>
+                        <div>
+                            <label for="service_id_display">Service ID</label>
+                            <input type="text" id="service_id_display" value="{{ service.get('service_id', 'Auto-generated') if service else 'Auto-generated' }}" disabled>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div>
+                            <label for="customer_id">Customer ID</label>
+                            <select id="customer_id" name="customer_id" aria-label="Select customer ID">
+                                <option value="">Select a customer...</option>
+                                {% for customer in customers or [] %}
+                                    {% set customer_label = customer.get('customer_id') or customer.get('uuid') or 'Unknown Customer' %}
+                                    <option value="{{ customer_label }}" data-customer-uuid="{{ customer.get('uuid', '') }}" {% if customer_label == selected_customer_id %}selected{% endif %}>
+                                        {{ customer_label }}{% if customer.get('preferred_name') or customer.get('first_name') %} — {{ customer.get('preferred_name') or customer.get('first_name') }} {{ customer.get('last_name', '') }}{% endif %}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label for="customer_uuid">Customer UUID</label>
+                            <input type="text" id="customer_uuid" name="customer_uuid" value="{{ selected_customer_uuid or '' }}" readonly>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div>
+                            <label for="service_sku">Service SKU</label>
+                            <input type="text" id="service_sku" name="service_sku" value="{{ service.get('service_sku', service.get('sku', '')) if service else '' }}">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header"><h3 class="card-title">System Details</h3></div>
+                <div class="card-body">
+                    <div class="form-row">
+                        <div>
+                            <label for="server_type">Server Type</label>
+                            <select id="server_type" name="server_type">
+                                <option value="virtual_machine" {% if not service or service.get('server_type', 'virtual_machine') in ['virtual_machine', 'Virtual Machine'] %}selected{% endif %}>Virtual Machine</option>
+                                <option value="container" {% if service and service.get('server_type') in ['container', 'Container'] %}selected{% endif %}>Container</option>
+                                <option value="bare_metal" {% if service and service.get('server_type') in ['bare_metal', 'Bare Metal'] %}selected{% endif %}>Bare Metal</option>
+                                <option value="instance" {% if service and service.get('server_type') in ['instance', 'Instance'] %}selected{% endif %}>Instance</option>
+                                <option value="other" {% if service and service.get('server_type') in ['other', 'Other'] %}selected{% endif %}>Other</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="service_type">Service Type</label>
+                            <select id="service_type" name="service_type">
+                                <option value="">Select...</option>
+                                <option value="application_server" {% if service and service.get('service_type') == 'application_server' %}selected{% endif %}>Application Server</option>
+                                <option value="game_server" {% if service and service.get('service_type') == 'game_server' %}selected{% endif %}>Game Server</option>
+                                <option value="web_server" {% if service and service.get('service_type') == 'web_server' %}selected{% endif %}>Web Server</option>
+                                <option value="other" {% if service and service.get('service_type') == 'other' %}selected{% endif %}>Other</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div>
+                            <label for="service_status">Service Status</label>
+                            <select id="service_status" name="service_status">
+                                <option value="provisioning" {% if not service or service.get('service_status', service.get('status')) == 'provisioning' %}selected{% endif %}>provisioning</option>
+                                <option value="active" {% if service and service.get('service_status', service.get('status')) == 'active' %}selected{% endif %}>active</option>
+                                <option value="maintenance" {% if service and service.get('service_status', service.get('status')) == 'maintenance' %}selected{% endif %}>maintenance</option>
+                                <option value="degraded" {% if service and service.get('service_status', service.get('status')) == 'degraded' %}selected{% endif %}>degraded</option>
+                                <option value="terminated" {% if service and service.get('service_status', service.get('status')) == 'terminated' %}selected{% endif %}>terminated</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="platform">Platform</label>
+                            <select id="platform" name="platform">
+                                <option value="">Select...</option>
+                                <option value="local" {% if service and service.get('platform') == 'local' %}selected{% endif %}>Local</option>
+                                <option value="aws" {% if service and service.get('platform') == 'aws' %}selected{% endif %}>AWS</option>
+                                <option value="gcp" {% if service and service.get('platform') == 'gcp' %}selected{% endif %}>GCP</option>
+                                <option value="linode" {% if service and service.get('platform') == 'linode' %}selected{% endif %}>Linode</option>
+                                <option value="oracle" {% if service and service.get('platform') == 'oracle' %}selected{% endif %}>Oracle</option>
+                                <option value="other" {% if service and service.get('platform') == 'other' %}selected{% endif %}>Other</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div>
+                            <label for="region">Region ID</label>
+                            <input type="text" id="region" name="region" value="{{ service.get('region', '') if service else '' }}">
+                        </div>
+                        <div>
+                            <label for="cluster_id">Cluster ID</label>
+                            <input type="text" id="cluster_id" name="cluster_id" value="{{ service.get('cluster_id', '') if service else '' }}">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div>
+                            <label for="node_id">Node ID</label>
+                            <input type="text" id="node_id" name="node_id" value="{{ service.get('node_id', '') if service else '' }}">
+                        </div>
+                        <div>
+                            <label for="service_ip">Service IP</label>
+                            <input type="text" id="service_ip" name="service_ip" value="{{ service.get('service_ip', service.get('ip_address', '')) if service else '' }}">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div>
+                            <label for="service_subdomain">Service Subdomain</label>
+                            <input type="text" id="service_subdomain" name="service_subdomain" value="{{ service.get('service_subdomain', service.get('hostname', '')) if service else '' }}">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div>
+                            <label for="allocated_cpu_cores">Allocated CPU Cores</label>
+                            <input type="number" step="0.1" id="allocated_cpu_cores" name="allocated_cpu_cores" value="{{ service.get('allocated_cpu_cores', 0.0) if service else 0.0 }}" min="0">
+                        </div>
+                        <div>
+                            <label for="allocated_ram_mb">Allocated RAM (MB)</label>
+                            <input type="number" id="allocated_ram_mb" name="allocated_ram_mb" value="{{ service.get('allocated_ram_mb', 0) if service else 0 }}" min="0">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div>
+                            <label for="allocated_disk_gb">Allocated Disk (GB)</label>
+                            <input type="number" id="allocated_disk_gb" name="allocated_disk_gb" value="{{ service.get('allocated_disk_gb', 0) if service else 0 }}" min="0">
+                        </div>
+                        <div>
+                            <label for="allocated_ports">Allocated Ports</label>
+                            <input type="text" id="allocated_ports" name="allocated_ports" value="{{ service.get('allocated_ports', []) | join(',') if service else '' }}" placeholder="25565,25575">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header"><h3 class="card-title">Minecraft Details</h3></div>
+                <div class="card-body">
+                    <div class="form-row">
+                        <div>
+                            <label for="minecraft_version">Minecraft Version</label>
+                            <input type="text" id="minecraft_version" name="minecraft_version" value="{{ service.get('minecraft_version', '') if service else '' }}">
+                        </div>
+                        <div>
+                            <label for="service_rcon_port">RCON Port</label>
+                            <input type="number" id="service_rcon_port" name="service_rcon_port" value="{{ service.get('service_rcon_port', '') if service else '' }}" min="0">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div>
+                            <label for="service_rcon_pwd">RCON Password</label>
+                            <input type="text" id="service_rcon_pwd" name="service_rcon_pwd" value="{{ service.get('service_rcon_pwd', '') if service else '' }}">
+                        </div>
+                        <div>
+                            <label for="player_limit">Player Limit</label>
+                            <input type="number" id="player_limit" name="player_limit" value="{{ service.get('player_limit', 0) if service else 0 }}" min="0">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div>
+                            <label for="modpack_name">Modpack Name</label>
+                            <input type="text" id="modpack_name" name="modpack_name" value="{{ service.get('modpack_name', '') if service else '' }}">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header"><h3 class="card-title">Mumble Details</h3></div>
+                <div class="card-body">
+                    <p class="text-muted">Placeholder</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header"><h3 class="card-title">Web Server Details</h3></div>
+                <div class="card-body">
+                    <div class="form-row">
+                        <div>
+                            <label for="web_server_engine">Web Server Engine</label>
+                            <input type="text" id="web_server_engine" name="web_server_engine" value="{{ service.get('web_server_engine', '') if service else '' }}">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div>
+                            <label for="homepage_url">Homepage URL</label>
+                            <input type="text" id="homepage_url" name="homepage_url" value="{{ service.get('homepage_url', '') if service else '' }}">
+                        </div>
+                        <div>
+                            <label for="management_url">Management URL</label>
+                            <input type="text" id="management_url" name="management_url" value="{{ service.get('management_url', '') if service else '' }}">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header"><h3 class="card-title">State and Activities</h3></div>
+                <div class="card-body">
+                    <div class="form-row">
+                        <div>
+                            <label for="provisioning_status">Provisioning Status</label>
+                            <select id="provisioning_status" name="provisioning_status">
+                                <option value="pending" {% if not service or service.get('provisioning_status') == 'pending' %}selected{% endif %}>pending</option>
+                                <option value="in_progress" {% if service and service.get('provisioning_status') == 'in_progress' %}selected{% endif %}>in_progress</option>
+                                <option value="provisioned" {% if service and service.get('provisioning_status') == 'provisioned' %}selected{% endif %}>provisioned</option>
+                                <option value="failed" {% if service and service.get('provisioning_status') == 'failed' %}selected{% endif %}>failed</option>
+                                <option value="terminated" {% if service and service.get('provisioning_status') == 'terminated' %}selected{% endif %}>Terminated</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="service_provision_source">Provision Source</label>
+                            <select id="service_provision_source" name="service_provision_source">
+                                <option value="manual" {% if not service or service.get('service_provision_source') == 'manual' %}selected{% endif %}>Manual</option>
+                                <option value="pipeline" {% if service and service.get('service_provision_source') == 'pipeline' %}selected{% endif %}>Pipeline</option>
+                                <option value="cli_api" {% if service and service.get('service_provision_source') == 'cli_api' %}selected{% endif %}>CLI/API</option>
+                                <option value="script" {% if service and service.get('service_provision_source') == 'script' %}selected{% endif %}>Script</option>
+                                <option value="other" {% if service and service.get('service_provision_source') == 'other' %}selected{% endif %}>Other</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div>
+                            <label for="service_created_timestamp">Created Timestamp</label>
+                            <input type="datetime-local" id="service_created_timestamp" name="service_created_timestamp" value="{{ (service.get('service_created_timestamp') or service.get('created') or '')[:16] if service else '' }}">
+                        </div>
+                        <div>
+                            <label for="service_updated_timestamp">Updated Timestamp</label>
+                            <input type="datetime-local" id="service_updated_timestamp" name="service_updated_timestamp" value="{{ (service.get('service_updated_timestamp') or service.get('updated') or '')[:16] if service else '' }}">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div>
+                            <label for="service_terminated_timestamp">Terminated Timestamp</label>
+                            <input type="datetime-local" id="service_terminated_timestamp" name="service_terminated_timestamp" value="{{ (service.get('service_terminated_timestamp') or service.get('terminated') or '')[:16] if service else '' }}">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="submit-btn">{% if service %}Save Service{% else %}Create Service{% endif %}</button>
+                {% if service %}
+                <button
+                    type="submit"
+                    class="submit-btn danger-btn"
+                    formaction="{{ url_for('serviceid_module.delete_service', uuid=service.get('uuid')) }}"
+                    formmethod="post"
+                    formnovalidate
+                    onclick="return confirm('Delete this service record? This cannot be undone.');"
+                >Delete Record</button>
+                {% endif %}
+                <a href="{% if service %}{{ url_for('serviceid_module.service_profile', uuid=service.get('uuid')) }}{% else %}{{ url_for('serviceid_module.serviceid_dashboard') }}{% endif %}" class="secondary-btn">Cancel</a>
+            </div>
+        </form>
+    </main>
+</body>
+</html>
