@@ -1,6 +1,6 @@
 # AI Instructions
 
-You are assisting with GoobyDesk_Modern. An Open-Source, Cloud Native, Lightweight, Databaseless, Self-Hosted ITSM Service Desk.
+You are assisting with GoobyDesk. An Open-Source, Cloud Native, Lightweight, Databaseless, Self-Hosted ITSM Service Desk.
 
 **Entry Point:** `app.py`
 
