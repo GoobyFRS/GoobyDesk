@@ -21,10 +21,6 @@
 </head>
 <body>
     <main class="container">
-        <!-- Logo -->
-        <div class="logo">
-            <img src="{{ url_for('static', filename='/img/logo_white.webp') }}" alt="GoobyDesk Logo">
-        </div>
         <!--
             Values below fall back to sample/placeholder numbers with the `default()` filter
             wherever GoobyDesk's Flask route doesn't pass real data yet (queue_counts,
@@ -76,9 +72,12 @@
         }) %}
 
         <div class="page-header">
-            <div>
+            <div class="page-header-title">
                 <h2>GoobyDesk Reporting</h2>
                 <p class="text-muted">Ticket Analytics and Platform Reporting</p>
+            </div>
+            <div class="logo">
+                <img src="{{ url_for('static', filename='/img/logo_white.webp') }}" alt="GoobyDesk Logo">
             </div>
             <div class="page-header-actions"></div>
         </div>

@@ -46,11 +46,10 @@
 /* GPT5 Reusable Dashboard */
 
 .page-header {
-    display: flex;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
     align-items: center;
     margin-bottom: 2rem;
-    flex-wrap: wrap;
     gap: 1rem;
     text-align: left;
 }
@@ -58,6 +57,7 @@
 .page-header-actions {
     display: flex;
     gap: .75rem;
+    justify-self: end;
 }
 
 .page-header-actions .submit-btn {
@@ -66,6 +66,14 @@
     display: inline-block;
     text-decoration: none;
     text-align: center;
+}
+
+.page-header .logo {
+    justify-self: center;
+}
+
+.page-header-title {
+    justify-self: start;
 }
 
 .page-actions {
