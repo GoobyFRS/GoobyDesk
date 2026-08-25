@@ -90,6 +90,10 @@
     </div>
 {%- endmacro %}
 
+{% macro render_record_dump(record) -%}
+    <pre class="profile-record-json">{{ record | tojson(indent=2) }}</pre>
+{%- endmacro %}
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -284,9 +288,12 @@
                     {'label': 'Last Modified By', 'value': audit.get('last_modified_by')},
                 ], true) }}
 
-                {{ render_section('Render Full Employee Record', [
-                    {'label': 'Record', 'value': employee},
-                ], true) }}
+                <div class="card profile-card profile-card--full">
+                    <div class="card-header"><h3 class="card-title">Render Full Employee Record</h3></div>
+                    <div class="card-body ticket-details">
+                        {{ render_record_dump(employee) }}
+                    </div>
+                </div>
             </div>
 
             <div class="profile-extras">
