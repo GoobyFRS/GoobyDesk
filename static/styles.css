@@ -278,6 +278,11 @@ form > .card + .card {
     margin-top: 1.5rem;
 }
 
+/* Utility: add vertical spacing above a card */
+.card--spaced {
+    margin-top: 1.5rem;
+}
+
 .grid {
     display: grid;
     gap: 1.5rem;
@@ -391,9 +396,10 @@ form > .card + .card {
 }
 
 .badge-primary {
-    background: rgba(163, 113, 247, .30);
+    /* Gold color for VIP status */
+    background: rgba(212, 175, 55, .30);
     color: #ffffff;
-    border-color: rgba(163, 113, 247, .6);
+    border-color: rgba(212, 175, 55, .6);
 }
 
 /* ==========================================================

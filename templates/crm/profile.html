@@ -134,7 +134,7 @@
             </div>
 
             <div class="card">
-                <div class="card-header"><h3 class="card-title">Security</h3></div>
+                <div class="card-header"><h3 class="card-title">Access and Security</h3></div>
                 <div class="card-body ticket-details">
                     {{ render_field('Account Status', customer.get('status', 'Unknown') | capitalize) }}
                     {{ render_field('Email Verified', 'Yes' if customer.get('email_verified') else 'No') }}
@@ -242,6 +242,7 @@
             </div>
 
             <div class="card">
+                <div class="card-header"><h3 class="card-title">Customer Profile Notes</h3></div>
                 <div class="card-body">
                     {% if customer.get('crm_worknotes') %}
                         <ul class="notes-list">

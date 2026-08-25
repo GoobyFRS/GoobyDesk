@@ -278,22 +278,22 @@
                         <div class="form-row">
                             <div>
                                 <label for="hourly_rate">Hourly Rate</label>
-                                <input type="number" step="0.01" id="hourly_rate" name="hourly_rate" value="{{ employment.get('hourly_rate', '') }}" placeholder="25.00">
+                                <input type="number" step="0.01" id="hourly_rate" name="hourly_rate" value="{{ employment.get('hourly_rate', '') }}" placeholder="$25.00">
                             </div>
                             <div>
                                 <label for="salary">Salary (annual)</label>
-                                <input type="number" step="0.01" id="salary" name="salary" value="{{ employment.get('salary', '') }}" placeholder="50000.00">
+                                <input type="number" step="0.01" id="salary" name="salary" value="{{ employment.get('salary', '') }}" placeholder="$50,000.00">
                             </div>
                         </div>
 
                         <div class="form-row">
                             <div>
                                 <label for="bonus_rate">Bonus Rate</label>
-                                <input type="text" id="bonus_rate" name="bonus_rate" value="{{ employment.get('bonus_rate', '') }}" placeholder="0.0">
+                                <input type="text" id="bonus_rate" name="bonus_rate" value="{{ employment.get('bonus_rate', '') }}" placeholder="10%">
                             </div>
                             <div>
                                 <label for="direct_deposit_info">Direct Deposit Info</label>
-                                <input type="text" id="direct_deposit_info" name="direct_deposit_info" value="{{ employment.get('direct_deposit_info', '') }}" placeholder="Sensitive bank routing details">
+                                <input type="text" id="direct_deposit_info" name="direct_deposit_info" value="{{ employment.get('direct_deposit_info', '') }}" placeholder="AN:RN">
                             </div>
                         </div>
 
@@ -376,7 +376,7 @@
                     </div>
                 </div>
             </div>
-            <section class="card">
+            <section class="card card--spaced">
                 <div class="card-header"><h3 class="card-title">Notes</h3></div>
                 <div class="card-body">
                     <div class="form-row">
