@@ -629,6 +629,15 @@ def new_employee():
     employees = hr_store.load_all()
     auth_employees = auth_store.load_all()
     new_record, employee_id = _build_employee_record(form, employees)
+    # If an initial worknote was provided on creation, append it to the record.
+    initial_note = _clean_form_value(form, "hr_worknotes")
+    if initial_note:
+        new_record.setdefault("hr_worknotes", [])
+        new_record["hr_worknotes"].append({
+            "created_by": resolve_preferred_name(session.get("technician")) or "unknown",
+            "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "note": initial_note,
+        })
     temporary_password = None
     auth_record = None
 

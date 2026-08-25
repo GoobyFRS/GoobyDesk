@@ -371,22 +371,22 @@
                                 <label for="emergency_contact_phone">Phone</label>
                                 <input type="text" id="emergency_contact_phone" name="emergency_contact_phone" value="{{ emergency_contact.get('phone', '') if employee else '' }}">
                             </div>
-                            <div>
-                                <label for="certifications_csv">Certifications</label>
-                                <input type="text" id="certifications_csv" name="certifications_csv" value="{{ certifications_value if employee else '' }}" placeholder="Comma-separated list">
-                            </div>
-                        </div>
-
-                        <div class="form-row">
-                            <div>
-                                <label for="skills_csv">Skills</label>
-                                <input type="text" id="skills_csv" name="skills_csv" value="{{ skills_value if employee else '' }}" placeholder="Comma-separated list">
-                            </div>
                             <div></div>
                         </div>
                     </div>
                 </div>
             </div>
+            <section class="card">
+                <div class="card-header"><h3 class="card-title">Notes</h3></div>
+                <div class="card-body">
+                    <div class="form-row">
+                        <div>
+                            <label for="hr_worknotes">Initial Note</label>
+                            <textarea id="hr_worknotes" name="hr_worknotes" placeholder="Add a note..."></textarea>
+                        </div>
+                    </div>
+                </div>
+            </section>
 
             <div class="form-actions">
                 <button type="submit" class="submit-btn">{% if employee %}Save Changes{% else %}Create Employee{% endif %}</button>
