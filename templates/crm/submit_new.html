@@ -138,11 +138,11 @@
                     <div class="form-row">
                         <div>
                             <label for="discord_username">Discord Username</label>
-                            <input type="text" id="discord_username" name="discord_username" value="{{ customer.get('discord', {}).get('username','') if customer else '' }}">
+                            <input type="text" id="discord_username" name="discord_username" value="{{ customer.get('discord', {}).get('username','') if customer else '' }}" placeholder="User#1234">
                         </div>
                         <div>
                             <label for="minecraft_username">Minecraft Username</label>
-                            <input type="text" id="minecraft_username" name="minecraft_username" value="{{ customer.get('minecraft', {}).get('username','') if customer else '' }}">
+                            <input type="text" id="minecraft_username" name="minecraft_username" value="{{ customer.get('minecraft', {}).get('username','') if customer else '' }}" placeholder="UserMC123">
                         </div>
                     </div>
 
