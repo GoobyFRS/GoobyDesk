@@ -109,11 +109,11 @@
                         <div class="form-row">
                             <div>
                                 <label for="street">Street Address</label>
-                                <input type="text" id="street" name="street" value="{{ address.get('street', '') }}" placeholder="Mailing street address">
+                                <input type="text" id="street" name="street" value="{{ address.get('street', '') }}" placeholder="Mailing Street Address">
                             </div>
                             <div>
                                 <label for="street_2">Street Address 2</label>
-                                <input type="text" id="street_2" name="street_2" value="{{ address.get('street_2', address.get('street_address_2', '')) }}" placeholder="Suite, unit, floor">
+                                <input type="text" id="street_2" name="street_2" value="{{ address.get('street_2', address.get('street_address_2', '')) }}" placeholder="Unit, Apartment, Suite, Floor">
                             </div>
                         </div>
 
@@ -169,11 +169,11 @@
                         <div class="form-row">
                             <div>
                                 <label for="minecraft_username">Minecraft Username</label>
-                                <input type="text" id="minecraft_username" name="minecraft_username" value="{{ minecraft.get('username', '') if employee else '' }}">
+                                <input type="text" id="minecraft_username" name="minecraft_username" value="{{ minecraft.get('username', '') if employee else '' }}" placeholder="UserMC123">
                             </div>
                             <div>
                                 <label for="discord_username">Discord Username</label>
-                                <input type="text" id="discord_username" name="discord_username" value="{{ discord.get('username', '') if employee else '' }}">
+                                <input type="text" id="discord_username" name="discord_username" value="{{ discord.get('username', '') if employee else '' }}" placeholder="User#1234">
                             </div>
                         </div>
                     </div>
