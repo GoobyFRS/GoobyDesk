@@ -1,9 +1,11 @@
 import json
+import io
 import os
 import tempfile
 import unittest
 
 import blueprints.api_module as api_module
+import blueprints.appid_module as appid_module
 import blueprints.changes_module as changes_module
 import blueprints.crm_module as crm_module
 import blueprints.hr_module as hr_module
@@ -61,6 +63,7 @@ class BlueprintRouteTests(unittest.TestCase):
         """Every blueprint should declare a module logger for production-safe output."""
         modules = [
             api_module,
+            appid_module,
             changes_module,
             crm_module,
             hr_module,
@@ -73,6 +76,19 @@ class BlueprintRouteTests(unittest.TestCase):
         for module in modules:
             self.assertTrue(hasattr(module, "logger"))
             self.assertEqual(module.logger.name, module.__name__)
+
+    def test_appid_blueprint_has_standard_route_schema(self):
+        """The AppID blueprint should expose the same CRUD-style route layout used across modules."""
+        self.assertTrue(hasattr(appid_module, "appid_dashboard"))
+        self.assertTrue(hasattr(appid_module, "submit_new"))
+        self.assertTrue(hasattr(appid_module, "view_appid"))
+        self.assertTrue(hasattr(appid_module, "edit_appid"))
+        self.assertTrue(hasattr(appid_module, "delete_appid"))
+        self.assertTrue(hasattr(appid_module, "export_appids"))
+        self.assertTrue(hasattr(appid_module, "import_appids"))
+        self.assertTrue(hasattr(appid_module, "search_appids"))
+        self.assertTrue(hasattr(appid_module, "bulk_update_appids"))
+        self.assertIn("/appid/", str(self.app.url_map))
 
 class ApiBlueprintTests(BlueprintRouteTests):
     """Validate the public API ingress endpoints."""
@@ -175,6 +191,54 @@ class CrmBlueprintTests(BlueprintRouteTests):
         self.assertEqual(customers[0]["first_name"], "Steve")
         self.assertEqual(customers[0]["last_name"], "Customer")
 
+    def test_crm_customer_delete_unlinks_services(self):
+        """Deleting a customer keeps linked services and marks them terminated."""
+        customer_file = os.path.join(self.temp_dir.name, "customers.json")
+        service_file = os.path.join(self.temp_dir.name, "serviceid.json")
+        self._write_json(
+            customer_file,
+            [
+                {
+                    "uuid": "customer-123",
+                    "customer_id": "CID-2026-0001",
+                    "first_name": "Steve",
+                    "last_name": "Customer",
+                    "services": ["SRV-2026-0001"],
+                }
+            ],
+        )
+        self._write_json(
+            service_file,
+            [
+                {
+                    "uuid": "service-123",
+                    "service_id": "SRV-2026-0001",
+                    "service_name": "Test Service",
+                    "customer_uuid": "customer-123",
+                }
+            ],
+        )
+        self.app.config["LOADED_CONFIG"] = {
+            "core": {
+                "customers_file": customer_file,
+                "serviceid_appid_file": service_file,
+            }
+        }
+        self._set_auth_session()
+
+        response = self.client.post("/crm/customer/customer-123/delete")
+
+        self.assertEqual(response.status_code, 302)
+        with open(customer_file, "r", encoding="utf-8") as handle:
+            customers = json.load(handle)
+        with open(service_file, "r", encoding="utf-8") as handle:
+            services = json.load(handle)
+        self.assertEqual(customers, [])
+        self.assertEqual(len(services), 1)
+        self.assertEqual(services[0]["customer_uuid"], "")
+        self.assertEqual(services[0]["service_status"], "terminated")
+        self.assertEqual(services[0]["provisioning_status"], "terminated")
+
     def test_crm_export_csv(self):
         """The CRM export endpoint should return a CSV download for all customers."""
         customer_file = os.path.join(self.temp_dir.name, "customers.json")
@@ -205,6 +269,106 @@ class CrmBlueprintTests(BlueprintRouteTests):
 
 class HrBlueprintTests(BlueprintRouteTests):
     """Validate HR employee dashboard and new-employee provisioning."""
+
+    def test_hr_profile_and_form_sections_render(self):
+        """The rebuilt HR profile and form pages should render their planned sections."""
+        hr_file = os.path.join(self.temp_dir.name, "hr.json")
+        auth_file = os.path.join(self.temp_dir.name, "employees.json")
+        self._write_json(
+            hr_file,
+            [
+                {
+                    "uuid": "employee-123",
+                    "employee_id": "EMP-2026-0001",
+                    "first_name": "Bob",
+                    "last_name": "Employee",
+                    "preferred_name": "Bob",
+                    "email": "bob@example.org",
+                    "phone": "555-0100",
+                    "timezone": "UTC",
+                    "employment": {
+                        "hire_date": "2026-01-02",
+                        "termination_date": None,
+                        "status": "active",
+                        "rehire_eligible": True,
+                        "title": "Systems Engineer",
+                        "business_unit": "IT",
+                        "department": "Support",
+                        "reports_to": "Jane Manager",
+                        "employment_type": "full_time",
+                        "compensation_type": "salary",
+                        "salary": 90000,
+                        "hourly_rate": None,
+                        "pay_frequency": "biweekly",
+                        "direct_deposit_info": None,
+                        "salary_exempt": True,
+                        "bonus_eligible": False,
+                        "bonus_rate": 0.0,
+                        "pto_available_hours": 40,
+                        "pto_used_hours": 0,
+                    },
+                    "access": {
+                        "role": "itsm_technician",
+                        "assignment_queue": "support",
+                        "account_locked": False,
+                        "mfa_enabled": False,
+                        "last_login": None,
+                        "login_enabled": True,
+                        "auth_username": "bob",
+                        "provisioning_status": "complete",
+                    },
+                    "address": {
+                        "street": "1 Main St",
+                        "street_2": "Suite 2",
+                        "city": "Austin",
+                        "state": "TX",
+                        "postal_code": "78701",
+                        "country": "United States",
+                    },
+                    "contact_preferences": {
+                        "preferred_contact": "email",
+                        "maintenance_notifications": True,
+                    },
+                    "emergency_contact": {
+                        "name": "Jane Employee",
+                        "relationship": "Spouse",
+                        "phone": "555-0199",
+                    },
+                    "minecraft": {"username": "bobmc"},
+                    "discord": {"username": "bob#1234"},
+                    "certifications": ["A+"],
+                    "skills": ["Troubleshooting"],
+                    "audit": {
+                        "creation_source": "auth_web",
+                        "last_modified": "2026-01-03T00:00:00Z",
+                        "last_modified_by": "hradmin",
+                    },
+                    "created": "2026-01-02T00:00:00Z",
+                    "updated": "2026-01-03T00:00:00Z",
+                }
+            ],
+        )
+        self._write_json(auth_file, [])
+        self.app.config["LOADED_CONFIG"] = {
+            "core": {
+                "hr_file": hr_file,
+                "employee_auth_file": auth_file,
+            }
+        }
+        self._set_auth_session(username="hradmin", roles=["hr_technician"])
+
+        profile_response = self.client.get("/hr/employee/employee-123")
+        self.assertEqual(profile_response.status_code, 200)
+        profile_text = profile_response.get_data(as_text=True)
+        self.assertIn("Employee Overview", profile_text)
+        self.assertIn("Record Audit", profile_text)
+
+        form_response = self.client.get("/hr/employee/submit-new")
+        self.assertEqual(form_response.status_code, 200)
+        form_text = form_response.get_data(as_text=True)
+        self.assertIn("Employee Overview", form_text)
+        self.assertIn("Contact Details", form_text)
+        self.assertIn("Compensation", form_text)
 
     def test_hr_dashboard_and_employee_creation(self):
         """The HR dashboard renders and a valid employee record is saved."""
@@ -241,6 +405,50 @@ class HrBlueprintTests(BlueprintRouteTests):
             employees = json.load(handle)
         self.assertEqual(len(employees), 1)
         self.assertEqual(employees[0]["first_name"], "Bob")
+
+    def test_hr_employee_delete_removes_auth_record(self):
+        """Deleting an employee removes the HR and auth records."""
+        hr_file = os.path.join(self.temp_dir.name, "hr.json")
+        auth_file = os.path.join(self.temp_dir.name, "employees.json")
+        self._write_json(
+            hr_file,
+            [
+                {
+                    "uuid": "employee-123",
+                    "employee_id": "EMP-2026-0001",
+                    "first_name": "Bob",
+                    "last_name": "Employee",
+                    "email": "bob@example.org",
+                }
+            ],
+        )
+        self._write_json(
+            auth_file,
+            [
+                {
+                    "uuid": "employee-123",
+                    "auth_username": "bob",
+                    "roles": ["hr_technician"],
+                }
+            ],
+        )
+        self.app.config["LOADED_CONFIG"] = {
+            "core": {
+                "hr_file": hr_file,
+                "employee_auth_file": auth_file,
+            }
+        }
+        self._set_auth_session(username="hradmin", roles=["hr_technician"])
+
+        response = self.client.post("/hr/employee/employee-123/delete")
+
+        self.assertEqual(response.status_code, 302)
+        with open(hr_file, "r", encoding="utf-8") as handle:
+            employees = json.load(handle)
+        with open(auth_file, "r", encoding="utf-8") as handle:
+            auth_employees = json.load(handle)
+        self.assertEqual(employees, [])
+        self.assertEqual(auth_employees, [])
 
     def test_hr_export_csv(self):
         """The HR export endpoint should return a CSV download for all employees."""
@@ -417,6 +625,100 @@ class ServiceIdBlueprintTests(BlueprintRouteTests):
             services = json.load(handle)
         self.assertEqual(len(services), 1)
         self.assertEqual(services[0]["service_name"], "Test Service")
+
+    def test_service_csv_import(self):
+        """The CSV import endpoint should create service records from uploaded rows."""
+        customer_file = os.path.join(self.temp_dir.name, "customers.json")
+        service_file = os.path.join(self.temp_dir.name, "serviceid.json")
+        self._write_json(
+            customer_file,
+            [{
+                "uuid": "customer-123",
+                "customer_id": "CID-2026-0001",
+                "first_name": "Alice",
+                "last_name": "Customer",
+                "services": [],
+            }],
+        )
+        self._write_json(service_file, [])
+        self.app.config["LOADED_CONFIG"] = {
+            "core": {
+                "customers_file": customer_file,
+                "serviceid_appid_file": service_file,
+            }
+        }
+        self._set_auth_session()
+
+        csv_payload = io.BytesIO(
+            (
+                "service_name,customer_id,service_type,service_status,provisioning_status,allocated_cpu_cores,allocated_ram_mb,allocated_disk_gb,allocated_ports\n"
+                "Imported Service,CID-2026-0001,web_server,active,provisioned,4,8192,120,\"25565,25575\"\n"
+            ).encode("utf-8")
+        )
+
+        response = self.client.post(
+            "/serviceid/import/csv",
+            data={"csv_file": (csv_payload, "service_import.csv")},
+            content_type="multipart/form-data",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        with open(service_file, "r", encoding="utf-8") as handle:
+            services = json.load(handle)
+        self.assertEqual(len(services), 1)
+        self.assertEqual(services[0]["service_name"], "Imported Service")
+        self.assertEqual(services[0]["customer_uuid"], "customer-123")
+        self.assertEqual(services[0]["allocated_ports"], [25565, 25575])
+
+    def test_service_delete_route(self):
+        """The edit form should expose delete and the delete route should remove the record."""
+        customer_file = os.path.join(self.temp_dir.name, "customers.json")
+        service_file = os.path.join(self.temp_dir.name, "serviceid.json")
+        self._write_json(
+            customer_file,
+            [{
+                "uuid": "customer-123",
+                "customer_id": "CID-2026-0001",
+                "first_name": "Alice",
+                "last_name": "Customer",
+                "services": ["SRV-2026-0001"],
+            }],
+        )
+        self._write_json(
+            service_file,
+            [{
+                "uuid": "service-123",
+                "service_id": "SRV-2026-0001",
+                "service_name": "Delete Me",
+                "customer_id": "CID-2026-0001",
+                "customer_uuid": "customer-123",
+                "service_status": "active",
+            }],
+        )
+        self.app.config["LOADED_CONFIG"] = {
+            "core": {
+                "customers_file": customer_file,
+                "serviceid_appid_file": service_file,
+            }
+        }
+        self._set_auth_session()
+
+        edit_response = self.client.get("/serviceid/edit/service-123")
+        self.assertEqual(edit_response.status_code, 200)
+        edit_body = edit_response.get_data(as_text=True)
+        self.assertIn("Delete Record", edit_body)
+        self.assertIn("Delete this service record? This cannot be undone.", edit_body)
+
+        delete_response = self.client.post("/serviceid/delete/service-123")
+        self.assertEqual(delete_response.status_code, 302)
+
+        with open(service_file, "r", encoding="utf-8") as handle:
+            services = json.load(handle)
+        self.assertEqual(services, [])
+
+        with open(customer_file, "r", encoding="utf-8") as handle:
+            customers = json.load(handle)
+        self.assertEqual(customers[0]["services"], [])
 
 if __name__ == "__main__":
     unittest.main()

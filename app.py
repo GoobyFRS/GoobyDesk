@@ -17,12 +17,13 @@ from blueprints.itsm_module import itsm_module_bp
 from blueprints.hr_module import hr_module_bp
 from blueprints.crm_module import crm_module_bp
 from blueprints.serviceid_module import serviceid_module_bp
+from blueprints.appid_module import appid_module_bp
 from blueprints.media_request_module import media_request_module_bp
 from storage.employee_store import EmployeeStore
 from storage.changes_store import ChangesStore
 from storage.ticket_store import TicketStore
 
-BUILDID=str("1.0.4")
+BUILDID=str("1.0.5")
 
 def _pseudonymize_actor(name: str) -> str:
     """Return a stable, opaque actor id for logging (no raw usernames).
@@ -133,6 +134,7 @@ app.register_blueprint(changes_module_bp)
 app.register_blueprint(hr_module_bp)
 app.register_blueprint(crm_module_bp)
 app.register_blueprint(serviceid_module_bp)
+app.register_blueprint(appid_module_bp)
 app.register_blueprint(media_request_module_bp)
 
 # Security Headers for all responses.

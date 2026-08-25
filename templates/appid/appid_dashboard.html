@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='img/favicon.ico') }}">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="author" content="Matt Faulkner">
+	<meta name="description" content="GoobyDesk AppID Dashboard">
+	<meta name="robots" content="noindex, nofollow">
+	<meta name="theme-color" content="#284389">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<link rel="preconnect" href="https://fonts.bunny.net/css">
+	<link rel="preconnect" href="https://fonts.bunny.net/css" crossorigin>
+	<script src="{{ url_for('static', filename='main.js') }}"></script>
+	<link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+	<title>AppID Dashboard - GoobyDesk</title>
+</head>
+<body>
+	<main class="container container--wide">
+		<div class="page-header">
+			<div class="logo">
+				<img src="{{ url_for('static', filename='/img/logo_white.webp') }}" alt="GoobyDesk Logo">
+			</div>
+			<div>
+				<h2>Application Dashboard</h2>
+				<p class="text-muted">Welcome back, {{ loggedInTech }}</p>
+			</div>
+			<div class="page-header-actions">
+				<a href="{{ url_for('appid_module.submit_new') }}" class="submit-btn">+ New Application</a>
+			</div>
+		</div>
+
+		<div class="card">
+			<div class="card-header">
+				<div class="header-row header-row--flush">
+					<h3 class="card-title">Applications</h3>
+					<form method="get" class="inline-form inline-form--flush">
+						<label class="checkbox-label" for="show_all">
+							<input type="checkbox" id="show_all" name="show_all" value="1" {% if show_all %}checked{% endif %} onchange="this.form.submit()">
+							Show All
+						</label>
+					</form>
+				</div>
+			</div>
+			<div class="card-body">
+				<table class="table">
+					<thead>
+						<tr>
+							<th scope="col">App ID</th>
+							<th scope="col">Application Name</th>
+							<th scope="col">Version</th>
+							<th scope="col">Status</th>
+							<th scope="col">Service ID</th>
+						</tr>
+					</thead>
+					<tbody>
+						{% for appid in appids %}
+						<tr>
+							<td>
+								{% if appid.get('uuid') %}
+								<a href="{{ url_for('appid_module.view_appid', appid_uuid=appid.get('uuid')) }}">
+									{{ appid.get('app_id') or appid.get('application_id') or 'N/A' }}
+								</a>
+								{% else %}
+								{{ appid.get('app_id') or appid.get('application_id') or 'N/A' }}
+								{% endif %}
+							</td>
+							<td>{{ appid.get('app_name') or appid.get('application_name') or appid.get('name') or '—' }}</td>
+							<td>{{ appid.get('app_version') or appid.get('application_version') or '—' }}</td>
+							<td>
+								<span class="badge badge-secondary">
+									{{ appid.get('app_status') or appid.get('status') or 'Unknown' }}
+								</span>
+							</td>
+							<td>{{ appid.get('service_id') or '—' }}</td>
+						</tr>
+						{% else %}
+						<tr>
+							<td colspan="5" class="text-muted">No application records found.</td>
+						</tr>
+						{% endfor %}
+					</tbody>
+				</table>
+			</div>
+		</div>
+
+		<p class="footer-text">©2025 GoobyDesk, FOSS created by GoobyFRS | Logged In as: {{ loggedInTech }} |
+			<br>
+			<a href="{{ url_for('itsm.dashboard') }}">Queues</a> | <a href="{{ url_for('changes_module.changes_home') }}">Changes</a> | <a href="{{ url_for('crm_module.crm_dashboard') }}">CRM</a> | <a href="{{ url_for('hr_module.hr_dashboard') }}">HR</a> | <a href="{{ url_for('serviceid_module.serviceid_dashboard') }}">ServiceID</a> | <a href="{{ url_for('appid_module.appid_dashboard') }}">AppID</a> | <a href="{{ url_for('reports_module.reports_home') }}">Reports</a>
+		</p>
+	</main>
+</body>
+</html>

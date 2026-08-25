@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="description" content="Import Service Records from CSV">
+    <link rel="preconnect" href="https://fonts.bunny.net/css">
+    <link rel="preconnect" href="https://fonts.bunny.net/css" crossorigin>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <script src="{{ url_for('static', filename='main.js') }}"></script>
+    <title>Import Service CSV — GoobyDesk</title>
+</head>
+<body>
+    <main class="container container--narrow">
+        <div class="logo">
+            <img src="{{ url_for('static', filename='/img/logo_white.webp') }}" alt="GoobyDesk Logo">
+        </div>
+
+        <h2>Import Service CSV</h2>
+        <p class="text-muted">Upload a CSV file with service records. Existing rows are matched by <code>uuid</code> or <code>service_id</code>.</p>
+
+        {% if error %}
+        <div class="alert alert--danger" role="alert">{{ error }}</div>
+        {% endif %}
+
+        {% if imported_count is defined %}
+        <div class="alert alert--success" role="status">
+            Imported {{ imported_count }} record{{ 's' if imported_count != 1 else '' }}.
+            {% if updated_count %} Updated {{ updated_count }} record{{ 's' if updated_count != 1 else '' }}.{% endif %}
+        </div>
+        {% endif %}
+
+        {% if row_errors %}
+        <div class="alert alert--warning" role="alert">
+            <strong>Skipped rows:</strong>
+            <ul>
+                {% for row_error in row_errors %}
+                <li>{{ row_error }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        <div class="card">
+            <div class="card-header"><h3 class="card-title">CSV Upload</h3></div>
+            <div class="card-body">
+                <form method="POST" enctype="multipart/form-data">
+                    <div class="form-row">
+                        <div>
+                            <label for="csv_file">CSV File</label>
+                            <input type="file" id="csv_file" name="csv_file" accept=".csv,text/csv" required>
+                        </div>
+                    </div>
+                    <p class="text-muted">Recommended columns: service_id, service_name, customer_id, customer_uuid, service_type, service_status, provisioning_status, server_type, platform, service_ip, allocated_cpu_cores, allocated_ram_mb, allocated_disk_gb, allocated_ports.</p>
+                    <div class="form-actions">
+                        <button type="submit" class="submit-btn">Import CSV</button>
+                        <a href="{{ url_for('serviceid_module.serviceid_dashboard') }}" class="secondary-btn">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+</body>
+</html>
