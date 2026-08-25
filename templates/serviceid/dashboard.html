@@ -69,8 +69,25 @@
                             <td>{{ service.get('service_name') or service.get('name') or '—' }}</td>
                             <td>{{ service.get('service_type') or service.get('type') or '—' }}</td>
                             <td>
-                                <span class="badge badge-secondary">
-                                    {{ service.get('provisioning_status') or service.get('status') or 'Unknown' }}
+                                {% set prov_status = service.get('provisioning_status') or service.get('status') or 'Unknown' %}
+                                {% set prov_key = prov_status|string|lower|replace('-', '_')|replace(' ', '_') %}
+                                {% if prov_key in ['provisioned', 'active'] %}
+                                    {% set prov_class = 'success' %}
+                                {% elif prov_key in ['provisioning', 'provision_in_progress', 'provision_in-progress', 'in_progress', 'inprogress'] %}
+                                    {% set prov_class = 'info' %}
+                                {% elif prov_key in ['maintenance', 'maint'] %}
+                                    {% set prov_class = 'warning' %}
+                                {% elif prov_key in ['degraded', 'degradation'] %}
+                                    {% set prov_class = 'degraded' %}
+                                {% elif prov_key in ['terminated', 'terminated', 'retired'] %}
+                                    {% set prov_class = 'danger' %}
+                                {% elif prov_key in ['failed', 'failure', 'error'] %}
+                                    {% set prov_class = 'danger' %}
+                                {% else %}
+                                    {% set prov_class = 'secondary' %}
+                                {% endif %}
+                                <span class="badge badge-{{ prov_class }}">
+                                    {{ prov_status }}
                                 </span>
                             </td>
                             <td>{{ service.get('customer_id') or '—' }}</td>
