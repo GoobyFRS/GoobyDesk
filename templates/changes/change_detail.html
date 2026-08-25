@@ -17,10 +17,18 @@
 </head>
 <body>
     <main class="container">
-        <div class="logo">
-            <img src="{{ url_for('static', filename='/img/logo_white.webp') }}" alt="GoobyDesk Logo">
+        <div class="page-header">
+            <div class="page-header-title">
+                <h2>Change Record</h2>
+                <p class="text-muted">Detailed change information</p>
+            </div>
+            <div class="logo">
+                <img src="{{ url_for('static', filename='/img/logo_white.webp') }}" alt="GoobyDesk Logo">
+            </div>
+            <div class="page-header-actions">
+                <a href="{{ url_for('changes_module.changes_home') }}" class="secondary-btn">Back to Changes</a>
+            </div>
         </div>
-        <h2>Change Record</h2>
 
         <div class="ticket-details">
             <p><strong>Change Number:</strong> {{ change.get('change_number', '—') }}</p>
