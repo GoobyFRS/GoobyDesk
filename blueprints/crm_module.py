@@ -81,6 +81,30 @@ def _clean_form_value(form: dict, field_name: str):
     cleaned = raw_value.strip()
     return cleaned or None
 
+
+def _format_tenure(created_value):
+    """Return a short tenure label from a created timestamp."""
+    if not created_value:
+        return None
+
+    try:
+        created_at = datetime.strptime(created_value, "%Y-%m-%d %H:%M:%S")
+    except (TypeError, ValueError):
+        return None
+
+    elapsed_days = max((datetime.now() - created_at).days, 0)
+    elapsed_months = elapsed_days // 30
+    years, months = divmod(elapsed_months, 12)
+
+    parts = []
+    if years:
+        parts.append(f"{years} year{'s' if years != 1 else ''}")
+    if months:
+        parts.append(f"{months} month{'s' if months != 1 else ''}")
+    if not parts:
+        return "Less than 1 month"
+    return ", ".join(parts)
+
 def _update_customer_record(customer: dict, form: dict) -> None:
     """Apply cleaned form values onto an existing customer record in-place."""
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -93,10 +117,16 @@ def _update_customer_record(customer: dict, form: dict) -> None:
     customer["email"] = email.lower() if email else customer.get("email")
 
     customer["phone"] = _clean_form_value(form, "phone") or customer.get("phone")
-    customer["country"] = _clean_form_value(form, "country") or customer.get("country")
+    country = _clean_form_value(form, "country")
+    customer["country"] = country or customer.get("country")
+    customer.setdefault("address", {})["country"] = country or customer.get("address", {}).get("country")
     customer["timezone"] = _clean_form_value(form, "timezone") or customer.get("timezone") or "UTC"
     customer["status"] = _clean_form_value(form, "status") or customer.get("status")
     customer["preferred_contact"] = _clean_form_value(form, "preferred_contact") or customer.get("preferred_contact")
+    customer["status_reason"] = _clean_form_value(form, "status_reason") or customer.get("status_reason")
+    customer["account_tier"] = _clean_form_value(form, "account_tier") or customer.get("account_tier")
+    customer["customer_type"] = _clean_form_value(form, "customer_type") or customer.get("customer_type")
+    customer["risk_level"] = _clean_form_value(form, "risk_level") or customer.get("risk_level")
 
     # Flags
     customer["vip"] = True if "vip" in form else False
@@ -167,6 +197,32 @@ def _update_customer_record(customer: dict, form: dict) -> None:
         "sla": support_sla or customer.get("support_contract", {}).get("sla"),
         "expires": support_expires or customer.get("support_contract", {}).get("expires"),
     }
+
+
+def _terminate_customer_services(customer_uuid: str) -> None:
+    """Orphan linked service records when a customer is deleted."""
+    if not customer_uuid:
+        return
+
+    from blueprints.serviceid_module import _get_service_appid_store
+    from datetime import datetime
+
+    store = _get_service_appid_store()
+    services = store.load_all()
+    changed = False
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    for service in services:
+        if str(service.get("customer_uuid") or "") == customer_uuid:
+            service["customer_uuid"] = ""
+            service["service_status"] = "terminated"
+            service["provisioning_status"] = "terminated"
+            service["service_terminated_timestamp"] = now
+            service["service_updated_timestamp"] = now
+            changed = True
+
+    if changed:
+        store.save_all(services)
 
 # Dashboard Route
 @crm_module_bp.route("/", methods=["GET"])
@@ -296,6 +352,7 @@ def customer_profile(uuid):
         "crm/profile.html",
         customer=customer,
         linked_services=linked_services,
+        customer_tenure=_format_tenure(customer.get("created")),
         loggedInTech=actor,
     )
 
@@ -373,6 +430,25 @@ def edit_customer(uuid):
     actor_label = _pseudonymize_actor(actor)
     logger.info("CRM MODULE - Customer %s edited actor=%s", customer.get('customer_id'), actor_label)
     return redirect(url_for("crm_module.customer_profile", uuid=customer["uuid"]))
+
+
+@crm_module_bp.route("/customer/<uuid>/delete", methods=["POST"])
+@role_required(ROLE_ITSM_TECH)
+def delete_customer(uuid):
+    """Delete a customer record and unlink any related services."""
+    actor = resolve_preferred_name(session.get("technician"))
+    customers = load_customers_file()
+    customer = _find_customer_by_uuid(customers, uuid)
+    if customer is None:
+        logger.warning("CRM MODULE - Customer delete lookup failed actor=%s uuid=%s", _pseudonymize_actor(actor), uuid)
+        return render_template("errors/404.html"), 404
+
+    customers = [record for record in customers if record.get("uuid") != uuid]
+    save_customers_file(customers)
+    _terminate_customer_services(uuid)
+
+    logger.info("CRM MODULE - Customer deleted actor=%s customer_id=%s uuid=%s", _pseudonymize_actor(actor), customer.get("customer_id"), uuid)
+    return redirect(url_for("crm_module.crm_dashboard"))
 
 
 def _serialize_customer_value(value):
