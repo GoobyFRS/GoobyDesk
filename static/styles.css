@@ -574,6 +574,21 @@ textarea {
 
 .logout-form {
     margin: 0;
+    text-align: right;
+    margin-top: 10px;
+}
+
+/* Right-align and compact logout button inside logout-form */
+.logout-form .submit-btn {
+    width: auto;
+    display: inline-block;
+    padding: 6px 12px;
+    font-size: 14px;
+    margin-top: 0;
+}
+
+.logout-form .submit-btn.logout-btn {
+    border-radius: 6px;
 }
 
 /* ==========================================================
