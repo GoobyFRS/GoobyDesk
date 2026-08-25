@@ -5,253 +5,385 @@
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='img/favicon.ico') }}"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="author" content="Matt Faulkner">
-    <meta name="description" content="Create New Employee">
-    <meta name="robots" content="noindex, nofollow"> <!--Discourage Search Engine Indexing of this page-->
-    <meta name="theme-color" content="#284389"> <!-- Mobile Browser stylized address bar.-->
-    <meta http-equiv="X-UA-Compatible" content="IE=edge"> <!-- Force IE to use latest rendering engine available.-->
-    <meta http-equiv="refresh" content="600"> <!-- 10 Minute Page Refresh -->
+    <meta name="description" content="Create or edit an employee record">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="theme-color" content="#284389">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta http-equiv="refresh" content="600">
     <link rel="preconnect" href="https://fonts.bunny.net/css">
     <link rel="preconnect" href="https://fonts.bunny.net/css" crossorigin>
     <script src="{{ url_for('static', filename='main.js') }}"></script>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-    <!-- Performance Enhancements -->
     <title>{% if employee %}Edit Employee{% else %}Create New Employee{% endif %} - GoobyDesk</title>
 </head>
 <body>
-    <main class="container container--narrow">
-        <div class="logo">
-            <img src="{{ url_for('static', filename='/img/logo_white.webp') }}" alt="GoobyDesk Logo">
+    <main class="container container--wide">
+        <div class="page-header">
+            <div>
+                <div class="profile-name">
+                    <h2 class="card-title">{% if employee %}Edit Employee{% else %}New Employee{% endif %}</h2>
+                    {% if employee and employee.get('employment', {}).get('status') %}
+                        <span class="badge badge-secondary">{{ employee.get('employment', {}).get('status') | capitalize }}</span>
+                    {% elif not employee %}
+                        <span class="badge badge-info">Draft</span>
+                    {% endif %}
+                </div>
+                <p class="text-muted">Fields marked with * are required.</p>
+            </div>
+            <div class="page-header-actions">
+                {% if employee %}
+                    <a href="{{ url_for('hr_module.employee_profile', uuid=employee.get('uuid')) }}" class="submit-btn secondary-btn">View Profile</a>
+                {% else %}
+                    <a href="{{ url_for('hr_module.hr_dashboard') }}" class="submit-btn secondary-btn">&larr; Back to Dashboard</a>
+                {% endif %}
+            </div>
         </div>
+
         {% set address = employee.get('address', {}) if employee else {} %}
         {% set employment = employee.get('employment', {}) if employee else {} %}
-        <h2>{% if employee %}Edit Employee{% else %}New Employee{% endif %}</h2>
-        <p class="text-muted">Fields marked with * are required.</p>
+        {% set access = employee.get('access', {}) if employee else {} %}
+        {% set emergency_contact = employee.get('emergency_contact', {}) if employee else {} %}
+        {% set minecraft = employee.get('minecraft', {}) if employee else {} %}
+        {% set discord = employee.get('discord', {}) if employee else {} %}
+        {% set certifications_value = (employee.get('certifications', []) | join(', ')) if employee else '' %}
+        {% set skills_value = (employee.get('skills', []) | join(', ')) if employee else '' %}
 
         {% if error %}
-        <div class="alert alert--danger" role="alert">{{ error }}</div>
+            <div class="alert alert--danger" role="alert">{{ error }}</div>
         {% endif %}
 
         <form method="POST" action="{% if employee %}{{ url_for('hr_module.edit_employee', uuid=employee.get('uuid')) }}{% else %}{{ url_for('hr_module.new_employee') }}{% endif %}">
+            <div class="grid grid-2 profile-sections">
+                <div class="card profile-card">
+                    <div class="card-header"><h3 class="card-title">Employee Overview</h3></div>
+                    <div class="card-body">
+                        <div class="form-row">
+                            <div>
+                                <label for="first_name">First Name *</label>
+                                <input type="text" id="first_name" name="first_name" value="{{ employee.get('first_name', '') if employee else '' }}" required>
+                            </div>
+                            <div>
+                                <label for="last_name">Last Name *</label>
+                                <input type="text" id="last_name" name="last_name" value="{{ employee.get('last_name', '') if employee else '' }}" required>
+                            </div>
+                        </div>
 
-            <div class="form-row">
-                <div>
-                    <label for="first_name">First Name *</label>
-                    <input type="text" id="first_name" name="first_name" value="{{ employee.get('first_name', '') if employee else '' }}" required>
+                        <div class="form-row">
+                            <div>
+                                <label for="preferred_name">Preferred Name</label>
+                                <input type="text" id="preferred_name" name="preferred_name" value="{{ employee.get('preferred_name', '') if employee else '' }}" placeholder="Defaults to First Name">
+                            </div>
+                            <div>
+                                <label for="title">Title</label>
+                                <input type="text" id="title" name="title" value="{{ employment.get('title', '') }}" placeholder="IT Technician">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div>
+                                <label for="department">Department</label>
+                                <input type="text" id="department" name="department" value="{{ employment.get('department', '') }}" placeholder="Support">
+                            </div>
+                            <div>
+                                <label for="business_unit">Business Unit</label>
+                                <input type="text" id="business_unit" name="business_unit" value="{{ employment.get('business_unit', '') }}" placeholder="Support">
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div>
-                    <label for="status">Employee Status</label>
-                    <select id="status" name="status">
-                        <option value="active" {% if not employee or employment.get('status') == 'active' %}selected{% endif %}>Active</option>
-                        <option value="flma" {% if employee and employment.get('status') == 'flma' %}selected{% endif %}>FMLA</option>
-                        <option value="leave" {% if employee and employment.get('status') == 'leave' %}selected{% endif %}>Leave</option>
-                        <option value="terminated" {% if employee and employment.get('status') == 'terminated' %}selected{% endif %}>Terminated</option>
-                        <option value="inactive" {% if employee and employment.get('status') == 'inactive' %}selected{% endif %}>Inactive</option>
-                        <option value="disabled" {% if employee and employment.get('status') == 'disabled' %}selected{% endif %}>Disabled</option>
-                    </select>
+
+                <div class="card profile-card">
+                    <div class="card-header"><h3 class="card-title">Contact Details</h3></div>
+                    <div class="card-body">
+                        <div class="form-row">
+                            <div>
+                                <label for="email">Email *</label>
+                                <input type="email" id="email" name="email" value="{{ employee.get('email', '') if employee else '' }}" required>
+                            </div>
+                            <div>
+                                <label for="phone">Phone</label>
+                                <input type="text" id="phone" name="phone" value="{{ employee.get('phone', '') if employee else '' }}">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div>
+                                <label for="street">Street Address</label>
+                                <input type="text" id="street" name="street" value="{{ address.get('street', '') }}" placeholder="Mailing street address">
+                            </div>
+                            <div>
+                                <label for="street_2">Street Address 2</label>
+                                <input type="text" id="street_2" name="street_2" value="{{ address.get('street_2', address.get('street_address_2', '')) }}" placeholder="Suite, unit, floor">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div>
+                                <label for="city">City</label>
+                                <input type="text" id="city" name="city" value="{{ address.get('city', '') }}">
+                            </div>
+                            <div>
+                                <label for="state">State / Province</label>
+                                <input type="text" id="state" name="state" value="{{ address.get('state', '') }}">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div>
+                                <label for="postal_code">Zip / Postal Code</label>
+                                <input type="text" id="postal_code" name="postal_code" value="{{ address.get('postal_code', '') }}">
+                            </div>
+                            <div>
+                                <label for="country">Country</label>
+                                <input type="text" id="country" name="country" value="{{ address.get('country', 'United States') }}">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div>
+                                <label for="timezone">Timezone</label>
+                                <select id="timezone" name="timezone">
+                                    <optgroup label="US Timezones">
+                                        <option value="PST" {% if employee and employee.get('timezone') == 'PST' %}selected{% endif %}>Pacific</option>
+                                        <option value="MST" {% if employee and employee.get('timezone') == 'MST' %}selected{% endif %}>Mountain</option>
+                                        <option value="CST" {% if employee and employee.get('timezone') == 'CST' %}selected{% endif %}>Central</option>
+                                        <option value="EST" {% if employee and employee.get('timezone') == 'EST' %}selected{% endif %}>Eastern</option>
+                                        <option value="AKST" {% if employee and employee.get('timezone') == 'AKST' %}selected{% endif %}>Alaskan</option>
+                                        <option value="HST" {% if employee and employee.get('timezone') == 'HST' %}selected{% endif %}>Hawaiian</option>
+                                    </optgroup>
+                                    <optgroup label="Other Timezones">
+                                        <option value="UTC" {% if not employee or employee.get('timezone') == 'UTC' %}selected{% endif %}>Standard / Zulu</option>
+                                        <option value="CET" {% if employee and employee.get('timezone') == 'CET' %}selected{% endif %}>Central European Time</option>
+                                        <option value="EET" {% if employee and employee.get('timezone') == 'EET' %}selected{% endif %}>Eastern European Time</option>
+                                        <option value="IST" {% if employee and employee.get('timezone') == 'IST' %}selected{% endif %}>India Standard Time</option>
+                                        <option value="JST" {% if employee and employee.get('timezone') == 'JST' %}selected{% endif %}>Japan Standard Time</option>
+                                    </optgroup>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="date_of_birth">Date of Birth</label>
+                                <input type="date" id="date_of_birth" name="date_of_birth" value="{{ employee.get('date_of_birth', '') if employee else '' }}">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div>
+                                <label for="minecraft_username">Minecraft Username</label>
+                                <input type="text" id="minecraft_username" name="minecraft_username" value="{{ minecraft.get('username', '') if employee else '' }}">
+                            </div>
+                            <div>
+                                <label for="discord_username">Discord Username</label>
+                                <input type="text" id="discord_username" name="discord_username" value="{{ discord.get('username', '') if employee else '' }}">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card profile-card">
+                    <div class="card-header"><h3 class="card-title">Employment Details</h3></div>
+                    <div class="card-body">
+                        <div class="form-row">
+                            <div>
+                                <label for="status">Employment Status</label>
+                                <select id="status" name="status">
+                                    <option value="active" {% if not employee or employment.get('status') == 'active' %}selected{% endif %}>Active</option>
+                                    <option value="fmla" {% if employee and employment.get('status') == 'fmla' %}selected{% endif %}>FMLA</option>
+                                    <option value="leave" {% if employee and employment.get('status') == 'leave' %}selected{% endif %}>Leave</option>
+                                    <option value="terminated" {% if employee and employment.get('status') == 'terminated' %}selected{% endif %}>Terminated</option>
+                                    <option value="inactive" {% if employee and employment.get('status') == 'inactive' %}selected{% endif %}>Inactive</option>
+                                    <option value="disabled" {% if employee and employment.get('status') == 'disabled' %}selected{% endif %}>Disabled</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="employment_type">Employment Type</label>
+                                <select id="employment_type" name="employment_type">
+                                    <option value="full_time" {% if not employee or employment.get('employment_type', 'full_time') == 'full_time' %}selected{% endif %}>Full Time</option>
+                                    <option value="part_time" {% if employee and employment.get('employment_type') == 'part_time' %}selected{% endif %}>Part Time</option>
+                                    <option value="contractor" {% if employee and employment.get('employment_type') == 'contractor' %}selected{% endif %}>Contractor</option>
+                                    <option value="intern" {% if employee and employment.get('employment_type') == 'intern' %}selected{% endif %}>Intern</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div>
+                                <label for="work_authorization">Work Authorization</label>
+                                <select id="work_authorization" name="work_authorization">
+                                    <option value="" {% if not employee or not employee.get('work_authorization') %}selected{% endif %}>Select...</option>
+                                    <option value="citizen" {% if employee and employee.get('work_authorization') == 'citizen' %}selected{% endif %}>US Citizen</option>
+                                    <option value="perm_resident" {% if employee and employee.get('work_authorization') == 'perm_resident' %}selected{% endif %}>Permanent Resident</option>
+                                    <option value="work_visa" {% if employee and employee.get('work_authorization') == 'work_visa' %}selected{% endif %}>Work Visa</option>
+                                    <option value="other" {% if employee and employee.get('work_authorization') == 'other' %}selected{% endif %}>Other</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="reports_to">Reports To</label>
+                                <input type="text" id="reports_to" name="reports_to" value="{{ employment.get('reports_to', '') }}" placeholder="Manager or UUID">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div>
+                                <label for="hire_date">Hire Date</label>
+                                <input type="text" id="hire_date" value="{{ employment.get('hire_date', 'Set automatically on save') }}" disabled>
+                            </div>
+                            <div>
+                                <label for="termination_date">Termination Date</label>
+                                <input type="text" id="termination_date" value="{{ employment.get('termination_date', 'Not set') }}" disabled>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div>
+                                <label for="pto_available_hours">PTO Hours Available</label>
+                                <input type="number" min="0" step="0.1" id="pto_available_hours" name="pto_available_hours" value="{{ employment.get('pto_available_hours', 0) }}">
+                            </div>
+                            <div>
+                                <label for="pto_used_hours">PTO Hours Used</label>
+                                <input type="number" min="0" step="0.1" id="pto_used_hours" name="pto_used_hours" value="{{ employment.get('pto_used_hours', 0) }}">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card profile-card">
+                    <div class="card-header"><h3 class="card-title">Compensation</h3></div>
+                    <div class="card-body">
+                        <div class="form-row">
+                            <div>
+                                <label for="compensation_type">Compensation Type</label>
+                                <select id="compensation_type" name="compensation_type">
+                                    <option value="salary" {% if not employee or employment.get('compensation_type', 'salary') == 'salary' %}selected{% endif %}>Salary</option>
+                                    <option value="hourly" {% if employee and employment.get('compensation_type') == 'hourly' %}selected{% endif %}>Hourly</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="pay_frequency">Pay Frequency</label>
+                                <select id="pay_frequency" name="pay_frequency">
+                                    <option value="weekly" {% if employee and employment.get('pay_frequency') == 'weekly' %}selected{% endif %}>Weekly</option>
+                                    <option value="biweekly" {% if not employee or employment.get('pay_frequency', 'biweekly') == 'biweekly' %}selected{% endif %}>Biweekly</option>
+                                    <option value="monthly" {% if employee and employment.get('pay_frequency') == 'monthly' %}selected{% endif %}>Monthly</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div>
+                                <label for="hourly_rate">Hourly Rate</label>
+                                <input type="number" step="0.01" id="hourly_rate" name="hourly_rate" value="{{ employment.get('hourly_rate', '') }}" placeholder="25.00">
+                            </div>
+                            <div>
+                                <label for="salary">Salary (annual)</label>
+                                <input type="number" step="0.01" id="salary" name="salary" value="{{ employment.get('salary', '') }}" placeholder="50000.00">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div>
+                                <label for="bonus_rate">Bonus Rate</label>
+                                <input type="text" id="bonus_rate" name="bonus_rate" value="{{ employment.get('bonus_rate', '') }}" placeholder="0.0">
+                            </div>
+                            <div>
+                                <label for="direct_deposit_info">Direct Deposit Info</label>
+                                <input type="text" id="direct_deposit_info" name="direct_deposit_info" value="{{ employment.get('direct_deposit_info', '') }}" placeholder="Sensitive bank routing details">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="salary_exempt" name="salary_exempt" {% if not employee or employment.get('salary_exempt', true) %}checked{% endif %}>
+                                    Salary Exempt
+                                </label>
+                            </div>
+                            <div>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="bonus_eligible" name="bonus_eligible" {% if employee and employment.get('bonus_eligible') %}checked{% endif %}>
+                                    Bonus Eligible
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card profile-card">
+                    <div class="card-header"><h3 class="card-title">Access Security</h3></div>
+                    <div class="card-body">
+                        <div class="form-row">
+                            <div>
+                                <label for="role">Access Role</label>
+                                <select id="role" name="role">
+                                    <option value="itsm_technician" {% if not employee or access.get('role') == 'itsm_technician' %}selected{% endif %}>ITSM Technician</option>
+                                    <option value="hr_technician" {% if employee and access.get('role') == 'hr_technician' %}selected{% endif %}>HR Technician</option>
+                                    <option value="manager" {% if employee and access.get('role') == 'manager' %}selected{% endif %}>Manager</option>
+                                    <option value="admin" {% if employee and access.get('role') == 'admin' %}selected{% endif %}>Administrator</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="assignment_queue">Assignment Queue</label>
+                                <input type="text" id="assignment_queue" name="assignment_queue" value="{{ access.get('assignment_queue', 'support') if employee else 'support' }}" placeholder="support">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div>
+                                <label for="auth_username">Login Username</label>
+                                <input type="text" id="auth_username" name="auth_username" value="{{ access.get('auth_username', '') if employee else '' }}" placeholder="Defaults to Employee ID">
+                            </div>
+                            <div>
+                                {% if not employee %}
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="create_login_access" name="create_login_access" checked>
+                                        Create login access
+                                    </label>
+                                {% else %}
+                                    <p class="text-muted text-muted--flush">Login access is managed in the auth store after creation.</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card profile-card">
+                    <div class="card-header"><h3 class="card-title">Emergency Contact</h3></div>
+                    <div class="card-body">
+                        <div class="form-row">
+                            <div>
+                                <label for="emergency_contact_name">Full Name</label>
+                                <input type="text" id="emergency_contact_name" name="emergency_contact_name" value="{{ emergency_contact.get('name', '') if employee else '' }}">
+                            </div>
+                            <div>
+                                <label for="emergency_contact_relationship">Relation</label>
+                                <input type="text" id="emergency_contact_relationship" name="emergency_contact_relationship" value="{{ emergency_contact.get('relationship', '') if employee else '' }}">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div>
+                                <label for="emergency_contact_phone">Phone</label>
+                                <input type="text" id="emergency_contact_phone" name="emergency_contact_phone" value="{{ emergency_contact.get('phone', '') if employee else '' }}">
+                            </div>
+                            <div>
+                                <label for="certifications_csv">Certifications</label>
+                                <input type="text" id="certifications_csv" name="certifications_csv" value="{{ certifications_value if employee else '' }}" placeholder="Comma-separated list">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div>
+                                <label for="skills_csv">Skills</label>
+                                <input type="text" id="skills_csv" name="skills_csv" value="{{ skills_value if employee else '' }}" placeholder="Comma-separated list">
+                            </div>
+                            <div></div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <div class="form-row">
-                <div>
-                    <label for="last_name">Last Name *</label>
-                    <input type="text" id="last_name" name="last_name" value="{{ employee.get('last_name', '') if employee else '' }}" required>
-                </div>
-                <div>
-                    <label for="title">Job Title</label>
-                    <input type="text" id="title" name="title" value="{{ employment.get('title', '') }}" placeholder="IT Technician">
-                </div>
+            <div class="form-actions">
+                <button type="submit" class="submit-btn">{% if employee %}Save Changes{% else %}Create Employee{% endif %}</button>
+                <a href="{% if employee %}{{ url_for('hr_module.employee_profile', uuid=employee.get('uuid')) }}{% else %}{{ url_for('hr_module.hr_dashboard') }}{% endif %}" class="form-link">Cancel</a>
             </div>
-
-            <div class="form-row">
-                <div>
-                    <label for="preferred_name">Preferred Name</label>
-                    <input type="text" id="preferred_name" name="preferred_name" value="{{ employee.get('preferred_name', '') if employee else '' }}" placeholder="Defaults to First Name">
-                </div>
-                <div>
-                    <label for="department">Department</label>
-                    <input type="text" id="department" name="department" value="{{ employment.get('department', '') }}" placeholder="Support">
-                </div>
-            </div>
-
-            <div class="form-row">
-                <div>
-                    <label for="email">Email *</label>
-                    <input type="email" id="email" name="email" value="{{ employee.get('email', '') if employee else '' }}" required>
-                </div>
-                <div>
-                    <label for="business_unit">Business Unit</label>
-                    <input type="text" id="business_unit" name="business_unit" value="{{ employment.get('business_unit', '') }}" placeholder="Support">
-                </div>
-            </div>
-
-            <div class="form-row">
-                <div>
-                    <label for="auth_username">Login Username</label>
-                    <input type="text" id="auth_username" name="auth_username" value="{{ employee.get('access', {}).get('auth_username', '') if employee else '' }}" placeholder="Defaults to Employee ID">
-                </div>
-                <div>
-                    <label for="role">Access Role</label>
-                    <select id="role" name="role">
-                        <option value="itsm_technician" {% if not employee or employee.get('access', {}).get('role') == 'itsm_technician' %}selected{% endif %}>ITSM Technician</option>
-                        <option value="hr_technician" {% if employee and employee.get('access', {}).get('role') == 'hr_technician' %}selected{% endif %}>HR Technician</option>
-                        <option value="manager" {% if employee and employee.get('access', {}).get('role') == 'manager' %}selected{% endif %}>Manager</option>
-                        <option value="admin" {% if employee and employee.get('access', {}).get('role') == 'admin' %}selected{% endif %}>Administrator</option>
-                    </select>
-                </div>
-            </div>
-
-            {% if not employee %}
-            <div class="form-row">
-                <div>
-                    <label class="checkbox-label">
-                        <input type="checkbox" id="create_login_access" name="create_login_access" checked>
-                        Create login access
-                    </label>
-                </div>
-                <div>
-                    <p class="text-muted text-muted--flush">Creates the auth record, password hash, and role mapping.</p>
-                </div>
-            </div>
-            {% endif %}
-
-            <div class="form-row">
-                <div>
-                    <label for="phone">Phone</label>
-                    <input type="text" id="phone" name="phone" value="{{ employee.get('phone', '') if employee else '' }}">
-                </div>
-                <div>
-                    <label for="employment_type">Employment Type</label>
-                    <select id="employment_type" name="employment_type">
-                        <option value="full_time" {% if not employee or employment.get('employment_type', 'full_time') == 'full_time' %}selected{% endif %}>Full Time</option>
-                        <option value="part_time" {% if employee and employment.get('employment_type') == 'part_time' %}selected{% endif %}>Part Time</option>
-                        <option value="contractor" {% if employee and employment.get('employment_type') == 'contractor' %}selected{% endif %}>Contractor</option>
-                        <option value="intern" {% if employee and employment.get('employment_type') == 'intern' %}selected{% endif %}>Intern</option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="form-row">
-                <div>
-                    <label for="street">Street</label>
-                    <input type="text" id="street" name="street" value="{{ address.get('street', '') }}" placeholder="Mailing street address">
-                </div>
-                <div>
-                    <label for="compensation_type">Compensation Type</label>
-                    <select id="compensation_type" name="compensation_type">
-                        <option value="salary" {% if not employee or employment.get('compensation_type', 'salary') == 'salary' %}selected{% endif %}>Salary</option>
-                        <option value="hourly" {% if employee and employment.get('compensation_type') == 'hourly' %}selected{% endif %}>Hourly</option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="form-row">
-                <div>
-                    <label for="city">City</label>
-                    <input type="text" id="city" name="city" value="{{ address.get('city', '') }}">
-                </div>
-                <div>
-                    <label for="hourly_rate">Hourly Rate</label>
-                    <input type="number" step="0.01" id="hourly_rate" name="hourly_rate" value="{{ employment.get('hourly_rate', '') }}" placeholder="25.00">
-                </div>
-            </div>
-
-            <div class="form-row">
-                <div>
-                    <label for="state">State / Province</label>
-                    <input type="text" id="state" name="state" value="{{ address.get('state', '') }}">
-                </div>
-                <div>
-                    <label for="salary">Salary (annual)</label>
-                    <input type="number" step="0.01" id="salary" name="salary" value="{{ employment.get('salary', '') }}" placeholder="50000.00">
-                </div>
-            </div>
-
-            <div class="form-row">
-                <div>
-                    <label for="postal_code">Postal Code</label>
-                    <input type="text" id="postal_code" name="postal_code" value="{{ address.get('postal_code', '') }}">
-                </div>
-                <div>
-                    <label for="pay_frequency">Pay Frequency</label>
-                    <select id="pay_frequency" name="pay_frequency">
-                        <option value="weekly" {% if employee and employment.get('pay_frequency') == 'weekly' %}selected{% endif %}>Weekly</option>
-                        <option value="biweekly" {% if not employee or employment.get('pay_frequency', 'biweekly') == 'biweekly' %}selected{% endif %}>Biweekly</option>
-                        <option value="monthly" {% if employee and employment.get('pay_frequency') == 'monthly' %}selected{% endif %}>Monthly</option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="form-row">
-                <div>
-                    <label for="country">Country</label>
-                    <input type="text" id="country" name="country" value="{{ address.get('country', 'United States') }}">
-                </div>
-                <div>
-                    <label for="work_authorization">Work Authorization (I-9)</label>
-                    <select id="work_authorization" name="work_authorization">
-                        <option value="" {% if not employee or not employee.get('work_authorization') %}selected{% endif %}>Select...</option>
-                        <option value="citizen" {% if employee and employee.get('work_authorization') == 'citizen' %}selected{% endif %}>US Citizen</option>
-                        <option value="perm_resident" {% if employee and employee.get('work_authorization') == 'perm_resident' %}selected{% endif %}>Permanent Resident</option>
-                        <option value="work_visa" {% if employee and employee.get('work_authorization') == 'work_visa' %}selected{% endif %}>Work Visa</option>
-                        <option value="other" {% if employee and employee.get('work_authorization') == 'other' %}selected{% endif %}>Other</option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="form-row">
-                <div>
-                    <label for="timezone">Timezone</label>
-                    <select id="timezone" name="timezone">
-                        <optgroup label="US Timezones">
-                            <option value="PST" {% if employee and employee.get('timezone') == 'PST' %}selected{% endif %}>Pacific</option>
-                            <option value="MST" {% if employee and employee.get('timezone') == 'MST' %}selected{% endif %}>Mountain</option>
-                            <option value="CST" {% if employee and employee.get('timezone') == 'CST' %}selected{% endif %}>Central</option>
-                            <option value="EST" {% if employee and employee.get('timezone') == 'EST' %}selected{% endif %}>Eastern</option>
-                            <option value="AKST" {% if employee and employee.get('timezone') == 'AKST' %}selected{% endif %}>Alaskan</option>
-                            <option value="HST" {% if employee and employee.get('timezone') == 'HST' %}selected{% endif %}>Hawaiian</option>
-                        </optgroup>
-                        <optgroup label="Other Timezones">
-                            <option value="UTC" {% if not employee or employee.get('timezone') == 'UTC' %}selected{% endif %}>Standard/Zulu</option>
-                            <option value="CET" {% if employee and employee.get('timezone') == 'CET' %}selected{% endif %}>Central European Time</option>
-                            <option value="EET" {% if employee and employee.get('timezone') == 'EET' %}selected{% endif %}>Eastern European Time</option>
-                            <option value="IST" {% if employee and employee.get('timezone') == 'IST' %}selected{% endif %}>India Standard Time</option>
-                            <option value="JST" {% if employee and employee.get('timezone') == 'JST' %}selected{% endif %}>Japan Standard Time</option>
-                        </optgroup>
-                    </select>
-                </div>
-                <div>
-                    <label for="equity">Equity / Grants (notes)</label>
-                    <input type="text" id="equity" name="equity" value="{{ employment.get('equity', {}).get('notes', '') }}" placeholder="e.g. 0.25% RSU">
-                </div>
-            </div>
-
-            <div class="form-row">
-                <div>
-                    <label for="date_of_birth">Date of Birth</label>
-                    <input type="date" id="date_of_birth" name="date_of_birth" value="{{ employee.get('date_of_birth', '') if employee else '' }}">
-                </div>
-                <div>
-                    <label for="direct_deposit_info">Direct Deposit Info <span class="text-muted">(sensitive)</span></label>
-                    <input type="text" id="direct_deposit_info" name="direct_deposit_info" value="{{ employment.get('direct_deposit_info', '') }}" placeholder="Do Not Use - RN:AN">
-                </div>
-            </div>
-
-            {% if not employee %}
-            <div class="form-row">
-                <div>
-                    <label for="initial_bonus">Initial Bonus (optional)</label>
-                    <input type="text" id="initial_bonus" name="initial_bonus" placeholder="amount or notes">
-                </div>
-                <div>
-                    <label for="initial_raise">Initial Raise (optional)</label>
-                    <input type="text" id="initial_raise" name="initial_raise" placeholder="amount or notes">
-                </div>
-            </div>
-            {% endif %}
-
-            <button type="submit" class="submit-btn">{% if employee %}Save Changes{% else %}Create Employee{% endif %}</button>
-            <a href="{% if employee %}{{ url_for('hr_module.employee_profile', uuid=employee.get('uuid')) }}{% else %}{{ url_for('hr_module.hr_dashboard') }}{% endif %}" class="form-link">Cancel</a>
-
         </form>
     </main>
 </body>

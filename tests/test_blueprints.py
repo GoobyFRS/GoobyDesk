@@ -222,6 +222,107 @@ class CrmBlueprintTests(BlueprintRouteTests):
 class HrBlueprintTests(BlueprintRouteTests):
     """Validate HR employee dashboard and new-employee provisioning."""
 
+    def test_hr_profile_and_form_sections_render(self):
+        """The rebuilt HR profile and form pages should render their planned sections."""
+        hr_file = os.path.join(self.temp_dir.name, "hr.json")
+        auth_file = os.path.join(self.temp_dir.name, "employees.json")
+        self._write_json(
+            hr_file,
+            [
+                {
+                    "uuid": "employee-123",
+                    "employee_id": "EMP-2026-0001",
+                    "first_name": "Bob",
+                    "last_name": "Employee",
+                    "preferred_name": "Bob",
+                    "email": "bob@example.org",
+                    "phone": "555-0100",
+                    "timezone": "UTC",
+                    "employment": {
+                        "hire_date": "2026-01-02",
+                        "termination_date": None,
+                        "status": "active",
+                        "rehire_eligible": True,
+                        "title": "Systems Engineer",
+                        "business_unit": "IT",
+                        "department": "Support",
+                        "reports_to": "Jane Manager",
+                        "employment_type": "full_time",
+                        "compensation_type": "salary",
+                        "salary": 90000,
+                        "hourly_rate": None,
+                        "pay_frequency": "biweekly",
+                        "direct_deposit_info": None,
+                        "salary_exempt": True,
+                        "bonus_eligible": False,
+                        "bonus_rate": 0.0,
+                        "pto_available_hours": 40,
+                        "pto_used_hours": 0,
+                    },
+                    "access": {
+                        "role": "itsm_technician",
+                        "assignment_queue": "support",
+                        "account_locked": False,
+                        "mfa_enabled": False,
+                        "last_login": None,
+                        "login_enabled": True,
+                        "auth_username": "bob",
+                        "provisioning_status": "complete",
+                    },
+                    "address": {
+                        "street": "1 Main St",
+                        "street_2": "Suite 2",
+                        "city": "Austin",
+                        "state": "TX",
+                        "postal_code": "78701",
+                        "country": "United States",
+                    },
+                    "contact_preferences": {
+                        "preferred_contact": "email",
+                        "maintenance_notifications": True,
+                    },
+                    "emergency_contact": {
+                        "name": "Jane Employee",
+                        "relationship": "Spouse",
+                        "phone": "555-0199",
+                    },
+                    "minecraft": {"username": "bobmc"},
+                    "discord": {"username": "bob#1234"},
+                    "certifications": ["A+"],
+                    "skills": ["Troubleshooting"],
+                    "audit": {
+                        "creation_source": "auth_web",
+                        "last_modified": "2026-01-03T00:00:00Z",
+                        "last_modified_by": "hradmin",
+                    },
+                    "created": "2026-01-02T00:00:00Z",
+                    "updated": "2026-01-03T00:00:00Z",
+                }
+            ],
+        )
+        self._write_json(auth_file, [])
+        self.app.config["LOADED_CONFIG"] = {
+            "core": {
+                "hr_file": hr_file,
+                "employee_auth_file": auth_file,
+            }
+        }
+        self._set_auth_session(username="hradmin", roles=["hr_technician"])
+
+        profile_response = self.client.get("/hr/employee/employee-123")
+        self.assertEqual(profile_response.status_code, 200)
+        profile_text = profile_response.get_data(as_text=True)
+        self.assertIn("Employee Overview", profile_text)
+        self.assertIn("Record Audit", profile_text)
+        self.assertIn("Render Full Employee Record", profile_text)
+
+        form_response = self.client.get("/hr/employee/submit-new")
+        self.assertEqual(form_response.status_code, 200)
+        form_text = form_response.get_data(as_text=True)
+        self.assertIn("Employee Overview", form_text)
+        self.assertIn("Contact Details", form_text)
+        self.assertIn("Compensation", form_text)
+
     def test_hr_dashboard_and_employee_creation(self):
         """The HR dashboard renders and a valid employee record is saved."""
         hr_file = os.path.join(self.temp_dir.name, "hr.json")

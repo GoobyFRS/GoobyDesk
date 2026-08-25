@@ -185,6 +185,7 @@ def _build_employee_record(form: dict, employees: list[dict]) -> tuple[dict, str
         "work_authorization": form.get("work_authorization"),
         "address": {
             "street": form.get("street") or None,
+            "street_2": form.get("street_2") or None,
             "city": form.get("city") or None,
             "state": form.get("state") or None,
             "postal_code": form.get("postal_code") or None,
@@ -193,16 +194,15 @@ def _build_employee_record(form: dict, employees: list[dict]) -> tuple[dict, str
         "phone": form.get("phone"),
         "timezone": form.get("timezone") or "UTC",
         "employment": _build_employment_details(form, now.split("T")[0]),
+        "minecraft": {"username": _clean_form_value(form, "minecraft_username")},
+        "discord": {"username": _clean_form_value(form, "discord_username")},
         "hr_worknotes": [],
         "access": _build_employee_access(form, None, False),
         "applications": {},
-        "contact_preferences": {
-            "preferred_contact": "email",
-            "maintenance_notifications": True,
-        },
-        "emergency_contact": {"name": None, "relationship": None, "phone": None},
-        "certifications": [],
-        "skills": [],
+        "contact_preferences": _build_contact_preferences(form),
+        "emergency_contact": _build_emergency_contact(form),
+        "certifications": _split_csv_values(_clean_form_value(form, "certifications_csv")),
+        "skills": _split_csv_values(_clean_form_value(form, "skills_csv")),
         "created": now,
         "created_by": resolve_preferred_name(session.get("technician")),
         "audit": {
@@ -234,6 +234,32 @@ def _find_employee_by_uuid(employees: list[dict], employee_uuid: str) -> dict | 
             return employee
     return None
 
+def _format_tenure(hire_date: str | None) -> str:
+    """Return a readable tenure string from a hire date."""
+    if not hire_date:
+        return "—"
+    try:
+        start_date = datetime.strptime(hire_date, "%Y-%m-%d").date()
+    except ValueError:
+        return hire_date
+
+    today = datetime.now().date()
+    if start_date > today:
+        return "Starts in the future"
+
+    total_months = (today.year - start_date.year) * 12 + today.month - start_date.month
+    if today.day < start_date.day:
+        total_months -= 1
+    total_months = max(total_months, 0)
+    years, months = divmod(total_months, 12)
+
+    parts = []
+    if years:
+        parts.append(f"{years} year{'s' if years != 1 else ''}")
+    if months or not parts:
+        parts.append(f"{months} month{'s' if months != 1 else ''}")
+    return ", ".join(parts)
+
 def _clean_form_value(form: dict, field_name: str) -> str | None:
     """Trim a string form value and return None if empty/missing."""
     value = form.get(field_name)
@@ -242,11 +268,43 @@ def _clean_form_value(form: dict, field_name: str) -> str | None:
     cleaned = value.strip()
     return cleaned or None
 
+def _form_bool(form: dict, field_name: str, default: bool = False) -> bool:
+    """Return a checkbox-style field as a boolean."""
+    value = form.get(field_name)
+    if value is None:
+        return default
+    return str(value).strip().lower() in {"1", "true", "yes", "on"}
+
+def _split_csv_values(value: str | None) -> list[str]:
+    """Split a comma-separated field into a normalized list."""
+    if not value:
+        return []
+    return [item.strip() for item in value.split(",") if item.strip()]
+
+def _build_contact_preferences(form: dict) -> dict:
+    """Build the contact preference block for an employee record."""
+    return {
+        "preferred_contact": _clean_form_value(form, "preferred_contact") or "email",
+        "maintenance_notifications": _form_bool(form, "maintenance_notifications", True),
+    }
+
+def _build_emergency_contact(form: dict) -> dict:
+    """Build the emergency contact block for an employee record."""
+    return {
+        "name": _clean_form_value(form, "emergency_contact_name"),
+        "relationship": _clean_form_value(form, "emergency_contact_relationship"),
+        "phone": _clean_form_value(form, "emergency_contact_phone"),
+    }
+
 def _update_employee_record(employee: dict, form: dict) -> None:
     """Apply cleaned form values to an employee record in-place."""
     now = _build_timestamp()
     address = employee.setdefault("address", {})
     employment = employee.setdefault("employment", {})
+    minecraft = employee.setdefault("minecraft", {})
+    discord = employee.setdefault("discord", {})
+    contact_preferences = employee.setdefault("contact_preferences", {})
+    emergency_contact = employee.setdefault("emergency_contact", {})
 
     first_name = _clean_form_value(form, "first_name")
     last_name = _clean_form_value(form, "last_name")
@@ -263,10 +321,18 @@ def _update_employee_record(employee: dict, form: dict) -> None:
     employee["timezone"] = _clean_form_value(form, "timezone") or "UTC"
 
     address["street"] = _clean_form_value(form, "street")
+    address["street_2"] = _clean_form_value(form, "street_2")
     address["city"] = _clean_form_value(form, "city")
     address["state"] = _clean_form_value(form, "state")
     address["postal_code"] = _clean_form_value(form, "postal_code")
     address["country"] = _clean_form_value(form, "country")
+
+    minecraft["username"] = _clean_form_value(form, "minecraft_username")
+    discord["username"] = _clean_form_value(form, "discord_username")
+    contact_preferences.update(_build_contact_preferences(form))
+    emergency_contact["name"] = _clean_form_value(form, "emergency_contact_name")
+    emergency_contact["relationship"] = _clean_form_value(form, "emergency_contact_relationship")
+    emergency_contact["phone"] = _clean_form_value(form, "emergency_contact_phone")
 
     employment["title"] = _clean_form_value(form, "title") or ""
     employment["business_unit"] = _clean_form_value(form, "business_unit") or ""
@@ -278,9 +344,17 @@ def _update_employee_record(employee: dict, form: dict) -> None:
     employment["hourly_rate"] = _clean_form_value(form, "hourly_rate")
     employment["pay_frequency"] = _clean_form_value(form, "pay_frequency")
     employment["direct_deposit_info"] = _clean_form_value(form, "direct_deposit_info")
+    employment["salary_exempt"] = _form_bool(form, "salary_exempt", True)
+    employment["bonus_eligible"] = _form_bool(form, "bonus_eligible", False)
+    employment["bonus_rate"] = _clean_form_value(form, "bonus_rate") or 0.0
+    employment["pto_available_hours"] = _clean_form_value(form, "pto_available_hours") or 0
+    employment["pto_used_hours"] = _clean_form_value(form, "pto_used_hours") or 0
+    employment["reports_to"] = _clean_form_value(form, "reports_to")
 
     equity_notes = _clean_form_value(form, "equity")
     employment["equity"] = {"notes": equity_notes} if equity_notes else {}
+    employee["certifications"] = _split_csv_values(_clean_form_value(form, "certifications_csv"))
+    employee["skills"] = _split_csv_values(_clean_form_value(form, "skills_csv"))
     employee["updated"] = now
     audit = employee.setdefault("audit", {})
     audit["last_modified"] = now
@@ -423,7 +497,12 @@ def employee_profile(uuid: str):
     employee = _find_employee_by_uuid(employees, uuid)
     if employee is None:
         return render_template("errors/404.html"), 404
-    return render_template("hr/profile.html", employee=employee, loggedInTech=resolve_preferred_name(session.get("technician")))
+    return render_template(
+        "hr/profile.html",
+        employee=employee,
+        employee_tenure=_format_tenure(employee.get("employment", {}).get("hire_date")),
+        loggedInTech=resolve_preferred_name(session.get("technician")),
+    )
 
 @hr_module_bp.route("/employee/<uuid>/edit", methods=["GET", "POST"])
 @role_required(ROLE_HR_TECH)
@@ -436,7 +515,11 @@ def edit_employee(uuid: str):
         return render_template("errors/404.html"), 404
 
     if request.method == "GET":
-        return render_template("hr/submit_new.html", employee=employee, loggedInTech=resolve_preferred_name(session.get("technician")))
+        return render_template(
+            "hr/submit_new.html",
+            employee=employee,
+            loggedInTech=resolve_preferred_name(session.get("technician")),
+        )
 
     form = {key: value for key, value in request.form.items()}
     ok, _missing = require_fields(form, ["first_name", "last_name", "email"])
@@ -478,8 +561,13 @@ def reset_employee_password(uuid: str):
 
     # Show password once to admin via template variable and flash
     flash("Password reset successful - show it once below.", "success")
-    return render_template("hr/profile.html", employee=employee, reset_password=new_password, 
-                           loggedInTech=resolve_preferred_name(session.get("technician")))
+    return render_template(
+        "hr/profile.html",
+        employee=employee,
+        employee_tenure=_format_tenure(employee.get("employment", {}).get("hire_date")),
+        reset_password=new_password,
+        loggedInTech=resolve_preferred_name(session.get("technician")),
+    )
 
 @hr_module_bp.route("/employee/<uuid>/append_note", methods=["POST"])
 @role_required(ROLE_HR_TECH)
@@ -581,6 +669,7 @@ def new_employee():
     return render_template(
         "hr/profile.html",
         employee=new_record,
+        employee_tenure=_format_tenure(new_record.get("employment", {}).get("hire_date")),
         loggedInTech=resolve_preferred_name(session.get("technician")),
     )
 

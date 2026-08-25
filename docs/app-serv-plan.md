@@ -132,3 +132,79 @@ Remove Language from Customer Profile record.
 **Add Note**
 
 **Customer Profile Notes**
+
+## HR Records
+
+**Employee Overview**
+- Preferred Name
+- Employee ID
+- Title
+- Tenure
+
+**Access Security**
+- Account Status
+- Username
+- Role
+- Assigment Queue
+- MFA Enabled
+- Login Enabled
+- Last Login
+
+**Contact Details**
+- Full Name
+- Email
+- Phone Number
+- Street Address
+- Street Address 2
+- City
+- State
+- Zip Code
+- Country (USA Default)
+- Timezone
+- Date of Birth
+- Minecraft Username
+- Discord Username
+
+**Employment Details**
+- Employment Status
+- Employment Type
+- Work Authorization
+- Hire Date
+- Termination Date
+- Rehire Eligible
+- Business Unit
+- Title
+- Reports To
+
+**Compensation**
+- Compensation Type
+- PayFrequency
+- HourlyRate
+- Salary
+- SalaryExempt
+- Bonus Eligible
+- Bonus Rate
+- Direct Deposit Info
+
+**Leave and Benefits**
+- PTO Hours Available
+
+**Emergency Contact**
+- Full Name
+- Phone
+- Relation
+
+**Qualifications**
+
+**Record Audit**
+- Creation Source
+- Provisioning Status
+- Created Timestamp
+- Last Modified Timestamp
+- Last Modified By
+
+**Render Full Employee Record**
+
+**Add Note**
+
+**Employee Profile Notes**
