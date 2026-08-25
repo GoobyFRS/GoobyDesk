@@ -225,11 +225,19 @@
                         <div class="form-row">
                             <div>
                                 <label for="hire_date">Hire Date</label>
-                                <input type="text" id="hire_date" value="{{ employment.get('hire_date', 'Set automatically on save') }}" disabled>
+                                {% if not employee %}
+                                    <input type="date" id="hire_date" name="hire_date" value="{{ employment.get('hire_date', '') }}">
+                                {% else %}
+                                    <input type="date" id="hire_date" name="hire_date" value="{{ employment.get('hire_date', 'Set automatically on save') }}" disabled>
+                                {% endif %}
                             </div>
                             <div>
                                 <label for="termination_date">Termination Date</label>
-                                <input type="text" id="termination_date" value="{{ employment.get('termination_date', 'Not set') }}" disabled>
+                                {% if not employee %}
+                                    <input type="date" id="termination_date" name="termination_date" value="{{ employment.get('termination_date', '') }}">
+                                {% else %}
+                                    <input type="date" id="termination_date" name="termination_date" value="{{ employment.get('termination_date', 'Not set') }}" disabled>
+                                {% endif %}
                             </div>
                         </div>
 
