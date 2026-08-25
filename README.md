@@ -4,7 +4,7 @@ The Ultimate Simple, Lightweight, Databaseless Service Desk for Home Labbers, Fa
 
 **Current Version:**  v1.0.4
 
-**Revision Date:** 2026.08.22
+**Revision Date:** 2026.08.25
 
 [GoobyDesk Repo Wiki](https://github.com/GoobyFRS/GoobyDesk/wiki) & [Production Deployment Guide](https://github.com/GoobyFRS/GoobyDesk/wiki/Production-Deployment-Guide).
 

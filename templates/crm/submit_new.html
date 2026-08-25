@@ -197,7 +197,7 @@
                     <div class="form-row">
                         <div>
                             <label for="street">Street Address</label>
-                            <input type="text" id="street" name="street" value="{{ customer.get('address', {}).get('street','') if customer else '' }}">
+                            <input type="text" id="street" name="street" value="{{ customer.get('address', {}).get('street','') if customer else '' }}" placeholder="123 Main St">
                         </div>
                         <div>
                             <label for="postal_code">Zip Code</label>
