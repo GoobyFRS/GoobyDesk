@@ -326,6 +326,9 @@
             {% endif %}
 
             <button type="submit" class="submit-btn">{% if customer %}Save Changes{% else %}Create Customer{% endif %}</button>
+            {% if customer %}
+            <button type="submit" class="submit-btn danger-btn" formaction="{{ url_for('crm_module.delete_customer', uuid=customer.get('uuid')) }}" formmethod="post" formnovalidate onclick="return confirm('Delete this customer record? This cannot be undone.');">Delete Record</button>
+            {% endif %}
             <a href="{% if customer %}{{ url_for('crm_module.customer_profile', uuid=customer.get('uuid')) }}{% else %}{{ url_for('crm_module.crm_dashboard') }}{% endif %}" class="form-link">Cancel</a>
 
         </form>

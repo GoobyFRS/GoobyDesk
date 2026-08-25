@@ -247,6 +247,7 @@
                                 <option value="in_progress" {% if service and service.get('provisioning_status') == 'in_progress' %}selected{% endif %}>in_progress</option>
                                 <option value="provisioned" {% if service and service.get('provisioning_status') == 'provisioned' %}selected{% endif %}>provisioned</option>
                                 <option value="failed" {% if service and service.get('provisioning_status') == 'failed' %}selected{% endif %}>failed</option>
+                                <option value="terminated" {% if service and service.get('provisioning_status') == 'terminated' %}selected{% endif %}>Terminated</option>
                             </select>
                         </div>
                         <div>

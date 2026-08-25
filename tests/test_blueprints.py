@@ -191,6 +191,54 @@ class CrmBlueprintTests(BlueprintRouteTests):
         self.assertEqual(customers[0]["first_name"], "Steve")
         self.assertEqual(customers[0]["last_name"], "Customer")
 
+    def test_crm_customer_delete_unlinks_services(self):
+        """Deleting a customer keeps linked services and marks them terminated."""
+        customer_file = os.path.join(self.temp_dir.name, "customers.json")
+        service_file = os.path.join(self.temp_dir.name, "serviceid.json")
+        self._write_json(
+            customer_file,
+            [
+                {
+                    "uuid": "customer-123",
+                    "customer_id": "CID-2026-0001",
+                    "first_name": "Steve",
+                    "last_name": "Customer",
+                    "services": ["SRV-2026-0001"],
+                }
+            ],
+        )
+        self._write_json(
+            service_file,
+            [
+                {
+                    "uuid": "service-123",
+                    "service_id": "SRV-2026-0001",
+                    "service_name": "Test Service",
+                    "customer_uuid": "customer-123",
+                }
+            ],
+        )
+        self.app.config["LOADED_CONFIG"] = {
+            "core": {
+                "customers_file": customer_file,
+                "serviceid_appid_file": service_file,
+            }
+        }
+        self._set_auth_session()
+
+        response = self.client.post("/crm/customer/customer-123/delete")
+
+        self.assertEqual(response.status_code, 302)
+        with open(customer_file, "r", encoding="utf-8") as handle:
+            customers = json.load(handle)
+        with open(service_file, "r", encoding="utf-8") as handle:
+            services = json.load(handle)
+        self.assertEqual(customers, [])
+        self.assertEqual(len(services), 1)
+        self.assertEqual(services[0]["customer_uuid"], "")
+        self.assertEqual(services[0]["service_status"], "terminated")
+        self.assertEqual(services[0]["provisioning_status"], "terminated")
+
     def test_crm_export_csv(self):
         """The CRM export endpoint should return a CSV download for all customers."""
         customer_file = os.path.join(self.temp_dir.name, "customers.json")
@@ -357,6 +405,50 @@ class HrBlueprintTests(BlueprintRouteTests):
             employees = json.load(handle)
         self.assertEqual(len(employees), 1)
         self.assertEqual(employees[0]["first_name"], "Bob")
+
+    def test_hr_employee_delete_removes_auth_record(self):
+        """Deleting an employee removes the HR and auth records."""
+        hr_file = os.path.join(self.temp_dir.name, "hr.json")
+        auth_file = os.path.join(self.temp_dir.name, "employees.json")
+        self._write_json(
+            hr_file,
+            [
+                {
+                    "uuid": "employee-123",
+                    "employee_id": "EMP-2026-0001",
+                    "first_name": "Bob",
+                    "last_name": "Employee",
+                    "email": "bob@example.org",
+                }
+            ],
+        )
+        self._write_json(
+            auth_file,
+            [
+                {
+                    "uuid": "employee-123",
+                    "auth_username": "bob",
+                    "roles": ["hr_technician"],
+                }
+            ],
+        )
+        self.app.config["LOADED_CONFIG"] = {
+            "core": {
+                "hr_file": hr_file,
+                "employee_auth_file": auth_file,
+            }
+        }
+        self._set_auth_session(username="hradmin", roles=["hr_technician"])
+
+        response = self.client.post("/hr/employee/employee-123/delete")
+
+        self.assertEqual(response.status_code, 302)
+        with open(hr_file, "r", encoding="utf-8") as handle:
+            employees = json.load(handle)
+        with open(auth_file, "r", encoding="utf-8") as handle:
+            auth_employees = json.load(handle)
+        self.assertEqual(employees, [])
+        self.assertEqual(auth_employees, [])
 
     def test_hr_export_csv(self):
         """The HR export endpoint should return a CSV download for all employees."""

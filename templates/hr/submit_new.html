@@ -390,6 +390,9 @@
 
             <div class="form-actions">
                 <button type="submit" class="submit-btn">{% if employee %}Save Changes{% else %}Create Employee{% endif %}</button>
+                {% if employee %}
+                <button type="submit" class="submit-btn danger-btn" formaction="{{ url_for('hr_module.delete_employee', uuid=employee.get('uuid')) }}" formmethod="post" formnovalidate onclick="return confirm('Delete this employee record? This cannot be undone.');">Delete Record</button>
+                {% endif %}
                 <a href="{% if employee %}{{ url_for('hr_module.employee_profile', uuid=employee.get('uuid')) }}{% else %}{{ url_for('hr_module.hr_dashboard') }}{% endif %}" class="form-link">Cancel</a>
             </div>
         </form>

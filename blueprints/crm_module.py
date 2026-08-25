@@ -198,6 +198,32 @@ def _update_customer_record(customer: dict, form: dict) -> None:
         "expires": support_expires or customer.get("support_contract", {}).get("expires"),
     }
 
+
+def _terminate_customer_services(customer_uuid: str) -> None:
+    """Orphan linked service records when a customer is deleted."""
+    if not customer_uuid:
+        return
+
+    from blueprints.serviceid_module import _get_service_appid_store
+    from datetime import datetime
+
+    store = _get_service_appid_store()
+    services = store.load_all()
+    changed = False
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    for service in services:
+        if str(service.get("customer_uuid") or "") == customer_uuid:
+            service["customer_uuid"] = ""
+            service["service_status"] = "terminated"
+            service["provisioning_status"] = "terminated"
+            service["service_terminated_timestamp"] = now
+            service["service_updated_timestamp"] = now
+            changed = True
+
+    if changed:
+        store.save_all(services)
+
 # Dashboard Route
 @crm_module_bp.route("/", methods=["GET"])
 @role_required(ROLE_ITSM_TECH)
@@ -404,6 +430,25 @@ def edit_customer(uuid):
     actor_label = _pseudonymize_actor(actor)
     logger.info("CRM MODULE - Customer %s edited actor=%s", customer.get('customer_id'), actor_label)
     return redirect(url_for("crm_module.customer_profile", uuid=customer["uuid"]))
+
+
+@crm_module_bp.route("/customer/<uuid>/delete", methods=["POST"])
+@role_required(ROLE_ITSM_TECH)
+def delete_customer(uuid):
+    """Delete a customer record and unlink any related services."""
+    actor = resolve_preferred_name(session.get("technician"))
+    customers = load_customers_file()
+    customer = _find_customer_by_uuid(customers, uuid)
+    if customer is None:
+        logger.warning("CRM MODULE - Customer delete lookup failed actor=%s uuid=%s", _pseudonymize_actor(actor), uuid)
+        return render_template("errors/404.html"), 404
+
+    customers = [record for record in customers if record.get("uuid") != uuid]
+    save_customers_file(customers)
+    _terminate_customer_services(uuid)
+
+    logger.info("CRM MODULE - Customer deleted actor=%s customer_id=%s uuid=%s", _pseudonymize_actor(actor), customer.get("customer_id"), uuid)
+    return redirect(url_for("crm_module.crm_dashboard"))
 
 
 def _serialize_customer_value(value):

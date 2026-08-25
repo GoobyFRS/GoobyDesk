@@ -532,6 +532,31 @@ def edit_employee(uuid: str):
     flash(f"Employee {employee.get('employee_id', uuid)} updated.", "success")
     return redirect(url_for("hr_module.employee_profile", uuid=employee["uuid"]))
 
+
+@hr_module_bp.route("/employee/<uuid>/delete", methods=["POST"])
+@role_required(ROLE_HR_TECH)
+def delete_employee(uuid: str):
+    """Delete an employee record and remove any matching auth record."""
+    actor = resolve_preferred_name(session.get("technician"))
+    store = _get_hr_store()
+    auth_store = _get_employee_store()
+    employees = store.load_all()
+    employee = _find_employee_by_uuid(employees, uuid)
+    if employee is None:
+        logger.warning("HR MODULE - Employee delete lookup failed actor=%s uuid=%s", _pseudonymize_actor(actor), uuid)
+        return render_template("errors/404.html"), 404
+
+    employees = [record for record in employees if record.get("uuid") != uuid]
+    store.save_all(employees)
+
+    auth_records = auth_store.load_all()
+    filtered_auth_records = [record for record in auth_records if record.get("uuid") != uuid]
+    if len(filtered_auth_records) != len(auth_records):
+        auth_store.save_all(filtered_auth_records)
+
+    logger.info("HR MODULE - Employee deleted actor=%s employee_id=%s uuid=%s", _pseudonymize_actor(actor), employee.get("employee_id"), uuid)
+    return redirect(url_for("hr_module.hr_dashboard"))
+
 @hr_module_bp.route("/employee/<uuid>/reset-password", methods=["POST"])
 @role_required(ROLE_ADMIN)
 def reset_employee_password(uuid: str):
