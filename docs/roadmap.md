@@ -5,21 +5,24 @@
 ### Small Fixes
 
 - Change Managaement workflow does not exisit.
-- Reorder Customer Profile edit boxes
-- Reorder Customer Profile boxes
-- Implement required Resolution Notes
-- Implement Password Reset function
+- Implement required Resolution Notes.
+- Implement Password Reset function.
 - Implement Billable Hours text box.
 - Pick `closure_date` or `ticket_resolved_timestamp`
-- Create APPID Module
-- Move some APPID fields from ServiceID
-- Update ServiceID input data
-- Add method of changing a tickets queue
-- Add a method of escalation
-- Implement login MFA
-- Link Customer ID to Tickets
-- Link Service ID to CHG
-- Link APPID to CHG
-- Implement User Data Export for Customers
-- Implement User Data Import for Customers
-- Implement User Data Import for Employees
+- Create APPID Module.
+- Move some APPID fields from ServiceID.
+- Update ServiceID input data.
+- Add method of changing a tickets queue.
+- Add a method of escalation.
+- Implement login MFA.
+- Link Customer ID to Tickets.
+- Link Service ID to CHG.
+- Link APPID to CHG.
+- Implement User Data Import for Customers.
+- Implement User Data Export for Customers.
+- Implement User Data Import for Employees.
+- Implement User Data Export for Employees.
+- Implement User Data Import for ServiceID.
+- Implement User Data Export for ServiceID.
+- Implement User Data Import for Changes.
+- Implement User Data Export for Changes.

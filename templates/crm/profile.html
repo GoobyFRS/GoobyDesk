@@ -69,24 +69,13 @@
     <main class="container container--wide">
 
         <div class="page-header">
-            <div>
-                <div class="profile-name">
-                    <h2 class="card-title">{{ customer.get('preferred_name', customer.first_name) }} {{ customer.last_name }}</h2>
-                    {% if customer.get('vip') %}
-                        <span class="badge badge-primary">VIP</span>
-                    {% endif %}
-                    {% if customer.get('content_creator') %}
-                        <span class="badge badge-info">Content Creator</span>
-                    {% endif %}
-                    {% if customer.get('status') == 'active' %}
-                        <span class="badge badge-success">Active</span>
-                    {% elif customer.get('status') == 'suspended' %}
-                        <span class="badge badge-danger">Suspended</span>
-                    {% else %}
-                        <span class="badge badge-secondary">{{ customer.get('status', 'Unknown') | capitalize }}</span>
-                    {% endif %}
-                </div>
-                <p class="text-muted">{{ customer.get('customer_id', customer.uuid) }}</p>
+            <div class="page-header-title">
+                <h2>{{ customer.get('preferred_name', customer.first_name) }} {{ customer.last_name }}</h2>
+                <p class="text-muted">{{ customer.get('customer_type', 'Customer') | capitalize }} — {{ customer.get('assigned_account_manager') or 'Unassigned' }}</p>
+                <p class="text-muted">ID: {{ customer.get('customer_id', customer.uuid) }}</p>
+            </div>
+            <div class="logo">
+                <img src="{{ url_for('static', filename='/img/logo_white.webp') }}" alt="GoobyDesk Logo">
             </div>
             <div class="page-header-actions">
                 <a href="{{ url_for('crm_module.edit_customer', uuid=customer.get('uuid')) }}" class="submit-btn warning-btn">Edit Customer</a>

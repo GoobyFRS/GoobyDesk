@@ -117,27 +117,21 @@
 <body>
     <main class="container container--wide">
         <div class="page-header">
-            <div>
-                <div class="profile-name">
-                    <h2 class="card-title">
-                        {% if employee %}
-                            {{ employee.get('preferred_name') or employee.get('first_name', 'Unknown') }} {{ employee.get('last_name', '') }}
-                        {% else %}
-                            Employee Profile
-                        {% endif %}
-                    </h2>
-                    {% if employee and employee.get('employment', {}).get('status') == 'active' %}
-                        <span class="badge badge-success">Active</span>
-                    {% elif employee and employee.get('employment', {}).get('status') %}
-                        <span class="badge badge-secondary">{{ employee.get('employment', {}).get('status') | capitalize }}</span>
+            <div class="page-header-title">
+                <h2>
+                    {% if employee %}
+                        {{ employee.get('preferred_name') or employee.get('first_name', 'Unknown') }} {{ employee.get('last_name', '') }}
+                    {% else %}
+                        Employee Profile
                     {% endif %}
-                    {% if employee and employee.get('access', {}).get('account_locked') %}
-                        <span class="badge badge-danger">Locked</span>
-                    {% endif %}
-                </div>
+                </h2>
+                <p class="text-muted">{{ employee.get('employment', {}).get('title') or 'Employee Details' }}</p>
                 {% if employee %}
-                    <p class="text-muted">{{ employee.get('employee_id', employee.get('uuid', '')) }}</p>
+                    <p class="text-muted">ID: {{ employee.get('employee_id', employee.get('uuid', '')) }}</p>
                 {% endif %}
+            </div>
+            <div class="logo">
+                <img src="{{ url_for('static', filename='/img/logo_white.webp') }}" alt="GoobyDesk Logo">
             </div>
             <div class="page-header-actions">
                 {% if employee %}

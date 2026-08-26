@@ -66,17 +66,13 @@
 <body>
     <main class="container container--wide">
         <div class="page-header">
-            <div>
-                <div class="profile-name">
-                    <h2 class="card-title">{{ service.get('service_name', 'Unnamed Service') }}</h2>
-                    {% if service.get('service_status') %}
-                        <span class="badge badge-secondary">{{ service.get('service_status', 'Unknown') | capitalize }}</span>
-                    {% endif %}
-                    {% if service.get('provisioning_status') %}
-                        <span class="badge badge-info">{{ service.get('provisioning_status', 'Unknown') | capitalize }}</span>
-                    {% endif %}
-                </div>
-                <p class="text-muted">{{ service.get('service_id', service.get('uuid', 'Unknown')) }}</p>
+            <div class="page-header-title">
+                <h2>{{ service.get('service_name', 'Unnamed Service') }}</h2>
+                <p class="text-muted">{{ service.get('service_type') or service.get('type') or 'Service Details' }}</p>
+                <p class="text-muted">ID: {{ service.get('service_id', service.get('uuid', 'Unknown')) }}</p>
+            </div>
+            <div class="logo">
+                <img src="{{ url_for('static', filename='/img/logo_white.webp') }}" alt="GoobyDesk Logo">
             </div>
             <div class="page-header-actions">
                 <a href="{{ url_for('serviceid_module.edit_service', uuid=service.get('uuid')) }}" class="submit-btn warning-btn">Edit Service</a>
