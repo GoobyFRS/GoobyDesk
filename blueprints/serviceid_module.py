@@ -9,6 +9,7 @@ from datetime import datetime
 from functools import wraps
 
 from flask import Blueprint, redirect, render_template, request, session, url_for
+from local_handlers.blueprint_helpers import render_not_implemented
 from local_handlers.utils import resolve_preferred_name
 from local_handlers.auth_decorators import role_required, ROLE_ITSM_TECH
 
@@ -141,7 +142,6 @@ def _is_terminated_service(service: dict) -> bool:
         return False
     return True
 
-
 def _first_csv_value(row: dict, *field_names: str) -> str:
     """Return the first non-empty value from a CSV row."""
     for field_name in field_names:
@@ -152,7 +152,6 @@ def _first_csv_value(row: dict, *field_names: str) -> str:
         if value:
             return value
     return ""
-
 
 def _parse_csv_ports(raw_value: str) -> list[int]:
     """Parse a comma-separated port list from CSV."""
@@ -166,7 +165,6 @@ def _parse_csv_ports(raw_value: str) -> list[int]:
             continue
         ports.append(int(cleaned_port))
     return ports
-
 
 def _build_service_from_csv_row(service: dict, row: dict, now_timestamp: str) -> dict:
     """Return a service record updated from CSV values."""
@@ -239,7 +237,6 @@ def _build_service_from_csv_row(service: dict, row: dict, now_timestamp: str) ->
         updated_service["service_id"] = ""
 
     return updated_service
-
 
 @serviceid_module_bp.route("/import/csv", methods=["GET", "POST"])
 @role_required(ROLE_ITSM_TECH)
@@ -361,6 +358,24 @@ def import_services_csv():
         row_errors=row_errors,
     )
 
+@serviceid_module_bp.route("/export/csv", methods=["GET"])
+@role_required(ROLE_ITSM_TECH)
+def export_services_csv():
+    """Render the service export placeholder."""
+    return render_not_implemented()
+
+@serviceid_module_bp.route("/search", methods=["GET"])
+@role_required(ROLE_ITSM_TECH)
+def search_services():
+    """Render the service search placeholder."""
+    return render_not_implemented()
+
+@serviceid_module_bp.route("/bulk-update", methods=["POST"])
+@role_required(ROLE_ITSM_TECH)
+def bulk_update_services():
+    """Render the service bulk-update placeholder."""
+    return render_not_implemented()
+
 @serviceid_module_bp.route("/", methods=["GET"])
 @role_required(ROLE_ITSM_TECH)
 def serviceid_dashboard():
@@ -383,6 +398,7 @@ def serviceid_dashboard():
         loggedInTech=actor,
         show_all=show_all,)
 
+@serviceid_module_bp.route("/<uuid>", methods=["GET"])
 @serviceid_module_bp.route("/profile/<uuid>", methods=["GET"])
 @role_required(ROLE_ITSM_TECH)
 def service_profile(uuid):
@@ -399,6 +415,7 @@ def service_profile(uuid):
         service=service,
         loggedInTech=actor,)
 
+@serviceid_module_bp.route("/<uuid>/edit", methods=["GET", "POST"])
 @serviceid_module_bp.route("/edit/<uuid>", methods=["GET", "POST"])
 @role_required(ROLE_ITSM_TECH)
 def edit_service(uuid):
@@ -491,7 +508,7 @@ def edit_service(uuid):
     logger.info("SERVICEID MODULE - Service updated actor=%s service_id=%s uuid=%s", _pseudonymize_actor(actor), service.get("service_id"), uuid)
     return redirect(url_for("serviceid_module.service_profile", uuid=uuid))
 
-
+@serviceid_module_bp.route("/<uuid>/delete", methods=["POST"])
 @serviceid_module_bp.route("/delete/<uuid>", methods=["POST"])
 @role_required(ROLE_ITSM_TECH)
 def delete_service(uuid):

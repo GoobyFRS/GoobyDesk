@@ -89,6 +89,8 @@ class BlueprintRouteTests(unittest.TestCase):
         self.assertTrue(hasattr(appid_module, "search_appids"))
         self.assertTrue(hasattr(appid_module, "bulk_update_appids"))
         self.assertIn("/appid/", str(self.app.url_map))
+        self.assertIn("/appid/export/csv", str(self.app.url_map))
+        self.assertIn("/appid/import/csv", str(self.app.url_map))
 
 class ApiBlueprintTests(BlueprintRouteTests):
     """Validate the public API ingress endpoints."""
@@ -159,6 +161,11 @@ class ChangesBlueprintTests(BlueprintRouteTests):
         self.assertEqual(len(change_records), 1)
         self.assertEqual(change_records[0]["change_short_description"], "Patch firewall rules")
 
+        self.assertEqual(self.client.get("/changes/ABC/edit").status_code, 200)
+        self.assertEqual(self.client.get("/changes/search").status_code, 200)
+        self.assertEqual(self.client.get("/changes/import/csv").status_code, 200)
+        self.assertEqual(self.client.post("/changes/bulk-update").status_code, 200)
+
 class CrmBlueprintTests(BlueprintRouteTests):
     """Validate the CRM customer dashboard and creation workflow."""
 
@@ -226,7 +233,8 @@ class CrmBlueprintTests(BlueprintRouteTests):
         }
         self._set_auth_session()
 
-        response = self.client.post("/crm/customer/customer-123/delete")
+        self.assertEqual(self.client.get("/crm/customer-123").status_code, 200)
+        response = self.client.post("/crm/customer-123/delete")
 
         self.assertEqual(response.status_code, 302)
         with open(customer_file, "r", encoding="utf-8") as handle:
@@ -238,6 +246,9 @@ class CrmBlueprintTests(BlueprintRouteTests):
         self.assertEqual(services[0]["customer_uuid"], "")
         self.assertEqual(services[0]["service_status"], "terminated")
         self.assertEqual(services[0]["provisioning_status"], "terminated")
+
+        self.assertEqual(self.client.get("/crm/search").status_code, 200)
+        self.assertEqual(self.client.post("/crm/bulk-update").status_code, 200)
 
     def test_crm_export_csv(self):
         """The CRM export endpoint should return a CSV download for all customers."""
@@ -363,12 +374,15 @@ class HrBlueprintTests(BlueprintRouteTests):
         self.assertIn("Employee Overview", profile_text)
         self.assertIn("Record Audit", profile_text)
 
+        self.assertEqual(self.client.get("/hr/employee-123").status_code, 200)
+
         form_response = self.client.get("/hr/employee/submit-new")
         self.assertEqual(form_response.status_code, 200)
         form_text = form_response.get_data(as_text=True)
         self.assertIn("Employee Overview", form_text)
         self.assertIn("Contact Details", form_text)
         self.assertIn("Compensation", form_text)
+        self.assertEqual(self.client.get("/hr/submit-new").status_code, 200)
 
     def test_hr_dashboard_and_employee_creation(self):
         """The HR dashboard renders and a valid employee record is saved."""
@@ -386,9 +400,12 @@ class HrBlueprintTests(BlueprintRouteTests):
 
         dashboard_response = self.client.get("/hr/")
         self.assertEqual(dashboard_response.status_code, 200)
+        self.assertEqual(self.client.get("/hr/search").status_code, 200)
+        self.assertEqual(self.client.get("/hr/import/csv").status_code, 200)
+        self.assertEqual(self.client.post("/hr/bulk-update").status_code, 200)
 
         create_response = self.client.post(
-            "/hr/employee/submit-new",
+            "/hr/submit-new",
             data={
                 "first_name": "Bob",
                 "last_name": "Employee",
@@ -709,7 +726,13 @@ class ServiceIdBlueprintTests(BlueprintRouteTests):
         self.assertIn("Delete Record", edit_body)
         self.assertIn("Delete this service record? This cannot be undone.", edit_body)
 
-        delete_response = self.client.post("/serviceid/delete/service-123")
+        self.assertEqual(self.client.get("/serviceid/service-123").status_code, 200)
+        self.assertEqual(self.client.get("/serviceid/service-123/edit").status_code, 200)
+        self.assertEqual(self.client.get("/serviceid/export/csv").status_code, 200)
+        self.assertEqual(self.client.get("/serviceid/search").status_code, 200)
+        self.assertEqual(self.client.post("/serviceid/bulk-update").status_code, 200)
+
+        delete_response = self.client.post("/serviceid/service-123/delete")
         self.assertEqual(delete_response.status_code, 302)
 
         with open(service_file, "r", encoding="utf-8") as handle:

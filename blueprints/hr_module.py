@@ -15,6 +15,7 @@ from datetime import datetime, timedelta
 
 from flask import Blueprint, Response, current_app, flash, redirect, render_template, request, session, url_for
 
+from local_handlers.blueprint_helpers import render_not_implemented
 from local_handlers.auth_decorators import ROLE_ADMIN, ROLE_HR_TECH, role_required
 from local_handlers.local_config_loader import load_core_config
 from local_handlers.utils import hash_password, resolve_preferred_name
@@ -477,7 +478,7 @@ def hr_dashboard():
         loggedInTech=resolve_preferred_name(session.get("technician")),
         show_all=show_all,)
 
-# View Employee Details Route
+@hr_module_bp.route("/<uuid>", methods=["GET"])
 @hr_module_bp.route("/employee/<uuid>", methods=["GET"])
 @role_required(ROLE_HR_TECH)
 def employee_profile(uuid: str):
@@ -504,6 +505,7 @@ def employee_profile(uuid: str):
         loggedInTech=resolve_preferred_name(session.get("technician")),
     )
 
+@hr_module_bp.route("/<uuid>/edit", methods=["GET", "POST"])
 @hr_module_bp.route("/employee/<uuid>/edit", methods=["GET", "POST"])
 @role_required(ROLE_HR_TECH)
 def edit_employee(uuid: str):
@@ -533,6 +535,7 @@ def edit_employee(uuid: str):
     return redirect(url_for("hr_module.employee_profile", uuid=employee["uuid"]))
 
 
+@hr_module_bp.route("/<uuid>/delete", methods=["POST"])
 @hr_module_bp.route("/employee/<uuid>/delete", methods=["POST"])
 @role_required(ROLE_HR_TECH)
 def delete_employee(uuid: str):
@@ -556,6 +559,24 @@ def delete_employee(uuid: str):
 
     logger.info("HR MODULE - Employee deleted actor=%s employee_id=%s uuid=%s", _pseudonymize_actor(actor), employee.get("employee_id"), uuid)
     return redirect(url_for("hr_module.hr_dashboard"))
+
+@hr_module_bp.route("/import/csv", methods=["GET", "POST"])
+@role_required(ROLE_HR_TECH)
+def import_employees_csv():
+    """Render the HR import placeholder."""
+    return render_not_implemented()
+
+@hr_module_bp.route("/search", methods=["GET"])
+@role_required(ROLE_HR_TECH)
+def search_employees():
+    """Render the HR search placeholder."""
+    return render_not_implemented()
+
+@hr_module_bp.route("/bulk-update", methods=["POST"])
+@role_required(ROLE_HR_TECH)
+def bulk_update_employees():
+    """Render the HR bulk-update placeholder."""
+    return render_not_implemented()
 
 @hr_module_bp.route("/employee/<uuid>/reset-password", methods=["POST"])
 @role_required(ROLE_ADMIN)
@@ -628,8 +649,8 @@ def add_employee_note(uuid: str):
     store.save_all(employees)
     return ({"message": "Note added successfully.", "note": note_record}, 200)
 
-# Create New Employee Route
 @hr_module_bp.route("/employee/submit-new", methods=["GET", "POST"])
+@hr_module_bp.route("/submit-new", methods=["GET", "POST"])
 @role_required(ROLE_HR_TECH)
 def new_employee():
     """Render form to create a new employee and handle submissions.

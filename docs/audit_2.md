@@ -110,6 +110,7 @@ Can you perform a basic layout and function audit and write the results to audit
 	- **API/webhook endpoints**: Present (status, webhooks). Not a CRUD blueprint; standard UI routes not applicable.
 
 **Findings & Recommendations**
+
 - **Inconsistent coverage**: Some modules (crm, hr, serviceid, changes) implement most UI CRUD patterns; others (itsm, reports, media_request, api) are specialized.
 - **Canonical route names**: Standardize on these endpoints where applicable: `/` (dashboard), `/submit-new`, `/<id>` (view), `/<id>/edit`, `/<id>/delete`, `/export` (or `/export/csv`), `/import` (or `/import/csv`), `/search`, `/bulk-update`.
 - **Shared helpers**: Create small helpers in `local_handlers/` for common tasks: CSV export, import parsing, id normalization, permission checks, render helpers. This avoids duplicated code.
@@ -118,9 +119,9 @@ Can you perform a basic layout and function audit and write the results to audit
 - **Search & Bulk Update**: Add `/search` (GET) and `/bulk-update` (POST) to modules that manage lists (crm, serviceid, hr, changes) to enable consistent admin workflows.
 
 **Next Steps (I can do)**
+
 - Add a short `local_handlers/blueprint_helpers.py` with CSV export/import helpers and a `standard_routes.py` mixin to apply consistent endpoints.
 - Open PR implementing missing placeholder routes as HTML stubs and wiring to helpers for one module (suggest starting with `changes_module`).
 - Or, implement a checklist patch that adds route stubs for the missing endpoints across all blueprints.
 
 Tell me which next step you want: add helpers, stub routes, or implement one module fully.
-

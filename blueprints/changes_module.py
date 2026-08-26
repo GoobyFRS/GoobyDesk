@@ -7,6 +7,7 @@ import os
 from datetime import datetime
 
 from flask import Blueprint, Response, redirect, render_template, request, session, url_for, current_app
+from local_handlers.blueprint_helpers import render_not_implemented
 from local_handlers.utils import resolve_preferred_name
 from local_handlers.auth_decorators import role_required, ROLE_ITSM_TECH
 from storage.changes_store import ChangesStore
@@ -102,7 +103,7 @@ def _build_change_record(form_data) -> dict:
 
     return record
 
-# Dashboard Route
+# Change Record Dashboard
 @changes_module_bp.route("/", methods=["GET"])
 @role_required(ROLE_ITSM_TECH)
 def changes_home():
@@ -110,6 +111,7 @@ def changes_home():
     changes = load_changes()
     return render_template("changes/changes_dashboard.html", changes=changes, loggedInTech=resolve_preferred_name(session.get("technician")))
 
+# Change Record View
 @changes_module_bp.route("/<change_number>", methods=["GET"])
 @role_required(ROLE_ITSM_TECH)
 def change_detail(change_number: str):
@@ -122,6 +124,20 @@ def change_detail(change_number: str):
         change=change,
         loggedInTech=resolve_preferred_name(session.get("technician")),
     )
+
+# Change Record Edit
+@changes_module_bp.route("/<change_number>/edit", methods=["GET", "POST"])
+@role_required(ROLE_ITSM_TECH)
+def edit_change(change_number: str):
+    """Render the change edit placeholder."""
+    return render_not_implemented()
+
+# Change Record Delete
+@changes_module_bp.route("/<change_number>/delete", methods=["POST"])
+@role_required(ROLE_ITSM_TECH)
+def delete_change(change_number: str):
+    """Render the change delete placeholder."""
+    return render_not_implemented()
 
 # Submit New Change Route
 @changes_module_bp.route("/submit-new", methods=["GET", "POST"])
@@ -172,6 +188,27 @@ def submit_new() -> str:
         actor,
     )
     return redirect(url_for("changes_module.changes_home"))
+
+# Change Record Import
+@changes_module_bp.route("/import/csv", methods=["GET", "POST"])
+@role_required(ROLE_ITSM_TECH)
+def import_changes_csv():
+    """Render the change import placeholder."""
+    return render_not_implemented()
+
+# Change Record Search
+@changes_module_bp.route("/search", methods=["GET"])
+@role_required(ROLE_ITSM_TECH)
+def search_changes():
+    """Render the change search placeholder."""
+    return render_not_implemented()
+
+# Change Record Bulk Update
+@changes_module_bp.route("/bulk-update", methods=["POST"])
+@role_required(ROLE_ITSM_TECH)
+def bulk_update_changes():
+    """Render the change bulk-update placeholder."""
+    return render_not_implemented()
 
 # Export open change tickets as CSV.
 @changes_module_bp.route("/export/csv", methods=["GET"])

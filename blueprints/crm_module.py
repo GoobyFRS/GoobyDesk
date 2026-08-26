@@ -12,6 +12,7 @@ from functools import wraps
 
 from flask import Blueprint, render_template, request, redirect, url_for, session, Response, current_app, flash
 from markupsafe import escape
+from local_handlers.blueprint_helpers import render_not_implemented
 from local_handlers.utils import resolve_preferred_name
 from local_handlers.auth_decorators import role_required, ROLE_ITSM_TECH
 from storage.crm_store import CrmStore
@@ -319,7 +320,7 @@ def new_customer():
 
     return redirect(url_for("crm_module.customer_profile", uuid=new_customer_record["uuid"]))
 
-# View Customer Details Route
+@crm_module_bp.route("/<uuid>", methods=["GET"])
 @crm_module_bp.route("/profile/<uuid>", methods=["GET"])
 @role_required(ROLE_ITSM_TECH)
 def customer_profile(uuid):
@@ -391,6 +392,7 @@ def add_customer_note(uuid):
     response_note["note"] = escape(response_note.get("note", ""))
     return ({"message": "Note added successfully.", "note": response_note}, 200)
 
+@crm_module_bp.route("/<uuid>/edit", methods=["GET", "POST"])
 @crm_module_bp.route("/customer/<uuid>/edit", methods=["GET", "POST"])
 @role_required(ROLE_ITSM_TECH)
 def edit_customer(uuid):
@@ -431,7 +433,7 @@ def edit_customer(uuid):
     logger.info("CRM MODULE - Customer %s edited actor=%s", customer.get('customer_id'), actor_label)
     return redirect(url_for("crm_module.customer_profile", uuid=customer["uuid"]))
 
-
+@crm_module_bp.route("/<uuid>/delete", methods=["POST"])
 @crm_module_bp.route("/customer/<uuid>/delete", methods=["POST"])
 @role_required(ROLE_ITSM_TECH)
 def delete_customer(uuid):
@@ -516,3 +518,21 @@ def export_customers_csv():
         mimetype="text/csv",
         headers={"Content-Disposition": f"attachment; filename={filename}"},
     )
+
+@crm_module_bp.route("/import/csv", methods=["GET", "POST"])
+@role_required(ROLE_ITSM_TECH)
+def import_customers_csv():
+    """Render the CRM import placeholder."""
+    return render_not_implemented()
+
+@crm_module_bp.route("/search", methods=["GET"])
+@role_required(ROLE_ITSM_TECH)
+def search_customers():
+    """Render the CRM search placeholder."""
+    return render_not_implemented()
+
+@crm_module_bp.route("/bulk-update", methods=["POST"])
+@role_required(ROLE_ITSM_TECH)
+def bulk_update_customers():
+    """Render the CRM bulk-update placeholder."""
+    return render_not_implemented()
