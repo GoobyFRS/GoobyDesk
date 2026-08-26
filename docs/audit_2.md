@@ -1,5 +1,25 @@
 # Audit Results
 
+GPT5-mini Medium 7.4 credits
+
+**Prompt:**
+```txt
+I would like to update my blueprints to have a similar layout.
+
+Dashboard route
+Submit New route
+View route
+Edit route
+Delete route
+Export route
+Import route
+Search route
+Bulk Update route
+I would also like the functions/routes above are developed as identical as possible to make it easier to track issues. This may require adding to the local_handlers modules.
+
+Can you perform a basic layout and function audit and write the results to audit_2.md
+```
+
 **Planned Actions**
 - **Scan**: Inspect each blueprint for the 9 standard routes.
 - **Map**: Record which routes exist and their endpoints.
